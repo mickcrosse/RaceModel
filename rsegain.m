@@ -1,22 +1,25 @@
 function [gain] = rsegain(x,y,xy,varargin)
-%rsegain Multisensory gain for a redundant signals effect.
+%rsegain Multisensory gain of a redundant signals effect.
 %   GAIN = RSEGAIN(X,Y,XY) returns the multisensory gain for a redundant
 %   signals effect (RSE), quantified by the area between the cumulative
 %   distribution functions of the multisensory RT distribution XY and the
-%   race model based on the unisensory RT distributions X and Y (Colonius
-%   & Diederich, 2006). This function does not require X, Y and XY to have
-%   the same number of observations. This function treats NaNs as missing
-%   values, and ignores them.
+%   race model based on the unisensory RT distributions X and Y (Miller,
+%   1986; Colonius & Diederich, 2006). This function does not require X, Y
+%   and XY to have an equal number of observations. This function treats
+%   NaNs as missing values, and ignores them.
 %
 %   [...] = RSEGAIN(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
 %   additional parameters and their values. Valid parameters are the
 %   following:
 %
 %   Parameter   Value
-%   'quant'     a vector specifying the quantiles used to compute the CDFs
+%   'q'         a vector specifying the quantiles used to compute the CDFs
 %               (default=[0.05:0.05:1])
 %   'per'       a 2-element vector specifying the lower and upper
 %               percentiles of RTs to consider (default=[0,100])
+%   'lim'       a 2-element vector specifying the lower and upper RT limits
+%               used to compute the CDFs: it is recommended to leave this
+%               unspecified or empty unless comparing to other conditions
 %   'dep'       a scalar specifying whether statistical dependence between
 %               X and Y is assumed: pass in 0 to assume independence (Raab,
 %               1962; default), -1 to assume a perfect negative dependence
@@ -25,21 +28,23 @@ function [gain] = rsegain(x,y,xy,varargin)
 %                   'ver'       vertical test (default)
 %                   'hor'       horizontal test
 %   'area'      a string specifying how to compute the area under the curve
-%                   'all'       entire area (default)
-%                   'pos'       positive area
-%                   'neg'       negative area
+%                   'all'       use all values (default)
+%                   'pos'       use only positive values
+%                   'neg'       use only negative values
 %
-%   See also RACEMODEL, RSEBENEFIT, TPERMTEST, EFFECTSIZE.
+%   See also RACEMODEL, RACEMODEL3, RSEBENEFIT, TPERMTEST, EFFECTSIZE.
 %
 %   RaceModel https://github.com/mickcrosse/RaceModel
 
 %   References:
-%       [1] Colonius H, Diederich A (2006) The Race Model Inequality:
+%       [1] Miller J (1986) Timecourse of coactivation in bimodal divided
+%           attention. Percept Psychophys 40(5):331-343.
+%       [2] Colonius H, Diederich A (2006) The Race Model Inequality:
 %           Interpreting a Geometric Measure of the Amount of Violation.
 %           Psychol Rev 113(1):148–154.
-%       [2] Raab DH (1962) Statistical facilitation of simple reaction
+%       [3] Raab DH (1962) Statistical facilitation of simple reaction
 %           times. Trans NY Acad Sci 24(5):574-590.
-%       [3] Miller J (1982) Divided attention: Evidence for coactivation
+%       [4] Miller J (1982) Divided attention: Evidence for coactivation
 %           with redundant signals. Cogn Psychol 14(2):247-279.
 
 %   Author: Mick Crosse
@@ -48,10 +53,8 @@ function [gain] = rsegain(x,y,xy,varargin)
 %   Albert Einstein College of Medicine, NY
 %   Apr 2017; Last Revision: 6-Feb-2019
 
-% ***Have not yet implemented horizontal test***
-
 % Decode input variable arguments
-[q,per,dep,test,area] = decode_varargin(varargin);
+[q,per,lim,dep,test,area] = decode_varargin(varargin);
 
 % Get RT range for each condition
 lims = zeros(3,2);
@@ -65,12 +68,14 @@ y = y(y>lims(2,1) & y<lims(2,2));
 xy = xy(xy>lims(3,1) & xy<lims(3,2));
 
 % Get min and max RT limits
-lims = [min(lims(:)),max(lims(:))];
+if isempty(lim)
+    lim = [min(lims(:)),max(lims(:))];
+end
 
 % Compute cumulative distribution functions
-fx = rt2cdf(x,q,lims);
-fy = rt2cdf(y,q,lims);
-fxy = rt2cdf(xy,q,lims);
+fx = rt2cdf(x,q,lim);
+fy = rt2cdf(y,q,lim);
+fxy = rt2cdf(xy,q,lim);
 
 % Compute race model
 if dep == 0 % Raab's Model
@@ -89,24 +94,7 @@ end
 
 gain = getauc(q,fdiff,area);
 
-function [auc] = getauc(x,y,p)
-%getauc Get area under the curve.
-%   Y = GETAUC(X,P) returns the area under the curve Y with respect to X
-%   based on the portion of the curve P. Valid values for argument P are
-%   'all' (entire portion), 'pos' (positive portion), and 'neg' (negative
-%   portion).
-
-% Replace negative/positive values with zeros
-if strcmpi(p,'pos') % positive portion
-    y(y<0) = 0;
-elseif strcmpi(p,'neg') % negative portion
-    y(y>0) = 0;
-end
-
-% Compute AUC using trapezoidal method
-auc = trapz(x,y);
-
-function [q,per,dep,test,area] = decode_varargin(varargin)
+function [q,per,lim,dep,test,area] = decode_varargin(varargin)
 %decode_varargin Decode input variable arguments.
 %   [PARAM1,PARAM2,...] = DECODE_VARARGIN('PARAM1',VAL1,'PARAM2',VAL2,...)
 %   decodes the input variable arguments of the main function.
@@ -128,6 +116,14 @@ if any(strcmpi(varargin,'per')) && ~isempty(varargin{find(strcmpi(varargin,'per'
 else
     per = [0,100]; % default: all RTs
 end
+if any(strcmpi(varargin,'lim')) && ~isempty(varargin{find(strcmpi(varargin,'lim'))+1})
+    lim = varargin{find(strcmpi(varargin,'lim'))+1};
+    if ~isnumeric(lim) || isscalar(lim) || any(isnan(lim)) || any(isinf(lim)) || any(lim<0) || lim(1)>=lim(2)
+        error('LIM must be a 2-element vector of positive values.')
+    end
+else
+    lim = []; % default: unspecified
+end
 if any(strcmpi(varargin,'dep')) && ~isempty(varargin{find(strcmpi(varargin,'dep'))+1})
     dep = varargin{find(strcmpi(varargin,'dep'))+1};
     if any(dep~=0) && any(dep~=-1) && any(dep~=1)
@@ -140,15 +136,17 @@ if any(strcmpi(varargin,'test')) && ~isempty(varargin{find(strcmpi(varargin,'tes
     test = varargin{find(strcmpi(varargin,'test'))+1};
     if ~any(strcmpi(test,{'ver','hor'}))
         error('Invalid value for argument TEST. Valid values are: ''ver'', ''hor''.')
+    elseif strcmpi(test,'hor')
+        error('Horizontal test not yet implemented. Please watch out for updates.')
     end
 else
     test = 'ver'; % default: vertical test
 end
 if any(strcmpi(varargin,'area')) && ~isempty(varargin{find(strcmpi(varargin,'area'))+1})
     area = varargin{find(strcmpi(varargin,'area'))+1};
-    if ~any(strcmpi(area,{'all','pos'}))
-        error('Invalid value for argument AREA. Valid values are: ''all'', ''pos''.')
+    if ~any(strcmpi(area,{'all','pos','neg'}))
+        error('Invalid value for argument AREA. Valid values are: ''all'', ''pos'', ''neg''.')
     end
 else
-    area = 'all'; % default: entire area
+    area = 'all'; % default: use all values
 end

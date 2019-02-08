@@ -5,9 +5,10 @@ function fx = rt2cdf(x,q,lim)
 %   must be a vector of evenly spaced quantiles between 0 and 1. LIM must
 %   be a 2-element vector containing the lower and upper RT limits of the
 %   CDF. CDFs drawn from different samples can be averaged as long as the
-%   values of Q and LIM are kept constant (Ratcliff, 1979).
+%   values of Q and LIM are kept constant (Ratcliff, 1979). This function 
+%   treats NaNs as missing values, and ignores them.
 %
-%   See also RACEMODEL, RSEGAIN, RSEBENEFIT, TPERMTEST, EFFECTSIZE.
+%   See also RACEMODEL, RACEMODEL3, RSEGAIN, RSEBENEFIT.
 %
 %   RaceModel https://github.com/mickcrosse/RaceModel
 
@@ -22,7 +23,7 @@ function fx = rt2cdf(x,q,lim)
 %   Apr 2017; Last Revision: 6-Feb-2019
 
 % Get number of observations
-nx = length(x);
+nx = sum(~isnan(x));
 nq = length(q);
 
 % Compute linearly-spaced quantiles between RT limits
@@ -30,12 +31,6 @@ qntls = linspace(lim(1),lim(2),nq);
 
 % Compute CDF
 fx = zeros(nq,1);
-if any(isnan(x) % for efficiency, only use NANSUM if necessary
-    for i = 1:length(q)
-        fx(i) = nansum(x<=qntls(i))/nx;
-    end
-else
-    for i = 1:length(q)
-        fx(i) = sum(x<=qntls(i))/nx;
-    end
+for i = 1:length(q)
+    fx(i) = sum(x<=qntls(i))/nx;
 end

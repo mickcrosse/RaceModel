@@ -1,24 +1,30 @@
-function [fx,fy,fxy,frace,fdiff] = racemodel(x,y,xy,varargin)
-%racemodel Create race model based on bimodal reaction time distributions.
-%   [FX,FY,FXY] = RACEMODEL(X,Y,XY) returns the cumulative distribution
-%   functions (CDFs) for the unisensory RT distributions X and Y, and the
-%   multisensory RT distribution XY at 20 linearly-spaced quantiles between
-%   0.05 and 1. This function does not require X, Y and XY to have an equal
-%   number of observations. This function treats NaNs as missing values,
-%   and ignores them.
+function [fx,fy,fxy,frace,fdiff] = racemodel3(x,y,z,xyz,varargin)
+%racemodel Create race model based on trimodal reaction time distributions.
+%   [FX,FY,Fz,FXYZ] = RACEMODEL3(X,Y,Z,XYZ) returns the cumulative 
+%   distribution functions (CDFs) for the unisensory RT distributions X, Y 
+%   and Z, and the multisensory RT distribution XYZ at 20 linearly-spaced 
+%   quantiles between 0.05 and 1. This function does not require X, Y, Z 
+%   and XYZ to have an equal number of observations. This function treats 
+%   NaNs as missing values, and ignores them.
+% 
+%   To generate CDFs and race models for conditions XY, XZ and YZ, use the
+%   function RACEMODEL separtely for each combination of unisensory and 
+%   multisensory RTs and input the same lower and upper values for argument 
+%   LIM (see below) to compare across datasets.
 %
-%   [...,FRACE] = RACEMODEL(...) returns the CDF of the race model based on
-%   the unisensory RT distributions X and Y. The race model is computed
-%   using probability summation (Raab, 1962), which assumes statistical
-%   independence between X and Y. For valid estimates of FRACE, the stimuli
-%   used to generate X, Y and XY should be randomly interleaved in order
-%   to uphold the assumption of context invariance (Luce, 1986).
+%   [...,FRACE] = RACEMODEL3(...) returns the CDF of the race model based 
+%   on the unisensory RT distributions X, Y and Z (Colonius et al., 2017). 
+%   The race model is computed using probability summation (Raab, 1962), 
+%   which assumes statistical independence between X, Y and Z. For valid 
+%   estimates of FRACE, the stimuli used to generate X, Y, Z and XYZ should 
+%   be randomly interleaved in order to uphold the assumption of context 
+%   invariance (Luce, 1986).
 %
-%   [...,FDIFF] = RACEMODEL(...) returns the difference between FXY and
-%   FRACE to test whether XY exceeded statistical facilitation predicted 
+%   [...,FDIFF] = RACEMODEL3(...) returns the difference between FXYZ and
+%   FRACE to test whether XYZ exceeded statistical facilitation predicted 
 %   by the race model (Miller, 1982).
 %
-%   [...] = RACEMODEL(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
+%   [...] = RACEMODEL3(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
 %   additional parameters and their values. Valid parameters are the
 %   following:
 %
@@ -31,15 +37,15 @@ function [fx,fy,fxy,frace,fdiff] = racemodel(x,y,xy,varargin)
 %               used to compute the CDFs: it is recommended to leave this
 %               unspecified or empty unless comparing to other conditions
 %   'dep'       a scalar specifying whether statistical dependence between
-%               X and Y is assumed: pass in 0 to assume independence (Raab,
-%               1962; default), -1 to assume a perfect negative dependence
-%               (Miller, 1982) and 1 to assume a perfect positive
-%               dependence (Grice et al., 1986)
+%               X, Y and Z is assumed: pass in 0 to assume independence 
+%               (Raab, 1962; default), -1 to assume a perfect negative 
+%               dependence (Miller, 1982) and 1 to assume a perfect 
+%               positive dependence (Grice et al., 1986)
 %   'test'      a string specifying how to test the race model
 %                   'ver'       vertical test (default)
 %                   'hor'       horizontal test
 %
-%   See also RACEMODEL3, RSEGAIN, RSEBENEFIT, TPERMTEST, EFFECTSIZE.
+%   See also RACEMODEL, RSEGAIN, RSEBENEFIT, TPERMTEST, EFFECTSIZE.
 %
 %   RaceModel https://github.com/mickcrosse/RaceModel
 
@@ -58,7 +64,7 @@ function [fx,fy,fxy,frace,fdiff] = racemodel(x,y,xy,varargin)
 %   Email: mickcrosse@gmail.com
 %   Cognitive Neurophysiology Laboratory,
 %   Albert Einstein College of Medicine, NY
-%   Apr 2017; Last Revision: 6-Feb-2019
+%   Apr 2017; Last Revision: 7-Feb-2019
 
 % Decode input variable arguments
 [q,per,lim,dep,test] = decode_varargin(varargin);
@@ -67,12 +73,14 @@ function [fx,fy,fxy,frace,fdiff] = racemodel(x,y,xy,varargin)
 lims = zeros(3,2);
 lims(1,:) = prctile(x,per);
 lims(2,:) = prctile(y,per);
-lims(3,:) = prctile(xy,per);
+lims(3,:) = prctile(z,per);
+lims(4,:) = prctile(xyz,per);
 
 % Limit RTs to specified range
 x = x(x>lims(1,1) & x<lims(1,2));
 y = y(y>lims(2,1) & y<lims(2,2));
-xy = xy(xy>lims(3,1) & xy<lims(3,2));
+z = z(z>lims(3,1) & z<lims(3,2));
+xyz = xyz(xyz>lims(4,1) & xyz<lims(4,2));
 
 % Get min and max RT limits
 if isempty(lim)
@@ -82,26 +90,28 @@ end
 % Compute cumulative distribution functions
 fx = rt2cdf(x,q,lim);
 fy = rt2cdf(y,q,lim);
-fxy = rt2cdf(xy,q,lim);
+fz = rt2cdf(z,q,lim);
+fxyz = rt2cdf(xyz,q,lim);
 
 % Compute race model
 if nargout > 3
     if dep == 0 % Raab's Model
-        frace = fx+fy-fx.*fy;
+        fxy = fx+fy-fx.*fy;
+        frace = fxy+fz-fxy.*fz;        
     elseif dep == -1 % Miller's Bound
-        frace = fx+fy;
+        frace = fx+fy+fz;
         frace(frace>1) = 1;
     elseif dep == 1 % Grice's Bound
-        frace = max([fx,fy],[],2);
+        frace = max([fx,fy,fz],[],2);
     end
 end
 
 % Compute difference
 if nargout > 4
     if strcmpi(test,'ver')
-        fdiff = fxy-frace;
+        fdiff = fxyz-frace;
     elseif strcmpi(test,'hor')
-        fdiff = frace-fxy;
+        fdiff = frace-fxyz;
     end
 end
 
