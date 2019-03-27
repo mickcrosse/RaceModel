@@ -1,6 +1,6 @@
-function [fx,fy,fxy,frace,fdiff] = racemodel3(x,y,z,xyz,varargin)
-%racemodel Create race model based on trimodal reaction time distributions.
-%   [FX,FY,Fz,FXYZ] = RACEMODEL3(X,Y,Z,XYZ) returns the cumulative 
+function [fx,fy,fz,fxyz,frace,fdiff] = racemodel3(x,y,z,xyz,varargin)
+%racemodel3 Generate a race model based on trimodal reaction times.
+%   [FX,FY,FZ,FXYZ] = RACEMODEL3(X,Y,Z,XYZ) returns the cumulative 
 %   distribution functions (CDFs) for the unisensory RT distributions X, Y 
 %   and Z, and the multisensory RT distribution XYZ at 20 linearly-spaced 
 %   quantiles between 0.05 and 1. This function does not require X, Y, Z 
@@ -8,9 +8,9 @@ function [fx,fy,fxy,frace,fdiff] = racemodel3(x,y,z,xyz,varargin)
 %   NaNs as missing values, and ignores them.
 % 
 %   To generate CDFs and race models for conditions XY, XZ and YZ, use the
-%   function RACEMODEL separtely for each combination of unisensory and 
+%   function RACEMODEL separately for each combination of unisensory and 
 %   multisensory RTs and input the same lower and upper values for argument 
-%   LIM (see below) to compare across datasets.
+%   LIM to compare across datasets (see below).
 %
 %   [...,FRACE] = RACEMODEL3(...) returns the CDF of the race model based 
 %   on the unisensory RT distributions X, Y and Z (Colonius et al., 2017). 
@@ -50,13 +50,16 @@ function [fx,fy,fxy,frace,fdiff] = racemodel3(x,y,z,xyz,varargin)
 %   RaceModel https://github.com/mickcrosse/RaceModel
 
 %   References:
-%       [1] Raab DH (1962) Statistical facilitation of simple reaction
+%       [1] Colonius H, Wolff FH, Diederich A (2017) Trimodal race model 
+%           inequalities in multisensory integration: I. Basics. Front 
+%           Psychol 8:1141.
+%       [2] Raab DH (1962) Statistical facilitation of simple reaction
 %           times. Trans NY Acad Sci 24(5):574-590.
-%       [2] Luce RD (1986) Response times: Their role in inferring mental
+%       [3] Luce RD (1986) Response times: Their role in inferring mental
 %           organization. New York, NY: Oxford University Press.
-%       [3] Miller J (1982) Divided attention: Evidence for coactivation
+%       [4] Miller J (1982) Divided attention: Evidence for coactivation
 %           with redundant signals. Cogn Psychol 14(2):247-279.
-%       [4] Grice GR, Canham L, Gwynne JW (1984) Absence of a redundant-
+%       [5] Grice GR, Canham L, Gwynne JW (1984) Absence of a redundant-
 %           signals effect in a reaction time task with divided attention.
 %           Percept Psychophys 36:565-570.
 

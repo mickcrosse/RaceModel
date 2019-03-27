@@ -11,7 +11,7 @@ function [bemp,bpred] = rsebenefit(x,y,xy,varargin)
 %   [...,BPRED] = RSEBENEFIT(...) returns the predicted benefit of an RSE
 %   quantified by the area between the CDFs of the most effective of the
 %   unisensory RT distributions X and Y, and the race model based on X and
-%   Y (Colonius & Diederich, 2006).
+%   Y (Otto et al., 2013).
 %
 %   [...] = RSEBENEFIT(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
 %   additional parameters and their values. Valid parameters are the

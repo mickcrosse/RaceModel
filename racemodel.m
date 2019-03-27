@@ -1,5 +1,5 @@
 function [fx,fy,fxy,frace,fdiff] = racemodel(x,y,xy,varargin)
-%racemodel Create race model based on bimodal reaction time distributions.
+%racemodel Generate a race model based on bimodal reaction times.
 %   [FX,FY,FXY] = RACEMODEL(X,Y,XY) returns the cumulative distribution
 %   functions (CDFs) for the unisensory RT distributions X and Y, and the
 %   multisensory RT distribution XY at 20 linearly-spaced quantiles between
