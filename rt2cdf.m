@@ -8,7 +8,7 @@ function fx = rt2cdf(x,q,lim)
 %   values of Q are kept constant (Ratcliff, 1979). This function treats
 %   NaNs as missing values, and ignores them.
 %
-%   See also RACEMODEL, RACEMODEL3, RSEGAIN, RSEBENEFIT.
+%   See also RACEMODEL, RACEMODEL3, RSEGAIN, RSEBENEFIT GETAUC.
 %
 %   RaceModel https://github.com/mickcrosse/RaceModel
 
@@ -24,12 +24,12 @@ function fx = rt2cdf(x,q,lim)
 
 % Set default values
 if nargin < 3 || isempty(lim)
-   lim = [min(x),max(x)]; 
+    lim = [min(x),max(x)];
 end
 if nargin < 2 || isempty(q)
-   q = 0.05:0.05:1; 
+    q = 0.05:0.05:1;
 end
-    
+
 % Get number of observations
 nx = sum(~isnan(x));
 nq = length(q);

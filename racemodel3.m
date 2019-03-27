@@ -1,27 +1,27 @@
 function [fx,fy,fz,fxyz,frace,fdiff] = racemodel3(x,y,z,xyz,varargin)
 %racemodel3 Generate a race model based on trimodal reaction times.
-%   [FX,FY,FZ,FXYZ] = RACEMODEL3(X,Y,Z,XYZ) returns the cumulative 
-%   distribution functions (CDFs) for the unisensory RT distributions X, Y 
-%   and Z, and the multisensory RT distribution XYZ at 20 linearly-spaced 
-%   quantiles between 0.05 and 1. This function does not require X, Y, Z 
-%   and XYZ to have an equal number of observations. This function treats 
+%   [FX,FY,FZ,FXYZ] = RACEMODEL3(X,Y,Z,XYZ) returns the cumulative
+%   distribution functions (CDFs) for the unisensory RT distributions X, Y
+%   and Z, and the multisensory RT distribution XYZ at 20 linearly-spaced
+%   quantiles between 0.05 and 1. This function does not require X, Y, Z
+%   and XYZ to have an equal number of observations. This function treats
 %   NaNs as missing values, and ignores them.
-% 
+%
 %   To generate CDFs and race models for conditions XY, XZ and YZ, use the
-%   function RACEMODEL separately for each combination of unisensory and 
-%   multisensory RTs and input the same lower and upper values for argument 
+%   function RACEMODEL separately for each combination of unisensory and
+%   multisensory RTs and input the same lower and upper values for argument
 %   LIM to compare across datasets (see below).
 %
-%   [...,FRACE] = RACEMODEL3(...) returns the CDF of the race model based 
-%   on the unisensory RT distributions X, Y and Z (Colonius et al., 2017). 
-%   The race model is computed using probability summation (Raab, 1962), 
-%   which assumes statistical independence between X, Y and Z. For valid 
-%   estimates of FRACE, the stimuli used to generate X, Y, Z and XYZ should 
-%   be randomly interleaved in order to uphold the assumption of context 
+%   [...,FRACE] = RACEMODEL3(...) returns the CDF of the race model based
+%   on the unisensory RT distributions X, Y and Z (Colonius et al., 2017).
+%   The race model is computed using probability summation (Raab, 1962),
+%   which assumes statistical independence between X, Y and Z. For valid
+%   estimates of FRACE, the stimuli used to generate X, Y, Z and XYZ should
+%   be randomly interleaved in order to uphold the assumption of context
 %   invariance (Luce, 1986).
 %
 %   [...,FDIFF] = RACEMODEL3(...) returns the difference between FXYZ and
-%   FRACE to test whether XYZ exceeded statistical facilitation predicted 
+%   FRACE to test whether XYZ exceeded statistical facilitation predicted
 %   by the race model (Miller, 1982).
 %
 %   [...] = RACEMODEL3(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
@@ -37,9 +37,9 @@ function [fx,fy,fz,fxyz,frace,fdiff] = racemodel3(x,y,z,xyz,varargin)
 %               used to compute the CDFs: it is recommended to leave this
 %               unspecified or empty unless comparing to other conditions
 %   'dep'       a scalar specifying whether statistical dependence between
-%               X, Y and Z is assumed: pass in 0 to assume independence 
-%               (Raab, 1962; default), -1 to assume a perfect negative 
-%               dependence (Miller, 1982) and 1 to assume a perfect 
+%               X, Y and Z is assumed: pass in 0 to assume independence
+%               (Raab, 1962; default), -1 to assume a perfect negative
+%               dependence (Miller, 1982) and 1 to assume a perfect
 %               positive dependence (Grice et al., 1986)
 %   'test'      a string specifying how to test the race model
 %                   'ver'       vertical test (default)
@@ -50,8 +50,8 @@ function [fx,fy,fz,fxyz,frace,fdiff] = racemodel3(x,y,z,xyz,varargin)
 %   RaceModel https://github.com/mickcrosse/RaceModel
 
 %   References:
-%       [1] Colonius H, Wolff FH, Diederich A (2017) Trimodal race model 
-%           inequalities in multisensory integration: I. Basics. Front 
+%       [1] Colonius H, Wolff FH, Diederich A (2017) Trimodal race model
+%           inequalities in multisensory integration: I. Basics. Front
 %           Psychol 8:1141.
 %       [2] Raab DH (1962) Statistical facilitation of simple reaction
 %           times. Trans NY Acad Sci 24(5):574-590.
@@ -100,7 +100,7 @@ fxyz = rt2cdf(xyz,q,lim);
 if nargout > 3
     if dep == 0 % Raab's Model
         fxy = fx+fy-fx.*fy;
-        frace = fxy+fz-fxy.*fz;        
+        frace = fxy+fz-fxy.*fz;
     elseif dep == -1 % Miller's Bound
         frace = fx+fy+fz;
         frace(frace>1) = 1;

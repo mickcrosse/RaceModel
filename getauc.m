@@ -1,14 +1,14 @@
 function [auc] = getauc(x,y,p)
 %getauc Get area under the curve.
-%   AUC = GETAUC(X,Y) returns the area under the curve Y with respect to X 
-%   using trapezoidal numerical integration. X and Y must be vectors of 
+%   AUC = GETAUC(X,Y) returns the area under the curve Y with respect to X
+%   using trapezoidal numerical integration. X and Y must be vectors of
 %   equal length.
-% 
+%
 %   AUC = GETAUC(X,Y,P) returns the area under the curve Y with respect to
 %   X based on the portion of the curve P. Valid values for argument P are
-%   'all' (entire portion, default), 'pos' (positive portion), and 'neg' 
+%   'all' (entire portion, default), 'pos' (positive portion), and 'neg'
 %   (negative portion).
-%  
+%
 %   See also RT2CDF, RSEGAIN, RSEBENEFIT.
 %
 %   RaceModel https://github.com/mickcrosse/RaceModel

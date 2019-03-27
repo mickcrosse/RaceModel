@@ -15,7 +15,7 @@ function [fx,fy,fxy,frace,fdiff] = racemodel(x,y,xy,varargin)
 %   to uphold the assumption of context invariance (Luce, 1986).
 %
 %   [...,FDIFF] = RACEMODEL(...) returns the difference between FXY and
-%   FRACE to test whether XY exceeded statistical facilitation predicted 
+%   FRACE to test whether XY exceeded statistical facilitation predicted
 %   by the race model (Miller, 1982).
 %
 %   [...] = RACEMODEL(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
