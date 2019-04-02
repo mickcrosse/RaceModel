@@ -1,15 +1,12 @@
-function [auc] = getauc(x,y,p)
+function auc = getauc(x,y,p)
 %getauc Get area under the curve.
-%   AUC = GETAUC(X,Y) returns the area under the curve Y with respect to X
-%   using trapezoidal numerical integration. X and Y must be vectors of
-%   equal length.
-%
 %   AUC = GETAUC(X,Y,P) returns the area under the curve Y with respect to
-%   X based on the portion of the curve P. Valid values for argument P are
-%   'all' (entire portion, default), 'pos' (positive portion), and 'neg'
-%   (negative portion).
+%   X based on the portion of the curve P using trapezoidal numerical
+%   integration. Valid values for argument P are 'all' (entire portion,
+%   default), 'pos' (positive portion), and 'neg' (negative portion). X and
+%   Y must be vectors of equal length.
 %
-%   See also RT2CDF, RSEGAIN, RSEBENEFIT.
+%   See also RT2CDF, RSEGAIN, RSEBENEFIT, RSEGAIN3, RSEBENEFIT3.
 %
 %   RaceModel https://github.com/mickcrosse/RaceModel
 
@@ -17,14 +14,18 @@ function [auc] = getauc(x,y,p)
 %   Email: mickcrosse@gmail.com
 %   Cognitive Neurophysiology Laboratory,
 %   Albert Einstein College of Medicine, NY
-%   Apr 2017; Last Revision: 7-Feb-2019
+%   Apr 2017; Last Revision: 4-Apr-2019
 
-% Set up area
+% Set default values
 if nargin < 3 || isempty(p)
     p = 'all';
 end
+if nargin < 2 || isempty(y)
+    y = x;
+    x = 1/length(y):1/length(y):1;
+end
 
-% Convert to column vectors if necessary
+% Convert row vectors to column vectors
 if size(x,2)>1, x = x'; end
 if size(y,2)>1, y = y'; end
 
@@ -33,7 +34,7 @@ if ~strcmpi(p,'all')
     
     % Invert signal to get negative area
     if strcmpi(p,'neg')
-        y = -1*y;
+        y = -y;
     end
     
     % Compute x-values

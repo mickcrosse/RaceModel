@@ -2,13 +2,13 @@ function [bemp,bpred] = rsebenefit(x,y,xy,varargin)
 %rsebenefit Multisensory benefit of a redundant signals effect.
 %   BEMP = RSEBENEFIT(X,Y,XY) returns the empirical benefit of a redundant
 %   signals effect (RSE), quantified by the area between the cumulative
-%   distribution functions (CDFs) of the most effective of the unisensory
-%   RT distributions X and Y, and the bisensory RT distribution XY (Otto et
-%   al., 2013). This function does not require X, Y and XY to have an
+%   distribution functions (CDFs) of the most effective unisensory
+%   RT distributions X and Y, and the multisensory RT distribution XY (Otto
+%   et al., 2013). This function does not require X, Y and XY to have an
 %   equal number of observations. This function treats NaNs as missing
 %   values, and ignores them.
 %
-%   [...,BPRED] = RSEBENEFIT(...) returns the predicted benefit of an RSE,
+%   [...,BPRED] = RSEBENEFIT(...) returns the predicted benefit of an RSE
 %   quantified by the area between the CDFs of the most effective of the
 %   unisensory RT distributions X and Y, and the race model based on X and
 %   Y (Otto et al., 2013).
@@ -18,19 +18,17 @@ function [bemp,bpred] = rsebenefit(x,y,xy,varargin)
 %   following:
 %
 %   Parameter   Value
-%   'q'         a vector specifying the quantiles to be used to compute the
-%               CDFs (default=[0.05:0.05:1])
-%   'per'       a 2-element vector specifying the lower and upper RT
-%               percentiles to be used for each condition (default=[0,100])
+%   'q'         a vector specifying the quantiles used to compute the CDFs
+%               (default=[0.05:0.05:1])
+%   'per'       a 2-element vector specifying the lower and upper
+%               percentiles of RTs to consider (default=[0,100])
 %   'lim'       a 2-element vector specifying the lower and upper RT limits
-%               to be used to compute the CDFs: it is recommended to leave
-%               this unspecified unless comparing directly to other
-%               conditions (default=[min([x,y,xy]),max([x,y,xy])])
-%   'dep'       a scalar specifying the model's assumption of statistical
-%               dependence between X and Y: pass in 0 to assume
-%               independence (Raab, 1962; default), -1 to assume a perfect
-%               negative dependence (Miller, 1982) and 1 to assume a
-%               perfect positive dependence (Grice et al., 1986)
+%               used to compute the CDFs: it is recommended to leave this
+%               unspecified or empty unless comparing to other conditions
+%   'dep'       a scalar specifying whether statistical dependence between
+%               X and Y is assumed: pass in 0 to assume independence (Raab,
+%               1962; default), -1 to assume a perfect negative dependence
+%               (Miller, 1982)
 %   'test'      a string specifying how to test the race model
 %                   'ver'       vertical test (default)
 %                   'hor'       horizontal test
@@ -76,7 +74,7 @@ if isempty(lim)
     lim = [min(lims(:)),max(lims(:))];
 end
 
-% Compute CDFs
+% Compute cumulative distribution functions
 fx = rt2cdf(x,q,lim);
 fy = rt2cdf(y,q,lim);
 fxy = rt2cdf(xy,q,lim);

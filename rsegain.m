@@ -1,8 +1,8 @@
-function [gain] = rsegain(x,y,xy,varargin)
+function gain = rsegain(x,y,xy,varargin)
 %rsegain Multisensory gain of a redundant signals effect.
-%   GAIN = RSEGAIN(X,Y,XY) returns the multisensory gain for a redundant
+%   GAIN = RSEGAIN(X,Y,XY) returns the multisensory gain of a redundant
 %   signals effect (RSE), quantified by the area between the cumulative
-%   distribution functions of the multisensory RT distribution XY and the
+%   distribution functions of the bisensory RT distribution XY, and the
 %   race model based on the unisensory RT distributions X and Y (Miller,
 %   1986; Colonius & Diederich, 2006). This function does not require X, Y
 %   and XY to have an equal number of observations. This function treats
@@ -13,17 +13,19 @@ function [gain] = rsegain(x,y,xy,varargin)
 %   following:
 %
 %   Parameter   Value
-%   'q'         a vector specifying the quantiles used to compute the CDFs
-%               (default=[0.05:0.05:1])
-%   'per'       a 2-element vector specifying the lower and upper
-%               percentiles of RTs to consider (default=[0,100])
+%   'q'         a vector specifying the quantiles to be used to compute the
+%               CDFs (default=[0.05:0.05:1])
+%   'per'       a 2-element vector specifying the lower and upper RT
+%               percentiles to be used for each condition (default=[0,100])
 %   'lim'       a 2-element vector specifying the lower and upper RT limits
-%               used to compute the CDFs: it is recommended to leave this
-%               unspecified or empty unless comparing to other conditions
-%   'dep'       a scalar specifying whether statistical dependence between
-%               X and Y is assumed: pass in 0 to assume independence (Raab,
-%               1962; default), -1 to assume a perfect negative dependence
-%               (Miller, 1982)
+%               to be used to compute the CDFs: it is recommended to leave
+%               this unspecified unless comparing directly to other
+%               conditions (default=[min([x,y,xy]),max([x,y,xy])])
+%   'dep'       a scalar specifying the model's assumption of statistical
+%               dependence between X and Y: pass in 0 to assume
+%               independence (Raab, 1962; default), -1 to assume a perfect
+%               negative dependence (Miller, 1982) and 1 to assume a
+%               perfect positive dependence (Grice et al., 1986)
 %   'test'      a string specifying how to test the race model
 %                   'ver'       vertical test (default)
 %                   'hor'       horizontal test
@@ -72,7 +74,7 @@ if isempty(lim)
     lim = [min(lims(:)),max(lims(:))];
 end
 
-% Compute cumulative distribution functions
+% Compute CDFs
 fx = rt2cdf(x,q,lim);
 fy = rt2cdf(y,q,lim);
 fxy = rt2cdf(xy,q,lim);
@@ -102,7 +104,7 @@ function [q,per,lim,dep,test,area] = decode_varargin(varargin)
 varargin = varargin{1,1};
 if any(strcmpi(varargin,'q')) && ~isempty(varargin{find(strcmpi(varargin,'q'))+1})
     q = varargin{find(strcmpi(varargin,'q'))+1};
-    if ~isnumeric(q) || isscalar(q) || any(isnan(q)) || any(isinf(q)) || any(q<0) || any(q>1) || q(1)>=q(2)
+    if ~isnumeric(q) || isscalar(q) || any(isnan(q)) || any(isinf(q)) || any(q<0) || any(q>1) || any(diff(q)<=0)
         error('Q must be a vector with values between 0 and 1.')
     end
 else
@@ -126,7 +128,7 @@ else
 end
 if any(strcmpi(varargin,'dep')) && ~isempty(varargin{find(strcmpi(varargin,'dep'))+1})
     dep = varargin{find(strcmpi(varargin,'dep'))+1};
-    if any(dep~=0) && any(dep~=-1) && any(dep~=1)
+    if dep~=0 && dep~=-1 && dep~=1
         error('DEP must be a scalar with a value of -1, 0 or 1.')
     end
 else

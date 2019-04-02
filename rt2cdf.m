@@ -1,14 +1,14 @@
 function fx = rt2cdf(x,q,lim)
 %rt2cdf Convert reaction times to cumulative probabilities.
 %   FX = RT2CDF(X,Q,LIM) returns the cumulative distribution function (CDF)
-%   of the RT distribution X at every quantile Q between RT limits LIM. Q
+%   of the RT distribution X for quantiles Q between the RT limits LIM. Q
 %   must be a vector of linearly-spaced quantiles between 0 and 1. LIM must
 %   be a 2-element vector containing the lower and upper RT limits of the
 %   CDF. CDFs drawn from different samples can be averaged as long as the
 %   values of Q are kept constant (Ratcliff, 1979). This function treats
 %   NaNs as missing values, and ignores them.
 %
-%   See also RACEMODEL, RACEMODEL3, RSEGAIN, RSEBENEFIT GETAUC.
+%   See also RACEMODEL, RACEMODEL3, RSEGAIN, RSEBENEFIT, GETAUC.
 %
 %   RaceModel https://github.com/mickcrosse/RaceModel
 
@@ -25,6 +25,8 @@ function fx = rt2cdf(x,q,lim)
 % Set default values
 if nargin < 3 || isempty(lim)
     lim = [min(x),max(x)];
+elseif lim(1) > lim(2)
+    error('Value of LIM(1) must be < LIM(2).')
 end
 if nargin < 2 || isempty(q)
     q = 0.05:0.05:1;

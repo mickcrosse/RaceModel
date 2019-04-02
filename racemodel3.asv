@@ -1,5 +1,5 @@
 function [fx,fy,fz,fxyz,frace,fdiff] = racemodel3(x,y,z,xyz,varargin)
-%racemodel3 Generate trisensory race model with unisensory reaction times.
+%racemodel3 Generate a trisensory race model based on reaction times.
 %   [FX,FY,FZ,FXYZ] = RACEMODEL3(X,Y,Z,XYZ) returns the cumulative
 %   distribution functions (CDFs) for the unisensory RT distributions X, Y
 %   and Z, and the trisensory RT distribution XYZ at 20 linearly-spaced
@@ -7,21 +7,21 @@ function [fx,fy,fz,fxyz,frace,fdiff] = racemodel3(x,y,z,xyz,varargin)
 %   and XYZ to have an equal number of observations. This function treats
 %   NaNs as missing values, and ignores them.
 %
-%   To generate CDFs and race models for the bisensory conditions XY, XZ
+%   To generate CDFs and race models for the bisensory conditions XY, XZ 
 %   and YZ, use the function RACEMODEL on the corresponding unisensory and
-%   bisensory RTs. To compare across bisensory and trisensory conditions,
+%   bisensory RTs. To compare across bisensory and trisensory conditions, 
 %   use the same lower and upper RT limits (see below).
 %
 %   [...,FRACE] = RACEMODEL3(...) returns the CDF of the race model based
 %   on the unisensory RT distributions X, Y and Z (Colonius et al., 2017).
 %   The race model is computed using probability summation (Raab, 1962),
-%   which assumes statistical independence between X, Y and Z. For valid
-%   estimates of FRACE, the stimuli used to generate X, Y, Z and XYZ should
-%   have been presented in random order to meet the assumption of context
-%   invariance (Luce, 1986).
+%   which assumes statistical independence between X, Y and Z. For valid 
+%   estimates of FRACE, the stimuli used to generate X, Y, Z and XYZ should have been presented in random order
+%   to meet the assumption of context invariance (Luce, 1986).
 %
-%   [...,FDIFF] = RACEMODEL(...) returns the difference between FXYZ and
-%   FRACE to test whether FXYZ violated the race model (Miller, 1982).
+%   [...,FDIFF] = RACEMODEL3(...) returns the difference between FXYZ and
+%   FRACE to determine whether XYZ exceeded the statistical facilitation
+%   predicted by the race model (Miller, 1982).
 %
 %   [...] = RACEMODEL3(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
 %   additional parameters and their values. Valid parameters are the
@@ -67,13 +67,13 @@ function [fx,fy,fz,fxyz,frace,fdiff] = racemodel3(x,y,z,xyz,varargin)
 %   Email: mickcrosse@gmail.com
 %   Cognitive Neurophysiology Laboratory,
 %   Albert Einstein College of Medicine, NY
-%   Apr 2017; Last Revision: 2-Apr-2019
+%   Apr 2017; Last Revision: 7-Feb-2019
 
 % Decode input variable arguments
 [q,per,lim,dep,test] = decode_varargin(varargin);
 
 % Get RT range for each condition
-lims = zeros(4,2);
+lims = zeros(3,2);
 lims(1,:) = prctile(x,per);
 lims(2,:) = prctile(y,per);
 lims(3,:) = prctile(z,per);
@@ -90,7 +90,7 @@ if isempty(lim)
     lim = [min(lims(:)),max(lims(:))];
 end
 
-% Compute CDFs
+% Compute cumulative distribution functions
 fx = rt2cdf(x,q,lim);
 fy = rt2cdf(y,q,lim);
 fz = rt2cdf(z,q,lim);

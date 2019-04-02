@@ -1,29 +1,19 @@
-function [fx,fy,fz,fxyz,frace,fdiff] = racemodel3(x,y,z,xyz,varargin)
-%racemodel3 Generate trisensory race model with unisensory reaction times.
-%   [FX,FY,FZ,FXYZ] = RACEMODEL3(X,Y,Z,XYZ) returns the cumulative
-%   distribution functions (CDFs) for the unisensory RT distributions X, Y
-%   and Z, and the trisensory RT distribution XYZ at 20 linearly-spaced
-%   quantiles between 0.05 and 1. This function does not require X, Y, Z
-%   and XYZ to have an equal number of observations. This function treats
+function gain = rsegain3(x,y,z,xyz,varargin)
+%rsegain3 Multisensory gain of a trisensory redundant signals effect.
+%   GAIN = RSEGAIN3(X,Y,Z,XYZ) returns the multisensory gain of a redundant
+%   signals effect (RSE), quantified by the area between the cumulative
+%   distribution functions of the trisensory RT distribution XYZ, and the
+%   race model based on the unisensory RT distributions X, Y and Z (Miller,
+%   1986; Colonius & Diederich, 2006). This function does not require X, Y,
+%   Z and XYZ to have an equal number of observations. This function treats
 %   NaNs as missing values, and ignores them.
 %
-%   To generate CDFs and race models for the bisensory conditions XY, XZ
-%   and YZ, use the function RACEMODEL on the corresponding unisensory and
-%   bisensory RTs. To compare across bisensory and trisensory conditions,
-%   use the same lower and upper RT limits (see below).
+%   To compute the gain for the bisensory conditions XY, XZ and YZ, use the
+%   function RSEGAIN on the corresponding unisensory and bisensory RTs. To
+%   compare across bisensory and trisensory conditions, use the same lower
+%   and upper RT limits (see below).
 %
-%   [...,FRACE] = RACEMODEL3(...) returns the CDF of the race model based
-%   on the unisensory RT distributions X, Y and Z (Colonius et al., 2017).
-%   The race model is computed using probability summation (Raab, 1962),
-%   which assumes statistical independence between X, Y and Z. For valid
-%   estimates of FRACE, the stimuli used to generate X, Y, Z and XYZ should
-%   have been presented in random order to meet the assumption of context
-%   invariance (Luce, 1986).
-%
-%   [...,FDIFF] = RACEMODEL(...) returns the difference between FXYZ and
-%   FRACE to test whether FXYZ violated the race model (Miller, 1982).
-%
-%   [...] = RACEMODEL3(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
+%   [...] = RSEGAIN3(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
 %   additional parameters and their values. Valid parameters are the
 %   following:
 %
@@ -44,24 +34,25 @@ function [fx,fy,fz,fxyz,frace,fdiff] = racemodel3(x,y,z,xyz,varargin)
 %   'test'      a string specifying how to test the race model
 %                   'ver'       vertical test (default)
 %                   'hor'       horizontal test
+%   'area'      a string specifying how to compute the area under the curve
+%                   'all'       use all values (default)
+%                   'pos'       use only positive values
+%                   'neg'       use only negative values
 %
-%   See also RACEMODEL, RSEGAIN, RSEBENEFIT, TPERMTEST, EFFECTSIZE.
+%   See also RACEMODEL, RACEMODEL3, RSEBENEFIT, TPERMTEST, EFFECTSIZE.
 %
 %   RaceModel https://github.com/mickcrosse/RaceModel
 
 %   References:
-%       [1] Colonius H, Wolff FH, Diederich A (2017) Trimodal race model
-%           inequalities in multisensory integration: I. Basics. Front
-%           Psychol 8:1141.
-%       [2] Raab DH (1962) Statistical facilitation of simple reaction
+%       [1] Miller J (1986) Timecourse of coactivation in bimodal divided
+%           attention. Percept Psychophys 40(5):331-343.
+%       [2] Colonius H, Diederich A (2006) The Race Model Inequality:
+%           Interpreting a Geometric Measure of the Amount of Violation.
+%           Psychol Rev 113(1):148–154.
+%       [3] Raab DH (1962) Statistical facilitation of simple reaction
 %           times. Trans NY Acad Sci 24(5):574-590.
-%       [3] Luce RD (1986) Response times: Their role in inferring mental
-%           organization. New York, NY: Oxford University Press.
 %       [4] Miller J (1982) Divided attention: Evidence for coactivation
 %           with redundant signals. Cogn Psychol 14(2):247-279.
-%       [5] Grice GR, Canham L, Gwynne JW (1984) Absence of a redundant-
-%           signals effect in a reaction time task with divided attention.
-%           Percept Psychophys 36:565-570.
 
 %   Author: Mick Crosse
 %   Email: mickcrosse@gmail.com
@@ -70,7 +61,7 @@ function [fx,fy,fz,fxyz,frace,fdiff] = racemodel3(x,y,z,xyz,varargin)
 %   Apr 2017; Last Revision: 2-Apr-2019
 
 % Decode input variable arguments
-[q,per,lim,dep,test] = decode_varargin(varargin);
+[q,per,lim,dep,test,area] = decode_varargin(varargin);
 
 % Get RT range for each condition
 lims = zeros(4,2);
@@ -97,28 +88,24 @@ fz = rt2cdf(z,q,lim);
 fxyz = rt2cdf(xyz,q,lim);
 
 % Compute race model
-if nargout > 3
-    if dep == 0 % Raab's Model
-        fxy = fx+fy-fx.*fy;
-        frace = fxy+fz-fxy.*fz;
-    elseif dep == -1 % Miller's Bound
-        frace = fx+fy+fz;
-        frace(frace>1) = 1;
-    elseif dep == 1 % Grice's Bound
-        frace = max([fx,fy,fz],[],2);
-    end
+if dep == 0 % Raab's Model
+    fxy = fx+fy-fx.*fy;
+    frace = fxy+fz-fxy.*fz;
+elseif dep == -1 % Miller's Bound
+    frace = fx+fy+fz;
+    frace(frace>1) = 1;
 end
 
 % Compute difference
-if nargout > 4
-    if strcmpi(test,'ver')
-        fdiff = fxyz-frace;
-    elseif strcmpi(test,'hor')
-        fdiff = frace-fxyz;
-    end
+if strcmpi(test,'ver')
+    fdiff = fxyz-frace;
+elseif strcmpi(test,'hor')
+    fdiff = frace-fxyz;
 end
 
-function [q,per,lim,dep,test] = decode_varargin(varargin)
+gain = getauc(q,fdiff,area);
+
+function [q,per,lim,dep,test,area] = decode_varargin(varargin)
 %decode_varargin Decode input variable arguments.
 %   [PARAM1,PARAM2,...] = DECODE_VARARGIN('PARAM1',VAL1,'PARAM2',VAL2,...)
 %   decodes the input variable arguments of the main function.
@@ -165,4 +152,12 @@ if any(strcmpi(varargin,'test')) && ~isempty(varargin{find(strcmpi(varargin,'tes
     end
 else
     test = 'ver'; % default: vertical test
+end
+if any(strcmpi(varargin,'area')) && ~isempty(varargin{find(strcmpi(varargin,'area'))+1})
+    area = varargin{find(strcmpi(varargin,'area'))+1};
+    if ~any(strcmpi(area,{'all','pos','neg'}))
+        error('Invalid value for argument AREA. Valid values are: ''all'', ''pos'', ''neg''.')
+    end
+else
+    area = 'all'; % default: use all values
 end
