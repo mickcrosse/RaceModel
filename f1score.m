@@ -58,7 +58,7 @@ if nargout > 1
     hitrate = hits/ntarget;
 end
 
-% Compute false alarm rate
+% Compute error rate
 if nargout > 2
     errorrate = falarms/ntarget;
 end

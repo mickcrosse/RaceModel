@@ -3,7 +3,7 @@ function [mse,fdiff] = switchcost(sw,re,varargin)
 %   MSE = SWITCHCOST(SW,RE) returns the modality switch effect (MSE) of RTs
 %   to mixed multisensory stimuli, quantified by the area between the
 %   cumulative distribution functions (CDFs) of the RT distributions of the
-%   swtich trials SW, and repeat trials RE (Crosse et al., 2019). This
+%   switch trials SW, and repeat trials RE (Crosse et al., 2019). This
 %   function does not require SW and RE to have an equal number of
 %   observations. This function treats NaNs as missing values, and ignores
 %   them.
@@ -24,7 +24,7 @@ function [mse,fdiff] = switchcost(sw,re,varargin)
 %               to be used to compute the CDFs: it is recommended to leave
 %               this unspecified unless comparing directly to other
 %               conditions (default=[min([sw,re]),max([sw,re])])
-%   'test'      a string specifying how to test the race model
+%   'test'      a string specifying how to test the MSE
 %                   'ver'       vertical test (default)
 %                   'hor'       horizontal test
 %   'area'      a string specifying how to compute the area under the curve
