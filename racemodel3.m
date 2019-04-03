@@ -1,5 +1,5 @@
 function [fx,fy,fz,fxyz,frace,fdiff] = racemodel3(x,y,z,xyz,varargin)
-%racemodel3 Generate trisensory race model with unisensory reaction times.
+%racemodel3 Generate trisensory race model using unisensory reaction times.
 %   [FX,FY,FZ,FXYZ] = RACEMODEL3(X,Y,Z,XYZ) returns the cumulative
 %   distribution functions (CDFs) for the unisensory RT distributions X, Y
 %   and Z, and the trisensory RT distribution XYZ at 20 linearly-spaced
@@ -45,7 +45,7 @@ function [fx,fy,fz,fxyz,frace,fdiff] = racemodel3(x,y,z,xyz,varargin)
 %                   'ver'       vertical test (default)
 %                   'hor'       horizontal test
 %
-%   See also RACEMODEL, RSEGAIN, RSEBENEFIT, TPERMTEST, EFFECTSIZE.
+%   See also RACEMODEL, RSEGAIN3, RSEBENEFIT3, TPERMTEST, EFFECTSIZE.
 %
 %   RaceModel https://github.com/mickcrosse/RaceModel
 

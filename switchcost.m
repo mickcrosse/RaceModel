@@ -1,19 +1,17 @@
-function [bemp,bpred] = rsebenefit(x,y,xy,varargin)
-%rsebenefit Multisensory benefit of a redundant signals effect.
-%   BEMP = RSEBENEFIT(X,Y,XY) returns the empirical benefit of a redundant
-%   signals effect (RSE), quantified by the area between the cumulative
-%   distribution functions (CDFs) of the most effective of the unisensory
-%   RT distributions X and Y, and the bisensory RT distribution XY (Otto et
-%   al., 2013). This function does not require X, Y and XY to have an
-%   equal number of observations. This function treats NaNs as missing
-%   values, and ignores them.
+function [mse,fdiff] = switchcost(sw,re,varargin)
+%switchcost Modality switch effect for mixed multisensory stimuli.
+%   MSE = SWITCHCOST(SW,RE) returns the modality switch effect (MSE) of RTs
+%   to mixed multisensory stimuli, quantified by the area between the
+%   cumulative distribution functions (CDFs) of the RT distributions of the
+%   swtich trials SW, and repeat trials RE (Crosse et al., 2019). This
+%   function does not require SW and RE to have an equal number of
+%   observations. This function treats NaNs as missing values, and ignores
+%   them.
 %
-%   [...,BPRED] = RSEBENEFIT(...) returns the predicted benefit of an RSE,
-%   quantified by the area between the CDFs of the most effective of the
-%   unisensory RT distributions X and Y, and the race model based on X and
-%   Y (Otto et al., 2013).
+%   FDIFF = SWITCHCOST(...) returns the difference between the CDFs of the
+%   switch and repeat trials at every quantile.
 %
-%   [...] = RSEBENEFIT(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
+%   [...] = SWITCHCOST(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
 %   additional parameters and their values. Valid parameters are the
 %   following:
 %
@@ -25,12 +23,7 @@ function [bemp,bpred] = rsebenefit(x,y,xy,varargin)
 %   'lim'       a 2-element vector specifying the lower and upper RT limits
 %               to be used to compute the CDFs: it is recommended to leave
 %               this unspecified unless comparing directly to other
-%               conditions (default=[min([x,y,xy]),max([x,y,xy])])
-%   'dep'       a scalar specifying the model's assumption of statistical
-%               dependence between X and Y: pass in 0 to assume
-%               independence (Raab, 1962; default), -1 to assume a perfect
-%               negative dependence (Miller, 1982) and 1 to assume a
-%               perfect positive dependence (Grice et al., 1986)
+%               conditions (default=[min([sw,re]),max([sw,re])])
 %   'test'      a string specifying how to test the race model
 %                   'ver'       vertical test (default)
 %                   'hor'       horizontal test
@@ -39,37 +32,32 @@ function [bemp,bpred] = rsebenefit(x,y,xy,varargin)
 %                   'pos'       use only positive values
 %                   'neg'       use only negative values
 %
-%   See also RSEBENEFIT3, RACEMODEL, RSEGAIN, TPERMTEST, EFFECTSIZE.
+%   See also RACEMODEL, RSEGAIN, RSEBENEFIT, TPERMTEST, EFFECTSIZE.
 %
 %   RaceModel https://github.com/mickcrosse/RaceModel
 
 %   References:
-%       [1] Otto TU, Dassy B, Mamassian P (2013) Principles of multisensory
-%           behavior. J Neurosci 33(17):7463-7474.
-%       [2] Raab DH (1962) Statistical facilitation of simple reaction
-%           times. Trans NY Acad Sci 24(5):574-590.
-%       [3] Miller J (1982) Divided attention: Evidence for coactivation
-%           with redundant signals. Cogn Psychol 14(2):247-279.
+%       [1] Crosse MJ, Foxe JJ, Molholm S (2019) Developmental Recovery of
+%           Impaired Multisensory Processing in Autism and the Cost of
+%           Switching Sensory Modality. bioRxiv 10.1101/565333.
 
 %   Author: Mick Crosse
 %   Email: mickcrosse@gmail.com
 %   Cognitive Neurophysiology Laboratory,
 %   Albert Einstein College of Medicine, NY
-%   Apr 2017; Last Revision: 6-Feb-2019
+%   Apr 2017; Last Revision: 3-Apr-2019
 
 % Decode input variable arguments
-[q,per,lim,dep,test,area] = decode_varargin(varargin);
+[q,per,lim,test,area] = decode_varargin(varargin);
 
 % Get RT range for each condition
 lims = zeros(3,2);
-lims(1,:) = prctile(x,per);
-lims(2,:) = prctile(y,per);
-lims(3,:) = prctile(xy,per);
+lims(1,:) = prctile(sw,per);
+lims(2,:) = prctile(re,per);
 
 % Limit RTs to specified range
-x = x(x>lims(1,1) & x<lims(1,2));
-y = y(y>lims(2,1) & y<lims(2,2));
-xy = xy(xy>lims(3,1) & xy<lims(3,2));
+sw = sw(sw>lims(1,1) & sw<lims(1,2));
+re = re(re>lims(2,1) & re<lims(2,2));
 
 % Get min and max RT limits
 if isempty(lim)
@@ -77,44 +65,18 @@ if isempty(lim)
 end
 
 % Compute CDFs
-fx = rt2cdf(x,q,lim);
-fy = rt2cdf(y,q,lim);
-fxy = rt2cdf(xy,q,lim);
-
-% Compute Grice's bound
-fmax = max([fx,fy],[],2);
+fsw = rt2cdf(sw,q,lim);
+fre = rt2cdf(re,q,lim);
 
 % Compute difference
 if strcmpi(test,'ver')
-    femp = fxy-fmax;
+    fdiff = fre-fsw;
 elseif strcmpi(test,'hor')
-    femp = fmax-fxy;
+    fdiff = fsw-fre;
 end
 
-% Compute empirical benefit
-bemp = getauc(q,femp,area);
-
-if nargout > 1
-    
-    % Compute race model
-    if dep == 0 % Raab's Model
-        frace = fx+fy-fx.*fy;
-    elseif dep == -1 % Miller's Bound
-        frace = fx+fy;
-        frace(frace>1) = 1;
-    end
-    
-    % Compute difference
-    if strcmpi(test,'ver')
-        fpred = frace-fmax;
-    elseif strcmpi(test,'hor')
-        fpred = fmax-frace;
-    end
-    
-    % Compute predicted benefit
-    bpred = getauc(q,fpred,area);
-    
-end
+% Compute MSE
+mse = getauc(q,fdiff,area);
 
 function [q,per,lim,dep,test,area] = decode_varargin(varargin)
 %decode_varargin Decode input variable arguments.
@@ -145,14 +107,6 @@ if any(strcmpi(varargin,'lim')) && ~isempty(varargin{find(strcmpi(varargin,'lim'
     end
 else
     lim = []; % default: unspecified
-end
-if any(strcmpi(varargin,'dep')) && ~isempty(varargin{find(strcmpi(varargin,'dep'))+1})
-    dep = varargin{find(strcmpi(varargin,'dep'))+1};
-    if dep~=0 && dep~=-1 && dep~=1
-        error('DEP must be a scalar with a value of -1, 0 or 1.')
-    end
-else
-    dep = 0; % default: assume statistical independence (Raab's Model)
 end
 if any(strcmpi(varargin,'test')) && ~isempty(varargin{find(strcmpi(varargin,'test'))+1})
     test = varargin{find(strcmpi(varargin,'test'))+1};

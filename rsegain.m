@@ -23,9 +23,8 @@ function gain = rsegain(x,y,xy,varargin)
 %               conditions (default=[min([x,y,xy]),max([x,y,xy])])
 %   'dep'       a scalar specifying the model's assumption of statistical
 %               dependence between X and Y: pass in 0 to assume
-%               independence (Raab, 1962; default), -1 to assume a perfect
-%               negative dependence (Miller, 1982) and 1 to assume a
-%               perfect positive dependence (Grice et al., 1986)
+%               independence (Raab, 1962; default) or -1 to assume a
+%               perfect negative dependence (Miller, 1982)
 %   'test'      a string specifying how to test the race model
 %                   'ver'       vertical test (default)
 %                   'hor'       horizontal test
@@ -34,7 +33,7 @@ function gain = rsegain(x,y,xy,varargin)
 %                   'pos'       use only positive values
 %                   'neg'       use only negative values
 %
-%   See also RACEMODEL, RACEMODEL3, RSEBENEFIT, TPERMTEST, EFFECTSIZE.
+%   See also RSEGAIN3, RACEMODEL, RSEBENEFIT, TPERMTEST, EFFECTSIZE.
 %
 %   RaceModel https://github.com/mickcrosse/RaceModel
 

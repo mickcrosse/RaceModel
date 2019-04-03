@@ -6,7 +6,7 @@ function auc = getauc(x,y,p)
 %   default), 'pos' (positive portion), and 'neg' (negative portion). X and
 %   Y must be vectors of equal length.
 %
-%   See also RT2CDF, RSEGAIN, RSEBENEFIT, RSEGAIN3, RSEBENEFIT3.
+%   See also RSEGAIN, RSEBENEFIT, SWITCHCOST, RT2CDF.
 %
 %   RaceModel https://github.com/mickcrosse/RaceModel
 
@@ -14,7 +14,7 @@ function auc = getauc(x,y,p)
 %   Email: mickcrosse@gmail.com
 %   Cognitive Neurophysiology Laboratory,
 %   Albert Einstein College of Medicine, NY
-%   Apr 2017; Last Revision: 4-Apr-2019
+%   Apr 2017; Last Revision: 3-Apr-2019
 
 % Set default values
 if nargin < 3 || isempty(p)
@@ -37,8 +37,9 @@ if ~strcmpi(p,'all')
         y = -y;
     end
     
-    % Compute x-values
-    neg = false(length(y),1); z = x;
+    % Compute x-intercepts
+    z = x;
+    neg = false(length(y),1);
     for i = 1:length(y)-1
         if y(i)<0 && y(i+1)>0 && neg(i)==0
             z(i) = x(i)-y(i)/(y(i+1)-y(i))*diff(x(i:i+1));
@@ -58,6 +59,11 @@ if ~strcmpi(p,'all')
     % Replace negative values with zeros
     neg(y<=0) = true;
     y(neg) = 0;
+    
+    % Invert signal again for negative area
+    if strcmpi(p,'neg')
+        y = -y;
+    end
     
 end
 

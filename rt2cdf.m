@@ -8,7 +8,7 @@ function fx = rt2cdf(x,q,lim)
 %   values of Q are kept constant (Ratcliff, 1979). This function treats
 %   NaNs as missing values, and ignores them.
 %
-%   See also RACEMODEL, RACEMODEL3, RSEGAIN, RSEBENEFIT, GETAUC.
+%   See also RACEMODEL, SWITCHCOST, GETAUC.
 %
 %   RaceModel https://github.com/mickcrosse/RaceModel
 
