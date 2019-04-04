@@ -1,12 +1,15 @@
-function Fx = rt2cdf(x,q,lim)
+function [Fx,q] = rt2cdf(x,p,lim)
 %rt2cdf Convert reaction times to cumulative probabilities.
-%   FX = RT2CDF(X,Q,LIM) returns the cumulative distribution function (CDF)
-%   of the RT distribution X for quantiles Q between the RT limits LIM. Q
-%   must be a vector of linearly-spaced quantiles between 0 and 1. LIM must
-%   be a 2-element vector containing the lower and upper RT limits of the
-%   CDF. CDFs drawn from different samples can be averaged as long as the
-%   values of Q are kept constant (Ratcliff, 1979). This function treats
-%   NaNs as missing values, and ignores them.
+%   FX = RT2CDF(X,P,LIM) returns the cumulative distribution function (CDF)
+%   of the RT distribution X for the set of quantiles between the RT limits 
+%   LIM corresponding to the probabilities P. P must be a vector of values 
+%   between 0 and 1 and LIM must be a 2-element vector containing the lower 
+%   and upper RT limits. CDFs drawn from different samples can be averaged 
+%   as long as the same probabilities were used to compute the quantiles 
+%   (Ratcliff, 1979). This function treats NaNs as missing values, and 
+%   ignores them.
+% 
+%   [...,Q] = RT2CDF(...) returns the quantiles used to compute the CDF.
 %
 %   See also RT2CFP, CFP2PER, RACEMODEL, SWITCHCOST, GETAUC.
 %
@@ -28,19 +31,19 @@ if nargin < 3 || isempty(lim)
 elseif lim(1) > lim(2)
     error('Value of LIM(1) must be < LIM(2).')
 end
-if nargin < 2 || isempty(q)
-    q = 0.05:0.05:1;
+if nargin < 2 || isempty(p)
+    p = 0.05:0.1:0.95;
 end
 
 % Get number of observations
 nx = sum(~isnan(x));
-nq = length(q);
+nq = length(p);
 
-% Compute linearly-spaced quantiles between RT limits
-qntls = linspace(lim(1),lim(2),nq);
+% Compute quantiles
+q = lim(1)+p*(lim(2)-lim(1));
 
 % Compute CDF
 Fx = zeros(nq,1);
-for i = 1:length(q)
-    Fx(i) = sum(x<=qntls(i))/nx;
+for i = 1:nq
+    Fx(i) = sum(x<=q(i))/nx;
 end

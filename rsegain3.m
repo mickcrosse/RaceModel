@@ -18,8 +18,9 @@ function gain = rsegain3(x,y,z,xyz,varargin)
 %   following:
 %
 %   Parameter   Value
-%   'q'         a vector specifying the quantiles to be used to compute the
-%               CDFs (default=[0.05:0.05:1])
+%   'p'         a vector specifying the probabilities for computing the
+%               quantiles of a vertical test or the percentiles of a
+%               horizontal test (default=0.05:0.1:0.95)
 %   'per'       a 2-element vector specifying the lower and upper RT
 %               percentiles to be used for each condition (default=[0,100])
 %   'lim'       a 2-element vector specifying the lower and upper RT limits
@@ -60,7 +61,7 @@ function gain = rsegain3(x,y,z,xyz,varargin)
 %   Apr 2017; Last Revision: 2-Apr-2019
 
 % Decode input variable arguments
-[q,per,lim,dep,test,area] = decode_varargin(varargin);
+[p,per,lim,dep,test,area] = decode_varargin(varargin);
 
 % Get RT range for each condition
 lims = zeros(4,2);
@@ -70,10 +71,10 @@ lims(3,:) = prctile(z,per);
 lims(4,:) = prctile(xyz,per);
 
 % Limit RTs to specified range
-x = x(x>lims(1,1) & x<lims(1,2));
-y = y(y>lims(2,1) & y<lims(2,2));
-z = z(z>lims(3,1) & z<lims(3,2));
-xyz = xyz(xyz>lims(4,1) & xyz<lims(4,2));
+x = x(x>=lims(1,1) & x<=lims(1,2));
+y = y(y>=lims(2,1) & y<=lims(2,2));
+z = z(z>=lims(3,1) & z<=lims(3,2));
+xyz = xyz(xyz>=lims(4,1) & xyz<=lims(4,2));
 
 % Get min and max RT limits
 if isempty(lim)
@@ -82,10 +83,10 @@ end
 
 % Compute CDFs
 if strcmpi(test,'ver')
-    Fx = rt2cdf(x,q,lim);
-    Fy = rt2cdf(y,q,lim);
-    Fz = rt2cdf(z,q,lim);
-    Fxyz = rt2cdf(xyz,q,lim);
+    Fx = rt2cdf(x,p,lim);
+    Fy = rt2cdf(y,p,lim);
+    Fz = rt2cdf(z,p,lim);
+    Fxyz = rt2cdf(xyz,p,lim);
 elseif strcmpi(test,'hor')
     Fx = rt2cfp(x,lim(2));
     Fy = rt2cfp(y,lim(2));
@@ -101,38 +102,32 @@ elseif dep == -1 % Miller's Bound
     Frace = Fx+Fy+Fz;
 end
 
-% Compute percentiles for horizontal test
-if strcmpi(test,'hor')
-    Fxyz = cfp2per(Fxyz,q,lim(2));
-    Frace = cfp2per(Frace,q,lim(2));
-end
-
-% Normalize race model between 0 and 1
-Frace(Frace>1) = 1;
-
 % Compute difference
 if strcmpi(test,'ver')
+    Frace(Frace>1) = 1;
     Fdiff = Fxyz-Frace;
 elseif strcmpi(test,'hor')
+    Fxyz = cfp2per(Fxyz,p,lim(2));
+    Frace = cfp2per(Frace,p,lim(2));
     Fdiff = Frace-Fxyz;
 end
 
 % Compute multisensory gain
-gain = getauc(q,Fdiff,area);
+gain = getauc(p,Fdiff,area);
 
-function [q,per,lim,dep,test,area] = decode_varargin(varargin)
+function [p,per,lim,dep,test,area] = decode_varargin(varargin)
 %decode_varargin Decode input variable arguments.
 %   [PARAM1,PARAM2,...] = DECODE_VARARGIN('PARAM1',VAL1,'PARAM2',VAL2,...)
 %   decodes the input variable arguments of the main function.
 
 varargin = varargin{1,1};
 if any(strcmpi(varargin,'q')) && ~isempty(varargin{find(strcmpi(varargin,'q'))+1})
-    q = varargin{find(strcmpi(varargin,'q'))+1};
-    if ~isnumeric(q) || isscalar(q) || any(isnan(q)) || any(isinf(q)) || any(q<0) || any(q>1) || any(diff(q)<=0)
-        error('Q must be a vector with values between 0 and 1.')
+    p = varargin{find(strcmpi(varargin,'q'))+1};
+    if ~isnumeric(p) || isscalar(p) || any(isnan(p)) || any(isinf(p)) || any(p<0) || any(p>1) || any(diff(p)<=0)
+        error('P must be a vector with values between 0 and 1.')
     end
 else
-    q = 0.05:0.05:1; % default: 0.05 to 1 in 0.05 increments
+    p = 0.05:0.1:0.95; % default: 0.05 to 0.95 in 0.1 increments
 end
 if any(strcmpi(varargin,'per')) && ~isempty(varargin{find(strcmpi(varargin,'per'))+1})
     per = varargin{find(strcmpi(varargin,'per'))+1};
@@ -162,8 +157,6 @@ if any(strcmpi(varargin,'test')) && ~isempty(varargin{find(strcmpi(varargin,'tes
     test = varargin{find(strcmpi(varargin,'test'))+1};
     if ~any(strcmpi(test,{'ver','hor'}))
         error('Invalid value for argument TEST. Valid values are: ''ver'', ''hor''.')
-    elseif strcmpi(test,'hor')
-        error('Horizontal test not yet implemented. Please watch out for updates.')
     end
 else
     test = 'ver'; % default: vertical test

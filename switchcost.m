@@ -1,4 +1,4 @@
-function [mse,Fdiff] = switchcost(sw,re,varargin)
+function [MSE,Fdiff,q] = switchcost(sw,re,varargin)
 %switchcost Modality switch effect for mixed multisensory stimuli.
 %   MSE = SWITCHCOST(SW,RE) returns the modality switch effect (MSE) of RTs
 %   to mixed multisensory stimuli, quantified by the area between the
@@ -11,13 +11,17 @@ function [mse,Fdiff] = switchcost(sw,re,varargin)
 %   FDIFF = SWITCHCOST(...) returns the difference between the CDFs of the
 %   switch and repeat trials at every quantile.
 %
+%   [...,Q] = SWITCHCOST(...) returns the quantiles used to compute the
+%   CDFs.
+% 
 %   [...] = SWITCHCOST(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
 %   additional parameters and their values. Valid parameters are the
 %   following:
 %
 %   Parameter   Value
-%   'q'         a vector specifying the quantiles to be used to compute the
-%               CDFs (default=[0.05:0.05:1])
+%   'p'         a vector specifying the probabilities for computing the
+%               quantiles of a vertical test or the percentiles of a
+%               horizontal test (default=0.05:0.1:0.95)
 %   'per'       a 2-element vector specifying the lower and upper RT
 %               percentiles to be used for each condition (default=[0,100])
 %   'lim'       a 2-element vector specifying the lower and upper RT limits
@@ -48,7 +52,7 @@ function [mse,Fdiff] = switchcost(sw,re,varargin)
 %   Apr 2017; Last Revision: 3-Apr-2019
 
 % Decode input variable arguments
-[q,per,lim,test,area] = decode_varargin(varargin);
+[p,per,lim,test,area] = decode_varargin(varargin);
 
 % Get RT range for each condition
 lims = zeros(3,2);
@@ -56,8 +60,8 @@ lims(1,:) = prctile(sw,per);
 lims(2,:) = prctile(re,per);
 
 % Limit RTs to specified range
-sw = sw(sw>lims(1,1) & sw<lims(1,2));
-re = re(re>lims(2,1) & re<lims(2,2));
+sw = sw(sw>=lims(1,1) & sw<=lims(1,2));
+re = re(re>=lims(2,1) & re<=lims(2,2));
 
 % Get min and max RT limits
 if isempty(lim)
@@ -65,32 +69,43 @@ if isempty(lim)
 end
 
 % Compute CDFs
-fsw = rt2cdf(sw,q,lim);
-fre = rt2cdf(re,q,lim);
+if strcmpi(test,'ver')
+    Fsw = rt2cdf(sw,p,lim);
+    [Fre,q] = rt2cdf(re,p,lim);
+elseif strcmpi(test,'hor')
+    Fsw = rt2cfp(sw,lim(2));
+    Fre = rt2cfp(re,lim(2));
+end
+
+% Compute percentiles for horizontal test
+if strcmpi(test,'hor')
+    Fsw = cfp2per(Fsw,p,lim(2));
+    Fre = cfp2per(Fre,p,lim(2));
+end
 
 % Compute difference
 if strcmpi(test,'ver')
-    Fdiff = fre-fsw;
+    Fdiff = Fre-Fsw;
 elseif strcmpi(test,'hor')
-    Fdiff = fsw-fre;
+    Fdiff = Fsw-Fre;
 end
 
 % Compute MSE
-mse = getauc(q,Fdiff,area);
+MSE = getauc(p,Fdiff,area);
 
-function [q,per,lim,dep,test,area] = decode_varargin(varargin)
+function [p,per,lim,dep,test,area] = decode_varargin(varargin)
 %decode_varargin Decode input variable arguments.
 %   [PARAM1,PARAM2,...] = DECODE_VARARGIN('PARAM1',VAL1,'PARAM2',VAL2,...)
 %   decodes the input variable arguments of the main function.
 
 varargin = varargin{1,1};
 if any(strcmpi(varargin,'q')) && ~isempty(varargin{find(strcmpi(varargin,'q'))+1})
-    q = varargin{find(strcmpi(varargin,'q'))+1};
-    if ~isnumeric(q) || isscalar(q) || any(isnan(q)) || any(isinf(q)) || any(q<0) || any(q>1) || any(diff(q)<=0)
-        error('Q must be a vector with values between 0 and 1.')
+    p = varargin{find(strcmpi(varargin,'q'))+1};
+    if ~isnumeric(p) || isscalar(p) || any(isnan(p)) || any(isinf(p)) || any(p<0) || any(p>1) || any(diff(p)<=0)
+        error('P must be a vector with values between 0 and 1.')
     end
 else
-    q = 0.05:0.05:1; % default: 0.05 to 1 in 0.05 increments
+    p = 0.05:0.1:0.95; % default: 0.05 to 0.95 in 0.1 increments
 end
 if any(strcmpi(varargin,'per')) && ~isempty(varargin{find(strcmpi(varargin,'per'))+1})
     per = varargin{find(strcmpi(varargin,'per'))+1};
@@ -112,8 +127,6 @@ if any(strcmpi(varargin,'test')) && ~isempty(varargin{find(strcmpi(varargin,'tes
     test = varargin{find(strcmpi(varargin,'test'))+1};
     if ~any(strcmpi(test,{'ver','hor'}))
         error('Invalid value for argument TEST. Valid values are: ''ver'', ''hor''.')
-    elseif strcmpi(test,'hor')
-        error('Horizontal test not yet implemented. Please watch out for updates.')
     end
 else
     test = 'ver'; % default: vertical test
