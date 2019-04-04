@@ -81,28 +81,44 @@ if isempty(lim)
 end
 
 % Compute CDFs
-fx = rt2cdf(x,q,lim);
-fy = rt2cdf(y,q,lim);
-fz = rt2cdf(z,q,lim);
-fxyz = rt2cdf(xyz,q,lim);
+if strcmpi(test,'ver')
+    Fx = rt2cdf(x,q,lim);
+    Fy = rt2cdf(y,q,lim);
+    Fz = rt2cdf(z,q,lim);
+    Fxyz = rt2cdf(xyz,q,lim);
+elseif strcmpi(test,'hor')
+    Fx = rt2cfp(x,lim(2));
+    Fy = rt2cfp(y,lim(2));
+    Fz = rt2cfp(z,lim(2));
+    Fxyz = rt2cfp(xyz,lim(2));
+end
 
 % Compute race model
 if dep == 0 % Raab's Model
-    fxy = fx+fy-fx.*fy;
-    frace = fxy+fz-fxy.*fz;
+    Fxy = Fx+Fy-Fx.*Fy;
+    Frace = Fxy+Fz-Fxy.*Fz;
 elseif dep == -1 % Miller's Bound
-    frace = fx+fy+fz;
-    frace(frace>1) = 1;
+    Frace = Fx+Fy+Fz;
 end
+
+% Compute percentiles for horizontal test
+if strcmpi(test,'hor')
+    Fxyz = cfp2per(Fxyz,q,lim(2));
+    Frace = cfp2per(Frace,q,lim(2));
+end
+
+% Normalize race model between 0 and 1
+Frace(Frace>1) = 1;
 
 % Compute difference
 if strcmpi(test,'ver')
-    fdiff = fxyz-frace;
+    Fdiff = Fxyz-Frace;
 elseif strcmpi(test,'hor')
-    fdiff = frace-fxyz;
+    Fdiff = Frace-Fxyz;
 end
 
-gain = getauc(q,fdiff,area);
+% Compute multisensory gain
+gain = getauc(q,Fdiff,area);
 
 function [q,per,lim,dep,test,area] = decode_varargin(varargin)
 %decode_varargin Decode input variable arguments.

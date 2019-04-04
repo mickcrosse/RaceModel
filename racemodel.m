@@ -1,4 +1,4 @@
-function [fx,fy,fxy,frace,fdiff] = racemodel(x,y,xy,varargin)
+function [Fx,Fy,Fxy,Frace,Fdiff] = racemodel(x,y,xy,varargin)
 %racemodel Generate race model using unisensory reaction times.
 %   [FX,FY,FXY] = RACEMODEL(X,Y,XY) returns the cumulative distribution
 %   functions (CDFs) for the unisensory RT distributions X and Y, and the
@@ -80,28 +80,44 @@ if isempty(lim)
 end
 
 % Compute CDFs
-fx = rt2cdf(x,q,lim);
-fy = rt2cdf(y,q,lim);
-fxy = rt2cdf(xy,q,lim);
+if strcmpi(test,'ver')
+    Fx = rt2cdf(x,q,lim);
+    Fy = rt2cdf(y,q,lim);
+    Fxy = rt2cdf(xy,q,lim);
+elseif strcmpi(test,'hor')
+    Fx = rt2cfp(x,lim(2));
+    Fy = rt2cfp(y,lim(2));
+    Fxy = rt2cfp(xy,lim(2));
+end
 
 % Compute race model
 if nargout > 3
     if dep == 0 % Raab's Model
-        frace = fx+fy-fx.*fy;
+        Frace = Fx+Fy-Fx.*Fy;
     elseif dep == -1 % Miller's Bound
-        frace = fx+fy;
-        frace(frace>1) = 1;
+        Frace = Fx+Fy;
     elseif dep == 1 % Grice's Bound
-        frace = max([fx,fy],[],2);
+        Frace = max([Fx,Fy],[],2);
     end
 end
+
+% Compute percentiles for horizontal test
+if strcmpi(test,'hor')
+    Fx = cfp2per(Fx,q,lim(2));
+    Fy = cfp2per(Fy,q,lim(2));
+    Fxy = cfp2per(Fxy,q,lim(2));
+    Frace = cfp2per(Frace,q,lim(2));
+end
+
+% Normalize race model between 0 and 1
+Frace(Frace>1) = 1;
 
 % Compute difference
 if nargout > 4
     if strcmpi(test,'ver')
-        fdiff = fxy-frace;
+        Fdiff = Fxy-Frace;
     elseif strcmpi(test,'hor')
-        fdiff = frace-fxy;
+        Fdiff = Frace-Fxy;
     end
 end
 

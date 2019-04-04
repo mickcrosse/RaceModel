@@ -1,4 +1,4 @@
-function [f1,hitrate,errorrate] = f1score(x,rtmin,rtmax,nresp,ntarget)
+function [F1,hitrate,errorrate] = f1score(x,rtmin,rtmax,nresp,ntarget)
 %f1score F1 score of a test's detection accuracy.
 %   F1 = F1SCORE(X,RTMIN,RTMAX,NRESP,NSTIM) returns the F1 score of a
 %   test's detection accuracy using the RTs contained in X. RTs below RTMIN
@@ -51,7 +51,7 @@ precis = hits./(hits+falarms);
 recall = hits./(hits+misses);
 
 % Compute F1 score
-f1 = 2*(precis.*recall)./(precis+recall);
+F1 = 2*(precis.*recall)./(precis+recall);
 
 % Compute hit rate
 if nargout > 1

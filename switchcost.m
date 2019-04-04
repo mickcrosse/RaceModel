@@ -1,4 +1,4 @@
-function [mse,fdiff] = switchcost(sw,re,varargin)
+function [mse,Fdiff] = switchcost(sw,re,varargin)
 %switchcost Modality switch effect for mixed multisensory stimuli.
 %   MSE = SWITCHCOST(SW,RE) returns the modality switch effect (MSE) of RTs
 %   to mixed multisensory stimuli, quantified by the area between the
@@ -70,13 +70,13 @@ fre = rt2cdf(re,q,lim);
 
 % Compute difference
 if strcmpi(test,'ver')
-    fdiff = fre-fsw;
+    Fdiff = fre-fsw;
 elseif strcmpi(test,'hor')
-    fdiff = fsw-fre;
+    Fdiff = fsw-fre;
 end
 
 % Compute MSE
-mse = getauc(q,fdiff,area);
+mse = getauc(q,Fdiff,area);
 
 function [q,per,lim,dep,test,area] = decode_varargin(varargin)
 %decode_varargin Decode input variable arguments.
