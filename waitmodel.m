@@ -1,31 +1,25 @@
-function [Fx,Fy,Fz,Fxyz,Frace,Fdiff,q] = racemodel3(x,y,z,xyz,varargin)
-%racemodel3 Generate a race model of trisensory reaction times.
-%   [FX,FY,FZ,FXYZ] = RACEMODEL3(X,Y,Z,XYZ) returns the cumulative
-%   distribution functions (CDFs) for the unisensory RT distributions X, Y
-%   and Z, and the trisensory RT distribution XYZ at 10 linearly-spaced
-%   quantiles. X, Y, Z and XYZ are not required to  have an equal number of 
-%   observations. This function treats NaNs as missing values, and ignores 
-%   them.
+function [Fx,Fy,Fxy,Fwait,Fdiff,q] = waitmodel(x,y,xy,varargin)
+%waitmodel Generate a wait model of bisensory reaction times.
+%   [FX,FY,FXY] = WAITMODEL(X,Y,XY) returns the cumulative distribution
+%   functions (CDFs) for the unisensory RT distributions X and Y, and the
+%   bisensory RT distribution XY at 10 linearly-spaced quantiles. X, Y and
+%   XY are not required to have an equal number of observations. This
+%   function treats NaNs as missing values, and ignores them.
 %
-%   To generate CDFs and race models for the bisensory conditions XY, XZ
-%   and YZ, use the function RACEMODEL on the corresponding unisensory and
-%   bisensory RTs. To compare across bisensory and trisensory conditions,
-%   use the same RT limits (see below).
-%
-%   [...,FRACE] = RACEMODEL3(...) returns the race model based on the
-%   probability summation of X, Y and Z. By default, the race model 
-%   assumes statistical independence between sensory channels (Raab, 1962). 
-%   For valid estimates of FRACE, the stimuli used to generate X, Y and XY 
-%   should be presented in random order to meet the assumption of context 
+%   [...,FWAIT] = WAITMODEL(...) returns the wait model based on the joint
+%   probability of X and Y. By default, the wait model assumes statistical
+%   independence between sensory channels (Townsend & Eidels, 2011). For
+%   valid estimates of FWAIT, the stimuli used to generate X, Y and XY
+%   should be presented in random order to meet the assumption of context
 %   invariance.
 %
-%   [...,FDIFF] = RACEMODEL3(...) returns the difference between FXYZ and
-%   FRACE to test for violations the race model (Miller, 1982).
+%   [...,FDIFF] = WAITMODEL(...) returns the difference between FXY and
+%   FWAIT to test for violations the wait model.
 %
-%   [...,Q] = RACEMODEL3(...) returns the quantiles used to compute the
+%   [...,Q] = WAITMODEL(...) returns the quantiles used to compute the
 %   CDFs.
-% 
-%   [...] = RACEMODEL3(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
+%
+%   [...] = WAITMODEL(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
 %   additional parameters and their values. Valid parameters are the
 %   following:
 %
@@ -36,57 +30,49 @@ function [Fx,Fy,Fz,Fxyz,Frace,Fdiff,q] = racemodel3(x,y,z,xyz,varargin)
 %   'per'       a 2-element vector specifying the lower and upper
 %               percentiles of RTs to consider (default=[0,100])
 %   'lim'       a 2-element vector specifying the lower and upper RT limits
-%               for computing CDFs: it is recommended to leave this  
-%               unspecified unless comparing directly to other conditions 
-%               (default=[min([X,Y,Z,XYZ]),max([X,Y,Z,XYZ])])
+%               for computing CDFs: it is recommended to leave this
+%               unspecified unless comparing directly to other conditions
+%               (default=[min([X,Y,XY]),max([X,Y,XY])])
 %   'dep'       a scalar specifying the model's assumption of statistical
 %               dependence between sensory channels: pass in 0 to assume
-%               independence (Raab, 1962; default), -1 to assume a perfect
-%               negative dependence (Miller, 1982) and 1 to assume a
-%               perfect positive dependence (Grice et al., 1984)
-%   'test'      a string specifying how to test the race model
+%               independence (Townsend & Eidels, 2011; default), -1 to
+%               assume a perfect negative dependence and 1 to assume a
+%               perfect positive dependence (Colonius & Vorberg, 1994)
+%   'test'      a string specifying how to test the wait model
 %                   'ver'       vertical test (default)
 %                   'hor'       horizontal test
 %
-%   See also RACEMODEL, RSEGAIN3, RSEBENEFIT3, TPERMTEST, EFFECTSIZE.
+%   See also WAITMODEL3, RACEMODEL, TPERMTEST, EFFECTSIZE.
 %
 %   RaceModel https://github.com/mickcrosse/RaceModel
 
 %   References:
-%       [1] Colonius H, Wolff FH, Diederich A (2017) Trimodal race model
-%           inequalities in multisensory integration: I. Basics. Front
-%           Psychol 8:1141.
-%       [2] Raab DH (1962) Statistical facilitation of simple reaction
-%           times. Trans NY Acad Sci 24(5):574-590.
-%       [3] Luce RD (1986) Response times: Their role in inferring mental
-%           organization. New York, NY: Oxford University Press.
-%       [4] Miller J (1982) Divided attention: Evidence for coactivation
-%           with redundant signals. Cogn Psychol 14(2):247-279.
-%       [5] Grice GR, Canham L, Gwynne JW (1984) Absence of a redundant-
-%           signals effect in a reaction time task with divided attention.
-%           Percept Psychophys 36:565-570.
+%       [1] Townsend JT, Eidels A (2011) Workload capacity spaces: A 
+%           unified methodology for response time measures of efficiency as 
+%           workload is varied. Psychon Bull Rev 18:659–681.
+%       [2] Colonius H, Vorberg D (1994) Distribution inequalities for 
+%           parallel models with unlimited capacity. J Math Psychol 
+%           38:35-58.
 
 %   Author: Mick Crosse
 %   Email: mickcrosse@gmail.com
 %   Cognitive Neurophysiology Laboratory,
 %   Albert Einstein College of Medicine, NY
-%   Apr 2017; Last Revision: 2-Apr-2019
+%   Apr 2017; Last Revision: 4-Apr-2019
 
 % Decode input variable arguments
 [p,per,lim,dep,test] = decode_varargin(varargin);
 
 % Get RT range for each condition
-lims = zeros(4,2);
+lims = zeros(3,2);
 lims(1,:) = prctile(x,per);
 lims(2,:) = prctile(y,per);
-lims(3,:) = prctile(z,per);
-lims(4,:) = prctile(xyz,per);
+lims(3,:) = prctile(xy,per);
 
 % Limit RTs to specified range
 x = x(x>=lims(1,1) & x<=lims(1,2));
 y = y(y>=lims(2,1) & y<=lims(2,2));
-z = z(z>=lims(3,1) & z<=lims(3,2));
-xyz = xyz(xyz>=lims(4,1) & xyz<=lims(4,2));
+xy = xy(xy>=lims(3,1) & xy<=lims(3,2));
 
 % Get min and max RT limits
 if isempty(lim)
@@ -97,46 +83,42 @@ end
 if strcmpi(test,'ver')
     Fx = rt2cdf(x,p,lim);
     Fy = rt2cdf(y,p,lim);
-    Fz = rt2cdf(z,p,lim);
-    [Fxyz,q] = rt2cdf(xyz,p,lim);
+    [Fxy,q] = rt2cdf(xy,p,lim);
 elseif strcmpi(test,'hor')
     Fx = rt2cfp(x,lim(2));
     Fy = rt2cfp(y,lim(2));
-    Fz = rt2cfp(z,lim(2));
-    Fxyz = rt2cfp(xyz,lim(2));
+    Fxy = rt2cfp(xy,lim(2));
 end
 
-% Compute race model
-if nargout > 4
-    if dep == 0 % Raab's Model
-        Fxy = Fx+Fy-Fx.*Fy;
-        Frace = Fxy+Fz-Fxy.*Fz;
-    elseif dep == -1 % Miller's Bound
-        Frace = Fx+Fy+Fz;
-    elseif dep == 1 % Grice's Bound
-        Frace = max([Fx,Fy,Fz],[],2);
+% Compute wait model
+if nargout > 3
+    if dep == 0 % Wait Model
+        Fwait = Fx.*Fy;
+    elseif dep == -1 % Colonius-Vorberg Lower Bound
+        Fwait = Fx+Fy-1;
+    elseif dep == 1 % Colonius-Vorberg Upper Bound
+        Fwait = min([Fx,Fy],[],2);
     end
 end
 
 % Compute percentiles for horizontal test
 if strcmpi(test,'ver')
-    Frace(Frace>1) = 1;
+    Fwait(Fwait<0) = 0;
 elseif strcmpi(test,'hor')
     Fx = cfp2per(Fx,p,lim(2));
     Fy = cfp2per(Fy,p,lim(2));
-    Fz = cfp2per(Fz,p,lim(2));
-    Fxyz = cfp2per(Fxyz,p,lim(2));
-    if nargout > 4
-        Frace = cfp2per(Frace,p,lim(2));
+    Fxy = cfp2per(Fxy,p,lim(2));
+    if nargout > 3
+        Fwait = cfp2per(Fwait,p,lim(2));
     end
 end
 
 % Compute difference
-if nargout > 5
+if nargout > 4
     if strcmpi(test,'ver')
-        Fdiff = Fxyz-Frace;
+        Fdiff = Fxy-Fwait;
     elseif strcmpi(test,'hor')
-        Fdiff = Frace-Fxyz;
+        Fdiff = Fwait-Fxy;
     end
 end
 
