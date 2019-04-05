@@ -1,21 +1,20 @@
 function [Fx,Fy,Fxy,Frace,Fdiff,q] = racemodel(x,y,xy,varargin)
-%racemodel Generate race model using unisensory reaction times.
+%racemodel Generate a race model of bisensory reaction times.
 %   [FX,FY,FXY] = RACEMODEL(X,Y,XY) returns the cumulative distribution
 %   functions (CDFs) for the unisensory RT distributions X and Y, and the
-%   bisensory RT distribution XY at 20 linearly-spaced quantiles between
-%   0.05 and 1. This function does not require X, Y and XY to have an equal
-%   number of observations. This function treats NaNs as missing values,
-%   and ignores them.
+%   bisensory RT distribution XY at 10 linearly-spaced quantiles. X, Y and
+%   XY are not required to have an equal number of observations. This
+%   function treats NaNs as missing values, and ignores them.
 %
-%   [...,FRACE] = RACEMODEL(...) returns the CDF of the race model based on
-%   the unisensory RT distributions X and Y. The race model is computed
-%   using probability summation (Raab, 1962), which assumes statistical
-%   independence between X and Y. For valid estimates of FRACE, the stimuli
-%   used to generate X, Y and XY should have been presented in random order
-%   to meet the assumption of context invariance (Luce, 1986).
+%   [...,FRACE] = RACEMODEL(...) returns the race model based on
+%   probability summation of X and Y. By default, the race model assumes
+%   statistical independence between sensory channels (Raab, 1962). For
+%   valid estimates of FRACE, the stimuli used to generate X, Y and XY
+%   should be presented in random order to meet the assumption of context
+%   invariance.
 %
 %   [...,FDIFF] = RACEMODEL(...) returns the difference between FXY and
-%   FRACE to test whether FXY violated the race model (Miller, 1982).
+%   FRACE to test for violations the race model (Miller, 1982).
 %
 %   [...,Q] = RACEMODEL(...) returns the quantiles used to compute the
 %   CDFs.
@@ -28,17 +27,17 @@ function [Fx,Fy,Fxy,Frace,Fdiff,q] = racemodel(x,y,xy,varargin)
 %   'p'         a vector specifying the probabilities for computing the
 %               quantiles of a vertical test or the percentiles of a
 %               horizontal test (default=0.05:0.1:0.95)
-%   'per'       a 2-element vector specifying the lower and upper RT
-%               percentiles to be used for each condition (default=[0,100])
+%   'per'       a 2-element vector specifying the lower and upper
+%               percentiles of RTs to consider (default=[0,100])
 %   'lim'       a 2-element vector specifying the lower and upper RT limits
-%               to be used to compute the CDFs: it is recommended to leave
-%               this unspecified unless comparing directly to other
-%               conditions (default=[min([x,y,xy]),max([x,y,xy])])
+%               for computing CDFs: it is recommended to leave this
+%               unspecified unless comparing directly to other conditions
+%               (default=[min([X,Y,XY]),max([X,Y,XY])])
 %   'dep'       a scalar specifying the model's assumption of statistical
-%               dependence between X and Y: pass in 0 to assume
+%               dependence between sensory channels: pass in 0 to assume
 %               independence (Raab, 1962; default), -1 to assume a perfect
 %               negative dependence (Miller, 1982) and 1 to assume a
-%               perfect positive dependence (Grice et al., 1986)
+%               perfect positive dependence (Grice et al., 1984)
 %   'test'      a string specifying how to test the race model
 %                   'ver'       vertical test (default)
 %                   'hor'       horizontal test
@@ -50,11 +49,9 @@ function [Fx,Fy,Fxy,Frace,Fdiff,q] = racemodel(x,y,xy,varargin)
 %   References:
 %       [1] Raab DH (1962) Statistical facilitation of simple reaction
 %           times. Trans NY Acad Sci 24(5):574-590.
-%       [2] Luce RD (1986) Response times: Their role in inferring mental
-%           organization. New York, NY: Oxford University Press.
-%       [3] Miller J (1982) Divided attention: Evidence for coactivation
+%       [2] Miller J (1982) Divided attention: Evidence for coactivation
 %           with redundant signals. Cogn Psychol 14(2):247-279.
-%       [4] Grice GR, Canham L, Gwynne JW (1984) Absence of a redundant-
+%       [3] Grice GR, Canham L, Gwynne JW (1984) Absence of a redundant-
 %           signals effect in a reaction time task with divided attention.
 %           Percept Psychophys 36:565-570.
 
@@ -62,7 +59,7 @@ function [Fx,Fy,Fxy,Frace,Fdiff,q] = racemodel(x,y,xy,varargin)
 %   Email: mickcrosse@gmail.com
 %   Cognitive Neurophysiology Laboratory,
 %   Albert Einstein College of Medicine, NY
-%   Apr 2017; Last Revision: 6-Feb-2019
+%   Apr 2017; Last Revision: 4-Apr-2019
 
 % Decode input variable arguments
 [p,per,lim,dep,test] = decode_varargin(varargin);
@@ -132,8 +129,8 @@ function [p,per,lim,dep,test] = decode_varargin(varargin)
 %   decodes the input variable arguments of the main function.
 
 varargin = varargin{1,1};
-if any(strcmpi(varargin,'q')) && ~isempty(varargin{find(strcmpi(varargin,'q'))+1})
-    p = varargin{find(strcmpi(varargin,'q'))+1};
+if any(strcmpi(varargin,'p')) && ~isempty(varargin{find(strcmpi(varargin,'p'))+1})
+    p = varargin{find(strcmpi(varargin,'p'))+1};
     if ~isnumeric(p) || isscalar(p) || any(isnan(p)) || any(isinf(p)) || any(p<0) || any(p>1) || any(diff(p)<=0)
         error('P must be a vector with values between 0 and 1.')
     end

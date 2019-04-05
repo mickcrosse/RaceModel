@@ -18,7 +18,7 @@ function [Fx] = cfp2per(Gx,q,rtmax)
 %   Email: mickcrosse@gmail.com
 %   Cognitive Neurophysiology Laboratory,
 %   Albert Einstein College of Medicine, NY
-%   Apr 2017; Last Revision: 3-Apr-2019
+%   Apr 2017; Last Revision: 4-Apr-2019
 
 % Round max RT value
 rtmax = round(rtmax);

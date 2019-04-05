@@ -1,31 +1,30 @@
 function [Fx,Fy,Fz,Fxyz,Frace,Fdiff,q] = racemodel3(x,y,z,xyz,varargin)
-%racemodel3 Generate trisensory race model using unisensory reaction times.
+%racemodel3 Generate a race model of trisensory reaction times.
 %   [FX,FY,FZ,FXYZ] = RACEMODEL3(X,Y,Z,XYZ) returns the cumulative
 %   distribution functions (CDFs) for the unisensory RT distributions X, Y
-%   and Z, and the trisensory RT distribution XYZ at 20 linearly-spaced
-%   quantiles between 0.05 and 1. This function does not require X, Y, Z
-%   and XYZ to have an equal number of observations. This function treats
-%   NaNs as missing values, and ignores them.
+%   and Z, and the trisensory RT distribution XYZ at 10 linearly-spaced
+%   quantiles. X, Y, Z and XYZ are not required to have an equal number of
+%   observations. This function treats NaNs as missing values, and ignores
+%   them.
 %
 %   To generate CDFs and race models for the bisensory conditions XY, XZ
 %   and YZ, use the function RACEMODEL on the corresponding unisensory and
 %   bisensory RTs. To compare across bisensory and trisensory conditions,
-%   use the same lower and upper RT limits (see below).
+%   use the same RT limits (see below).
 %
-%   [...,FRACE] = RACEMODEL3(...) returns the CDF of the race model based
-%   on the unisensory RT distributions X, Y and Z (Colonius et al., 2017).
-%   The race model is computed using probability summation (Raab, 1962),
-%   which assumes statistical independence between X, Y and Z. For valid
-%   estimates of FRACE, the stimuli used to generate X, Y, Z and XYZ should
-%   have been presented in random order to meet the assumption of context
-%   invariance (Luce, 1986).
+%   [...,FRACE] = RACEMODEL3(...) returns the race model based on
+%   probability summation of X, Y and Z (Colonius et al., 2017). By 
+%   default, the race model assumes statistical independence between 
+%   sensory channels (Raab, 1962). For valid estimates of FRACE, the 
+%   stimuli used to generate X, Y and XY should be presented in random 
+%   order to meet the assumption of context invariance.
 %
 %   [...,FDIFF] = RACEMODEL3(...) returns the difference between FXYZ and
-%   FRACE to test whether FXYZ violated the race model (Miller, 1982).
+%   FRACE to test for violations the race model (Colonius et al., 2017).
 %
 %   [...,Q] = RACEMODEL3(...) returns the quantiles used to compute the
 %   CDFs.
-% 
+%
 %   [...] = RACEMODEL3(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
 %   additional parameters and their values. Valid parameters are the
 %   following:
@@ -34,17 +33,17 @@ function [Fx,Fy,Fz,Fxyz,Frace,Fdiff,q] = racemodel3(x,y,z,xyz,varargin)
 %   'p'         a vector specifying the probabilities for computing the
 %               quantiles of a vertical test or the percentiles of a
 %               horizontal test (default=0.05:0.1:0.95)
-%   'per'       a 2-element vector specifying the lower and upper RT
-%               percentiles to be used for each condition (default=[0,100])
+%   'per'       a 2-element vector specifying the lower and upper
+%               percentiles of RTs to consider (default=[0,100])
 %   'lim'       a 2-element vector specifying the lower and upper RT limits
-%               to be used to compute the CDFs: it is recommended to leave
-%               this unspecified unless comparing directly to other
-%               conditions (default=[min([x,y,z,xyz]),max([x,y,z,xyz])])
+%               for computing CDFs: it is recommended to leave this
+%               unspecified unless comparing directly to other conditions
+%               (default=[min([X,Y,Z,XYZ]),max([X,Y,Z,XYZ])])
 %   'dep'       a scalar specifying the model's assumption of statistical
-%               dependence between X and Y: pass in 0 to assume
+%               dependence between sensory channels: pass in 0 to assume
 %               independence (Raab, 1962; default), -1 to assume a perfect
 %               negative dependence (Miller, 1982) and 1 to assume a
-%               perfect positive dependence (Grice et al., 1986)
+%               perfect positive dependence (Grice et al., 1984)
 %   'test'      a string specifying how to test the race model
 %                   'ver'       vertical test (default)
 %                   'hor'       horizontal test
@@ -71,7 +70,7 @@ function [Fx,Fy,Fz,Fxyz,Frace,Fdiff,q] = racemodel3(x,y,z,xyz,varargin)
 %   Email: mickcrosse@gmail.com
 %   Cognitive Neurophysiology Laboratory,
 %   Albert Einstein College of Medicine, NY
-%   Apr 2017; Last Revision: 2-Apr-2019
+%   Apr 2017; Last Revision: 4-Apr-2019
 
 % Decode input variable arguments
 [p,per,lim,dep,test] = decode_varargin(varargin);
@@ -110,8 +109,8 @@ end
 % Compute race model
 if nargout > 4
     if dep == 0 % Raab's Model
-        fxy = Fx+Fy-Fx.*Fy;
-        Frace = fxy+Fz-fxy.*Fz;
+        Fxy = Fx+Fy-Fx.*Fy;
+        Frace = Fxy+Fz-Fxy.*Fz;
     elseif dep == -1 % Miller's Bound
         Frace = Fx+Fy+Fz;
     elseif dep == 1 % Grice's Bound
@@ -147,8 +146,8 @@ function [p,per,lim,dep,test] = decode_varargin(varargin)
 %   decodes the input variable arguments of the main function.
 
 varargin = varargin{1,1};
-if any(strcmpi(varargin,'q')) && ~isempty(varargin{find(strcmpi(varargin,'q'))+1})
-    p = varargin{find(strcmpi(varargin,'q'))+1};
+if any(strcmpi(varargin,'p')) && ~isempty(varargin{find(strcmpi(varargin,'p'))+1})
+    p = varargin{find(strcmpi(varargin,'p'))+1};
     if ~isnumeric(p) || isscalar(p) || any(isnan(p)) || any(isinf(p)) || any(p<0) || any(p>1) || any(diff(p)<=0)
         error('P must be a vector with values between 0 and 1.')
     end

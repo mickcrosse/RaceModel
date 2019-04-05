@@ -14,7 +14,7 @@ function auc = getauc(x,y,p)
 %   Email: mickcrosse@gmail.com
 %   Cognitive Neurophysiology Laboratory,
 %   Albert Einstein College of Medicine, NY
-%   Apr 2017; Last Revision: 3-Apr-2019
+%   Apr 2017; Last Revision: 4-Apr-2019
 
 % Set default values
 if nargin < 3 || isempty(p)

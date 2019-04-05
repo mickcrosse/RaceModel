@@ -1,14 +1,25 @@
-function gain = rsegain(x,y,xy,varargin)
-%rsegain Multisensory gain of a redundant signals effect.
-%   GAIN = RSEGAIN(X,Y,XY) returns the multisensory gain of a redundant
-%   signals effect (RSE), quantified by the area between the cumulative
-%   distribution functions of the bisensory RT distribution XY, and the
-%   race model based on the unisensory RT distributions X and Y (Miller,
-%   1986; Colonius & Diederich, 2006). This function does not require X, Y
-%   and XY to have an equal number of observations. This function treats
-%   NaNs as missing values, and ignores them.
+function [Fx,Fy,Fxy,Frace,Fdiff,q] = racemodel(x,y,xy,varargin)
+%racemodel Generate a race model of bisensory reaction times.
+%   [FX,FY,FXY] = RACEMODEL(X,Y,XY) returns the cumulative distribution
+%   functions (CDFs) for the unisensory RT distributions X and Y, and the 
+%   bisensory RT distribution XY at 10 linearly-spaced quantiles. X, Y and 
+%   XY are not required to have an equal number of observations. This 
+%   function treats NaNs as missing values, and ignores 
+%   them. 
 %
-%   [...] = RSEGAIN(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
+%   [...,FRACE] = RACEMODEL(...) returns the bisensory race model based on
+%   the probabilistic summation of FX and FY, which assumes statistical
+%   independence between sensory channels (Raab, 1962). For valid estimates of FRACE, the stimuli
+%   used to generate X, Y and XY should have been presented in random order
+%   to meet the assumption of context invariance (Luce, 1986).
+%
+%   [...,FDIFF] = RACEMODEL(...) returns the difference between FXY and
+%   FRACE to test whether FXY violated the race model (Miller, 1982).
+%
+%   [...,Q] = RACEMODEL(...) returns the quantiles used to compute the
+%   CDFs.
+%
+%   [...] = RACEMODEL(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
 %   additional parameters and their values. Valid parameters are the
 %   following:
 %
@@ -16,47 +27,44 @@ function gain = rsegain(x,y,xy,varargin)
 %   'p'         a vector specifying the probabilities for computing the
 %               quantiles of a vertical test or the percentiles of a
 %               horizontal test (default=0.05:0.1:0.95)
-%   'per'       a 2-element vector specifying the lower and upper
-%               percentiles of RTs to consider (default=[0,100])
+%   'per'       a 2-element vector specifying the lower and upper RT
+%               percentiles to be used for each condition (default=[0,100])
 %   'lim'       a 2-element vector specifying the lower and upper RT limits
-%               for computing CDFs: it is recommended to leave this
-%               unspecified unless comparing directly to other conditions
-%               (default=[min([X,Y,XY]),max([X,Y,XY])])
+%               to be used to compute the CDFs: it is recommended to leave
+%               this unspecified unless comparing directly to other
+%               conditions (default=[min([x,y,xy]),max([x,y,xy])])
 %   'dep'       a scalar specifying the model's assumption of statistical
 %               dependence between sensory channels: pass in 0 to assume
-%               independence (Raab, 1962; default) and -1 to assume a
-%               perfect negative dependence (Miller, 1982)
+%               independence (Raab, 1962; default), -1 to assume a perfect
+%               negative dependence (Miller, 1982) and 1 to assume a
+%               perfect positive dependence (Grice et al., 1984)
 %   'test'      a string specifying how to test the race model
 %                   'ver'       vertical test (default)
 %                   'hor'       horizontal test
-%   'area'      a string specifying how to compute the area under the curve
-%                   'all'       use all values (default)
-%                   'pos'       use only positive values
-%                   'neg'       use only negative values
 %
-%   See also RSEGAIN3, RACEMODEL, RSEBENEFIT, TPERMTEST, EFFECTSIZE.
+%   See also RACEMODEL3, RSEGAIN, RSEBENEFIT, TPERMTEST, EFFECTSIZE.
 %
 %   RaceModel https://github.com/mickcrosse/RaceModel
 
 %   References:
-%       [1] Miller J (1986) Timecourse of coactivation in bimodal divided
-%           attention. Percept Psychophys 40(5):331-343.
-%       [2] Colonius H, Diederich A (2006) The Race Model Inequality:
-%           Interpreting a Geometric Measure of the Amount of Violation.
-%           Psychol Rev 113(1):148–154.
-%       [3] Raab DH (1962) Statistical facilitation of simple reaction
+%       [1] Raab DH (1962) Statistical facilitation of simple reaction
 %           times. Trans NY Acad Sci 24(5):574-590.
-%       [4] Miller J (1982) Divided attention: Evidence for coactivation
+%       [2] Luce RD (1986) Response times: Their role in inferring mental
+%           organization. New York, NY: Oxford University Press.
+%       [3] Miller J (1982) Divided attention: Evidence for coactivation
 %           with redundant signals. Cogn Psychol 14(2):247-279.
+%       [4] Grice GR, Canham L, Gwynne JW (1984) Absence of a redundant-
+%           signals effect in a reaction time task with divided attention.
+%           Percept Psychophys 36:565-570.
 
 %   Author: Mick Crosse
 %   Email: mickcrosse@gmail.com
 %   Cognitive Neurophysiology Laboratory,
 %   Albert Einstein College of Medicine, NY
-%   Apr 2017; Last Revision: 4-Apr-2019
+%   Apr 2017; Last Revision: 6-Feb-2019
 
 % Decode input variable arguments
-[p,per,lim,dep,test,area] = decode_varargin(varargin);
+[p,per,lim,dep,test] = decode_varargin(varargin);
 
 % Get RT range for each condition
 lims = zeros(3,2);
@@ -78,7 +86,7 @@ end
 if strcmpi(test,'ver')
     Fx = rt2cdf(x,p,lim);
     Fy = rt2cdf(y,p,lim);
-    Fxy = rt2cdf(xy,p,lim);
+    [Fxy,q] = rt2cdf(xy,p,lim);
 elseif strcmpi(test,'hor')
     Fx = rt2cfp(x,lim(2));
     Fy = rt2cfp(y,lim(2));
@@ -86,26 +94,38 @@ elseif strcmpi(test,'hor')
 end
 
 % Compute race model
-if dep == 0 % Raab's Model
-    Frace = Fx+Fy-Fx.*Fy;
-elseif dep == -1 % Miller's Bound
-    Frace = Fx+Fy;
+if nargout > 3
+    if dep == 0 % Raab's Model
+        Frace = Fx+Fy-Fx.*Fy;
+    elseif dep == -1 % Miller's Bound
+        Frace = Fx+Fy;
+    elseif dep == 1 % Grice's Bound
+        Frace = max([Fx,Fy],[],2);
+    end
+end
+
+% Compute percentiles for horizontal test
+if strcmpi(test,'ver')
+    Frace(Frace>1) = 1;
+elseif strcmpi(test,'hor')
+    Fx = cfp2per(Fx,p,lim(2));
+    Fy = cfp2per(Fy,p,lim(2));
+    Fxy = cfp2per(Fxy,p,lim(2));
+    if nargout > 3
+        Frace = cfp2per(Frace,p,lim(2));
+    end
 end
 
 % Compute difference
-if strcmpi(test,'ver')
-    Frace(Frace>1) = 1;
-    Fdiff = Fxy-Frace;
-elseif strcmpi(test,'hor')
-    Fxy = cfp2per(Fxy,p,lim(2));
-    Frace = cfp2per(Frace,p,lim(2));
-    Fdiff = Frace-Fxy;
+if nargout > 4
+    if strcmpi(test,'ver')
+        Fdiff = Fxy-Frace;
+    elseif strcmpi(test,'hor')
+        Fdiff = Frace-Fxy;
+    end
 end
 
-% Compute multisensory gain
-gain = getauc(p,Fdiff,area);
-
-function [p,per,lim,dep,test,area] = decode_varargin(varargin)
+function [p,per,lim,dep,test] = decode_varargin(varargin)
 %decode_varargin Decode input variable arguments.
 %   [PARAM1,PARAM2,...] = DECODE_VARARGIN('PARAM1',VAL1,'PARAM2',VAL2,...)
 %   decodes the input variable arguments of the main function.
@@ -150,12 +170,4 @@ if any(strcmpi(varargin,'test')) && ~isempty(varargin{find(strcmpi(varargin,'tes
     end
 else
     test = 'ver'; % default: vertical test
-end
-if any(strcmpi(varargin,'area')) && ~isempty(varargin{find(strcmpi(varargin,'area'))+1})
-    area = varargin{find(strcmpi(varargin,'area'))+1};
-    if ~any(strcmpi(area,{'all','pos','neg'}))
-        error('Invalid value for argument AREA. Valid values are: ''all'', ''pos'', ''neg''.')
-    end
-else
-    area = 'all'; % default: use all values
 end

@@ -31,7 +31,7 @@ function [F1,hitrate,errorrate] = f1score(x,rtmin,rtmax,nresp,ntarget)
 %   Email: mickcrosse@gmail.com
 %   Cognitive Neurophysiology Laboratory,
 %   Albert Einstein College of Medicine, NY
-%   Apr 2017; Last Revision: 3-Apr-2019
+%   Apr 2017; Last Revision: 4-Apr-2019
 
 % Set default values
 if nargin < 5 || isempty(ntarget)

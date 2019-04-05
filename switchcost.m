@@ -1,10 +1,10 @@
 function [MSE,Fdiff,q] = switchcost(sw,re,varargin)
-%switchcost Modality switch effect for mixed multisensory stimuli.
-%   MSE = SWITCHCOST(SW,RE) returns the modality switch effect (MSE) of RTs
-%   to mixed multisensory stimuli, quantified by the area between the
-%   cumulative distribution functions (CDFs) of the RT distributions of the
-%   switch trials SW, and repeat trials RE (Crosse et al., 2019). This
-%   function does not require SW and RE to have an equal number of
+%switchcost Modality switch effect for mixed stimulus presenation.
+%   MSE = SWITCHCOST(SW,RE) returns the modality switch effect (MSE) of
+%   response times for mixed stimulus presenation. MSE is quantified as the
+%   area between the cumulative distribution functions (CDFs) of the RT
+%   distributions of the switch trials SW, and repeat trials RE (Crosse et
+%   al., 2019). SW and RE are not required to have an equal number of
 %   observations. This function treats NaNs as missing values, and ignores
 %   them.
 %
@@ -13,7 +13,7 @@ function [MSE,Fdiff,q] = switchcost(sw,re,varargin)
 %
 %   [...,Q] = SWITCHCOST(...) returns the quantiles used to compute the
 %   CDFs.
-% 
+%
 %   [...] = SWITCHCOST(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
 %   additional parameters and their values. Valid parameters are the
 %   following:
@@ -22,12 +22,12 @@ function [MSE,Fdiff,q] = switchcost(sw,re,varargin)
 %   'p'         a vector specifying the probabilities for computing the
 %               quantiles of a vertical test or the percentiles of a
 %               horizontal test (default=0.05:0.1:0.95)
-%   'per'       a 2-element vector specifying the lower and upper RT
-%               percentiles to be used for each condition (default=[0,100])
+%   'per'       a 2-element vector specifying the lower and upper
+%               percentiles of RTs to consider (default=[0,100])
 %   'lim'       a 2-element vector specifying the lower and upper RT limits
-%               to be used to compute the CDFs: it is recommended to leave
-%               this unspecified unless comparing directly to other
-%               conditions (default=[min([sw,re]),max([sw,re])])
+%               for computing CDFs: it is recommended to leave this
+%               unspecified unless comparing directly to other conditions
+%               (default=[min([SW,RE]),max([SW,RE])])
 %   'test'      a string specifying how to test the MSE
 %                   'ver'       vertical test (default)
 %                   'hor'       horizontal test
@@ -49,7 +49,7 @@ function [MSE,Fdiff,q] = switchcost(sw,re,varargin)
 %   Email: mickcrosse@gmail.com
 %   Cognitive Neurophysiology Laboratory,
 %   Albert Einstein College of Medicine, NY
-%   Apr 2017; Last Revision: 3-Apr-2019
+%   Apr 2017; Last Revision: 4-Apr-2019
 
 % Decode input variable arguments
 [p,per,lim,test,area] = decode_varargin(varargin);
@@ -99,8 +99,8 @@ function [p,per,lim,dep,test,area] = decode_varargin(varargin)
 %   decodes the input variable arguments of the main function.
 
 varargin = varargin{1,1};
-if any(strcmpi(varargin,'q')) && ~isempty(varargin{find(strcmpi(varargin,'q'))+1})
-    p = varargin{find(strcmpi(varargin,'q'))+1};
+if any(strcmpi(varargin,'p')) && ~isempty(varargin{find(strcmpi(varargin,'p'))+1})
+    p = varargin{find(strcmpi(varargin,'p'))+1};
     if ~isnumeric(p) || isscalar(p) || any(isnan(p)) || any(isinf(p)) || any(p<0) || any(p>1) || any(diff(p)<=0)
         error('P must be a vector with values between 0 and 1.')
     end
