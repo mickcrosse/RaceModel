@@ -47,11 +47,11 @@ function [Fx,Fy,Fxy,Fwait,Fdiff,q] = waitmodel(x,y,xy,varargin)
 %   RaceModel https://github.com/mickcrosse/RaceModel
 
 %   References:
-%       [1] Townsend JT, Eidels A (2011) Workload capacity spaces: A 
-%           unified methodology for response time measures of efficiency as 
+%       [1] Townsend JT, Eidels A (2011) Workload capacity spaces: A
+%           unified methodology for response time measures of efficiency as
 %           workload is varied. Psychon Bull Rev 18:659–681.
-%       [2] Colonius H, Vorberg D (1994) Distribution inequalities for 
-%           parallel models with unlimited capacity. J Math Psychol 
+%       [2] Colonius H, Vorberg D (1994) Distribution inequalities for
+%           parallel models with unlimited capacity. J Math Psychol
 %           38:35-58.
 
 %   Author: Mick Crosse
@@ -94,23 +94,21 @@ end
 if nargout > 3
     if dep == 0 % Wait Model
         Fwait = Fx.*Fy;
-    elseif dep == -1 % Colonius-Vorberg Lower Bound
-        Fwait = Fx+Fy-1;
-    elseif dep == 1 % Colonius-Vorberg Upper Bound
+    elseif dep == -1 % Colonius's Lower Bound
+        Fwait = max([Fx+Fy-1,zeros(size(Fxy))],2);
+    elseif dep == 1 % Colonius's Upper Bound
         Fwait = min([Fx,Fy],[],2);
+    end
+    if strcmpi(test,'hor')
+        Fwait = cfp2per(Fwait,p,lim(2));
     end
 end
 
 % Compute percentiles for horizontal test
-if strcmpi(test,'ver')
-    Fwait(Fwait<0) = 0;
-elseif strcmpi(test,'hor')
+if strcmpi(test,'hor')
     Fx = cfp2per(Fx,p,lim(2));
     Fy = cfp2per(Fy,p,lim(2));
     Fxy = cfp2per(Fxy,p,lim(2));
-    if nargout > 3
-        Fwait = cfp2per(Fwait,p,lim(2));
-    end
 end
 
 % Compute difference

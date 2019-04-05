@@ -102,13 +102,16 @@ elseif dep == -1 % Miller's Bound
     Frace = Fx+Fy+Fz;
 end
 
-% Compute difference
-if strcmpi(test,'ver')
-    Frace(Frace>1) = 1;
-    Fdiff = Fxyz-Frace;
-elseif strcmpi(test,'hor')
+% Compute percentiles for horizontal test
+if strcmpi(test,'hor')
     Fxyz = cfp2per(Fxyz,p,lim(2));
     Frace = cfp2per(Frace,p,lim(2));
+end
+
+% Compute difference
+if strcmpi(test,'ver')
+    Fdiff = Fxyz-Frace;
+elseif strcmpi(test,'hor')
     Fdiff = Frace-Fxyz;
 end
 

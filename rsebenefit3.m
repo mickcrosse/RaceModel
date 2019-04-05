@@ -99,9 +99,19 @@ end
 % Compute Grice's bound
 Fmax = max([Fx,Fy,Fz],[],2);
 
+% Compute race model
+if dep == 0 % Raab's Model
+    Fxy = Fx+Fy-Fx.*Fy;
+    Frace = Fxy+Fz-Fxy.*Fz;
+elseif dep == -1 % Miller's Bound
+    Frace = Fx+Fy+Fz;
+end
+
 % Compute percentiles for horizontal test
 if strcmpi(test,'hor')
     Fxyz = cfp2per(Fxyz,p,lim(2));
+    Fmax = cfp2per(Fmax,p,lim(2));
+    Frace = cfp2per(Frace,p,lim(2));
 end
 
 % Compute difference
@@ -116,20 +126,10 @@ bemp = getauc(p,Femp,area);
 
 if nargout > 1
     
-    % Compute race model
-    if dep == 0 % Raab's Model
-        Fxy = Fx+Fy-Fx.*Fy;
-        Frace = Fxy+Fz-Fxy.*Fz;
-    elseif dep == -1 % Miller's Bound
-        Frace = Fx+Fy+Fz;
-    end
-    
     % Compute difference
     if strcmpi(test,'ver')
-        Frace(Frace>1) = 1;
         Fpred = Frace-Fmax;
     elseif strcmpi(test,'hor')
-        Frace = cfp2per(Frace,p,lim(2));
         Fpred = Fmax-Frace;
     end
     

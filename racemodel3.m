@@ -13,10 +13,10 @@ function [Fx,Fy,Fz,Fxyz,Frace,Fdiff,q] = racemodel3(x,y,z,xyz,varargin)
 %   use the same RT limits (see below).
 %
 %   [...,FRACE] = RACEMODEL3(...) returns the race model based on
-%   probability summation of X, Y and Z (Colonius et al., 2017). By 
-%   default, the race model assumes statistical independence between 
-%   sensory channels (Raab, 1962). For valid estimates of FRACE, the 
-%   stimuli used to generate X, Y and XY should be presented in random 
+%   probability summation of X, Y and Z (Colonius et al., 2017). By
+%   default, the race model assumes statistical independence between
+%   sensory channels (Raab, 1962). For valid estimates of FRACE, the
+%   stimuli used to generate X, Y and XY should be presented in random
 %   order to meet the assumption of context invariance.
 %
 %   [...,FDIFF] = RACEMODEL3(...) returns the difference between FXYZ and
@@ -112,23 +112,21 @@ if nargout > 4
         Fxy = Fx+Fy-Fx.*Fy;
         Frace = Fxy+Fz-Fxy.*Fz;
     elseif dep == -1 % Miller's Bound
-        Frace = Fx+Fy+Fz;
+        Frace = min([Fx+Fy+Fz,ones(size(Fxyz))],2);
     elseif dep == 1 % Grice's Bound
         Frace = max([Fx,Fy,Fz],[],2);
+    end
+    if strcmpi(test,'hor')
+        Frace = cfp2per(Frace,p,lim(2));
     end
 end
 
 % Compute percentiles for horizontal test
-if strcmpi(test,'ver')
-    Frace(Frace>1) = 1;
-elseif strcmpi(test,'hor')
+if strcmpi(test,'hor')
     Fx = cfp2per(Fx,p,lim(2));
     Fy = cfp2per(Fy,p,lim(2));
     Fz = cfp2per(Fz,p,lim(2));
     Fxyz = cfp2per(Fxyz,p,lim(2));
-    if nargout > 4
-        Frace = cfp2per(Frace,p,lim(2));
-    end
 end
 
 % Compute difference

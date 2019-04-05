@@ -1,5 +1,5 @@
 function [MSE,Fdiff,q] = switchcost(sw,re,varargin)
-%switchcost Modality switch effect for mixed stimulus presenation.
+%switchcost Modality switch effect of RTs for mixed stimulus presenation.
 %   MSE = SWITCHCOST(SW,RE) returns the modality switch effect (MSE) of
 %   response times for mixed stimulus presenation. MSE is quantified as the
 %   area between the cumulative distribution functions (CDFs) of the RT
@@ -93,7 +93,7 @@ end
 % Compute MSE
 MSE = getauc(p,Fdiff,area);
 
-function [p,per,lim,dep,test,area] = decode_varargin(varargin)
+function [p,per,lim,test,area] = decode_varargin(varargin)
 %decode_varargin Decode input variable arguments.
 %   [PARAM1,PARAM2,...] = DECODE_VARARGIN('PARAM1',VAL1,'PARAM2',VAL2,...)
 %   decodes the input variable arguments of the main function.

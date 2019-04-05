@@ -89,16 +89,19 @@ end
 if dep == 0 % Raab's Model
     Frace = Fx+Fy-Fx.*Fy;
 elseif dep == -1 % Miller's Bound
-    Frace = Fx+Fy;
+    Frace = min([Fx+Fy,ones(size(Fxy))],2);
+end
+
+% Compute percentiles for horizontal test
+if strcmpi(test,'hor')
+    Fxy = cfp2per(Fxy,p,lim(2));
+    Frace = cfp2per(Frace,p,lim(2));
 end
 
 % Compute difference
 if strcmpi(test,'ver')
-    Frace(Frace>1) = 1;
     Fdiff = Fxy-Frace;
 elseif strcmpi(test,'hor')
-    Fxy = cfp2per(Fxy,p,lim(2));
-    Frace = cfp2per(Frace,p,lim(2));
     Fdiff = Frace-Fxy;
 end
 

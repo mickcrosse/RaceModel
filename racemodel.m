@@ -96,22 +96,20 @@ if nargout > 3
     if dep == 0 % Raab's Model
         Frace = Fx+Fy-Fx.*Fy;
     elseif dep == -1 % Miller's Bound
-        Frace = Fx+Fy;
+        Frace = min([Fx+Fy,ones(size(Fxy))],2);
     elseif dep == 1 % Grice's Bound
         Frace = max([Fx,Fy],[],2);
+    end
+    if strcmpi(test,'hor')
+        Frace = cfp2per(Frace,p,lim(2));
     end
 end
 
 % Compute percentiles for horizontal test
-if strcmpi(test,'ver')
-    Frace(Frace>1) = 1;
-elseif strcmpi(test,'hor')
+if strcmpi(test,'hor')
     Fx = cfp2per(Fx,p,lim(2));
     Fy = cfp2per(Fy,p,lim(2));
     Fxy = cfp2per(Fxy,p,lim(2));
-    if nargout > 3
-        Frace = cfp2per(Frace,p,lim(2));
-    end
 end
 
 % Compute difference
