@@ -1,5 +1,5 @@
 function [Fx,Fy,Fz,Fxyz,Frace,Fdiff,q] = racemodel3(x,y,z,xyz,varargin)
-%racemodel3 Generate a race model of trisensory reaction times.
+%racemodel3 Generate a race model for trisensory reaction times.
 %   [FX,FY,FZ,FXYZ] = RACEMODEL3(X,Y,Z,XYZ) returns the cumulative
 %   distribution functions (CDFs) for the unisensory RT distributions X, Y
 %   and Z, and the trisensory RT distribution XYZ at 10 linearly-spaced
@@ -14,16 +14,16 @@ function [Fx,Fy,Fz,Fxyz,Frace,Fdiff,q] = racemodel3(x,y,z,xyz,varargin)
 %
 %   [...,FRACE] = RACEMODEL3(...) returns the race model based on
 %   probability summation of X, Y and Z (Colonius et al., 2017). By
-%   default, the race model assumes statistical independence between
-%   sensory channels (Raab, 1962). For valid estimates of FRACE, the
-%   stimuli used to generate X, Y and XY should be presented in random
-%   order to meet the assumption of context invariance.
+%   default, channel independence is assumed (Raab, 1962). For valid
+%   estimates of FRACE, the stimuli used to generate X, Y, Z and XYZ should
+%   be presented in random order to meet the assumption of context
+%   invariance.
 %
 %   [...,FDIFF] = RACEMODEL3(...) returns the difference between FXYZ and
 %   FRACE to test for violations the race model (Colonius et al., 2017).
 %
-%   [...,Q] = RACEMODEL3(...) returns the quantiles used to compute the
-%   CDFs.
+%   [...,Q] = RACEMODEL3(...) returns the RT quantiles used to compute the
+%   CDFs for the vertical test.
 %
 %   [...] = RACEMODEL3(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
 %   additional parameters and their values. Valid parameters are the
@@ -33,6 +33,8 @@ function [Fx,Fy,Fz,Fxyz,Frace,Fdiff,q] = racemodel3(x,y,z,xyz,varargin)
 %   'p'         a vector specifying the probabilities for computing the
 %               quantiles of a vertical test or the percentiles of a
 %               horizontal test (default=0.05:0.1:0.95)
+%   'outlier'   a 2-element vector specifying the lower and upper RT
+%               cutoffs for outlier correction (default=no correction).
 %   'per'       a 2-element vector specifying the lower and upper
 %               percentiles of RTs to consider (default=[0,100])
 %   'lim'       a 2-element vector specifying the lower and upper RT limits
@@ -58,11 +60,9 @@ function [Fx,Fy,Fz,Fxyz,Frace,Fdiff,q] = racemodel3(x,y,z,xyz,varargin)
 %           Psychol 8:1141.
 %       [2] Raab DH (1962) Statistical facilitation of simple reaction
 %           times. Trans NY Acad Sci 24(5):574-590.
-%       [3] Luce RD (1986) Response times: Their role in inferring mental
-%           organization. New York, NY: Oxford University Press.
-%       [4] Miller J (1982) Divided attention: Evidence for coactivation
+%       [3] Miller J (1982) Divided attention: Evidence for coactivation
 %           with redundant signals. Cogn Psychol 14(2):247-279.
-%       [5] Grice GR, Canham L, Gwynne JW (1984) Absence of a redundant-
+%       [4] Grice GR, Canham L, Gwynne JW (1984) Absence of a redundant-
 %           signals effect in a reaction time task with divided attention.
 %           Percept Psychophys 36:565-570.
 
@@ -73,7 +73,15 @@ function [Fx,Fy,Fz,Fxyz,Frace,Fdiff,q] = racemodel3(x,y,z,xyz,varargin)
 %   Apr 2017; Last Revision: 4-Apr-2019
 
 % Decode input variable arguments
-[p,per,lim,dep,test] = decode_varargin(varargin);
+[p,outlier,per,lim,dep,test] = decode_varargin(varargin);
+
+% Outlier correction procedure
+if ~isempty(outlier)
+    x(x<outlier(1)|x>outlier(2)) = [];
+    y(y<outlier(1)|y>outlier(2)) = [];
+    z(z<outlier(1)|z>outlier(2)) = [];
+    xyz(xyz<outlier(1)|xyz>outlier(2)) = [];
+end
 
 % Get RT range for each condition
 lims = zeros(4,2);
@@ -112,21 +120,21 @@ if nargout > 4
         Fxy = Fx+Fy-Fx.*Fy;
         Frace = Fxy+Fz-Fxy.*Fz;
     elseif dep == -1 % Miller's Bound
-        Frace = min([Fx+Fy+Fz,ones(size(Fxyz))],2);
+        Frace = min(Fx+Fy+Fz,ones(size(Fxyz)));
     elseif dep == 1 % Grice's Bound
         Frace = max([Fx,Fy,Fz],[],2);
     end
     if strcmpi(test,'hor')
-        Frace = cfp2per(Frace,p,lim(2));
+        Frace = cfp2per(Frace,p);
     end
 end
 
 % Compute percentiles for horizontal test
 if strcmpi(test,'hor')
-    Fx = cfp2per(Fx,p,lim(2));
-    Fy = cfp2per(Fy,p,lim(2));
-    Fz = cfp2per(Fz,p,lim(2));
-    Fxyz = cfp2per(Fxyz,p,lim(2));
+    Fx = cfp2per(Fx,p);
+    Fy = cfp2per(Fy,p);
+    Fz = cfp2per(Fz,p);
+    Fxyz = cfp2per(Fxyz,p);
 end
 
 % Compute difference
@@ -138,7 +146,7 @@ if nargout > 5
     end
 end
 
-function [p,per,lim,dep,test] = decode_varargin(varargin)
+function [p,outlier,per,lim,dep,test] = decode_varargin(varargin)
 %decode_varargin Decode input variable arguments.
 %   [PARAM1,PARAM2,...] = DECODE_VARARGIN('PARAM1',VAL1,'PARAM2',VAL2,...)
 %   decodes the input variable arguments of the main function.
@@ -151,6 +159,14 @@ if any(strcmpi(varargin,'p')) && ~isempty(varargin{find(strcmpi(varargin,'p'))+1
     end
 else
     p = 0.05:0.1:0.95; % default: 0.05 to 0.95 in 0.1 increments
+end
+if any(strcmpi(varargin,'outlier')) && ~isempty(varargin{find(strcmpi(varargin,'outlier'))+1})
+    outlier = varargin{find(strcmpi(varargin,'outlier'))+1};
+    if ~isnumeric(outlier) || isscalar(outlier) || any(isnan(outlier)) || any(isinf(outlier)) || any(outlier<0) || outlier(1)>=outlier(2)
+        error('OUTLIER must be a 2-element vector of positive values.')
+    end
+else
+    outlier = []; % default: unspecified
 end
 if any(strcmpi(varargin,'per')) && ~isempty(varargin{find(strcmpi(varargin,'per'))+1})
     per = varargin{find(strcmpi(varargin,'per'))+1};

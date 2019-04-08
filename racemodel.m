@@ -1,5 +1,5 @@
 function [Fx,Fy,Fxy,Frace,Fdiff,q] = racemodel(x,y,xy,varargin)
-%racemodel Generate a race model of bisensory reaction times.
+%racemodel Generate a race model for bisensory reaction times.
 %   [FX,FY,FXY] = RACEMODEL(X,Y,XY) returns the cumulative distribution
 %   functions (CDFs) for the unisensory RT distributions X and Y, and the
 %   bisensory RT distribution XY at 10 linearly-spaced quantiles. X, Y and
@@ -7,17 +7,16 @@ function [Fx,Fy,Fxy,Frace,Fdiff,q] = racemodel(x,y,xy,varargin)
 %   function treats NaNs as missing values, and ignores them.
 %
 %   [...,FRACE] = RACEMODEL(...) returns the race model based on
-%   probability summation of X and Y. By default, the race model assumes
-%   statistical independence between sensory channels (Raab, 1962). For
-%   valid estimates of FRACE, the stimuli used to generate X, Y and XY
-%   should be presented in random order to meet the assumption of context
-%   invariance.
+%   probability summation of X and Y. By default, channel independence is
+%   assumed (Raab, 1962). For valid estimates of FRACE, the stimuli used to
+%   generate X, Y and XY should be presented in random order to meet the
+%   assumption of context invariance.
 %
 %   [...,FDIFF] = RACEMODEL(...) returns the difference between FXY and
 %   FRACE to test for violations the race model (Miller, 1982).
 %
-%   [...,Q] = RACEMODEL(...) returns the quantiles used to compute the
-%   CDFs.
+%   [...,Q] = RACEMODEL(...) returns the RT quantiles used to compute the
+%   CDFs for the vertical test.
 %
 %   [...] = RACEMODEL(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
 %   additional parameters and their values. Valid parameters are the
@@ -27,6 +26,8 @@ function [Fx,Fy,Fxy,Frace,Fdiff,q] = racemodel(x,y,xy,varargin)
 %   'p'         a vector specifying the probabilities for computing the
 %               quantiles of a vertical test or the percentiles of a
 %               horizontal test (default=0.05:0.1:0.95)
+%   'outlier'   a 2-element vector specifying the lower and upper RT
+%               cutoffs for outlier correction (default=no correction).
 %   'per'       a 2-element vector specifying the lower and upper
 %               percentiles of RTs to consider (default=[0,100])
 %   'lim'       a 2-element vector specifying the lower and upper RT limits
@@ -62,7 +63,14 @@ function [Fx,Fy,Fxy,Frace,Fdiff,q] = racemodel(x,y,xy,varargin)
 %   Apr 2017; Last Revision: 4-Apr-2019
 
 % Decode input variable arguments
-[p,per,lim,dep,test] = decode_varargin(varargin);
+[p,outlier,per,lim,dep,test] = decode_varargin(varargin);
+
+% Outlier correction procedure
+if ~isempty(outlier)
+    x(x<outlier(1)|x>outlier(2)) = [];
+    y(y<outlier(1)|y>outlier(2)) = [];
+    xy(xy<outlier(1)|xy>outlier(2)) = [];
+end
 
 % Get RT range for each condition
 lims = zeros(3,2);
@@ -96,20 +104,20 @@ if nargout > 3
     if dep == 0 % Raab's Model
         Frace = Fx+Fy-Fx.*Fy;
     elseif dep == -1 % Miller's Bound
-        Frace = min([Fx+Fy,ones(size(Fxy))],2);
+        Frace = min(Fx+Fy,ones(size(Fxy)));
     elseif dep == 1 % Grice's Bound
-        Frace = max([Fx,Fy],[],2);
+        Frace = max(Fx,Fy);
     end
     if strcmpi(test,'hor')
-        Frace = cfp2per(Frace,p,lim(2));
+        Frace = cfp2per(Frace,p);
     end
 end
 
 % Compute percentiles for horizontal test
 if strcmpi(test,'hor')
-    Fx = cfp2per(Fx,p,lim(2));
-    Fy = cfp2per(Fy,p,lim(2));
-    Fxy = cfp2per(Fxy,p,lim(2));
+    Fx = cfp2per(Fx,p);
+    Fy = cfp2per(Fy,p);
+    Fxy = cfp2per(Fxy,p);
 end
 
 % Compute difference
@@ -121,7 +129,7 @@ if nargout > 4
     end
 end
 
-function [p,per,lim,dep,test] = decode_varargin(varargin)
+function [p,outlier,per,lim,dep,test] = decode_varargin(varargin)
 %decode_varargin Decode input variable arguments.
 %   [PARAM1,PARAM2,...] = DECODE_VARARGIN('PARAM1',VAL1,'PARAM2',VAL2,...)
 %   decodes the input variable arguments of the main function.
@@ -134,6 +142,14 @@ if any(strcmpi(varargin,'p')) && ~isempty(varargin{find(strcmpi(varargin,'p'))+1
     end
 else
     p = 0.05:0.1:0.95; % default: 0.05 to 0.95 in 0.1 increments
+end
+if any(strcmpi(varargin,'outlier')) && ~isempty(varargin{find(strcmpi(varargin,'outlier'))+1})
+    outlier = varargin{find(strcmpi(varargin,'outlier'))+1};
+    if ~isnumeric(outlier) || isscalar(outlier) || any(isnan(outlier)) || any(isinf(outlier)) || any(outlier<0) || outlier(1)>=outlier(2)
+        error('OUTLIER must be a 2-element vector of positive values.')
+    end
+else
+    outlier = []; % default: unspecified
 end
 if any(strcmpi(varargin,'per')) && ~isempty(varargin{find(strcmpi(varargin,'per'))+1})
     per = varargin{find(strcmpi(varargin,'per'))+1};

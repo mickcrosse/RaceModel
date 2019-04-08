@@ -4,9 +4,9 @@ function [bemp,bpred] = rsebenefit3(x,y,z,xyz,varargin)
 %   redundant signals effect (RSE), quantified by the area between the
 %   cumulative distribution functions (CDFs) of the most effective of the
 %   unisensory RT distributions X, Y and Z, and the trisensory RT
-%   distribution XYZ (Otto et al., 2013). This function does not require X,
-%   Y, Z and XYZ to have an equal number of observations. This function
-%   treats NaNs as missing values, and ignores them.
+%   distribution XYZ (Otto et al., 2013). X, Y, Z and XYZ are not required 
+%   to have an equal number of observations. This function treats NaNs as 
+%   missing values, and ignores them.
 %
 %   To compute the benefit for the bisensory conditions XY, XZ and YZ, use
 %   the function RSEBENEFIT on the corresponding unisensory and bisensory
@@ -26,6 +26,8 @@ function [bemp,bpred] = rsebenefit3(x,y,z,xyz,varargin)
 %   'p'         a vector specifying the probabilities for computing the
 %               quantiles of a vertical test or the percentiles of a
 %               horizontal test (default=0.05:0.1:0.95)
+%   'outlier'   a 2-element vector specifying the lower and upper RT
+%               cutoffs for outlier correction (default=no correction).
 %   'per'       a 2-element vector specifying the lower and upper
 %               percentiles of RTs to consider (default=[0,100])
 %   'lim'       a 2-element vector specifying the lower and upper RT limits
@@ -63,7 +65,15 @@ function [bemp,bpred] = rsebenefit3(x,y,z,xyz,varargin)
 %   Apr 2017; Last Revision: 4-Apr-2019
 
 % Decode input variable arguments
-[p,per,lim,dep,test,area] = decode_varargin(varargin);
+[p,outlier,per,lim,dep,test,area] = decode_varargin(varargin);
+
+% Outlier correction procedure
+if ~isempty(outlier)
+    x(x<outlier(1)|x>outlier(2)) = [];
+    y(y<outlier(1)|y>outlier(2)) = [];
+    z(z<outlier(1)|z>outlier(2)) = [];
+    xyz(xyz<outlier(1)|xyz>outlier(2)) = [];
+end
 
 % Get RT range for each condition
 lims = zeros(4,2);
@@ -104,14 +114,14 @@ if dep == 0 % Raab's Model
     Fxy = Fx+Fy-Fx.*Fy;
     Frace = Fxy+Fz-Fxy.*Fz;
 elseif dep == -1 % Miller's Bound
-    Frace = Fx+Fy+Fz;
+    Frace = min(Fx+Fy+Fz,ones(size(Fxyz)));
 end
 
 % Compute percentiles for horizontal test
 if strcmpi(test,'hor')
-    Fxyz = cfp2per(Fxyz,p,lim(2));
-    Fmax = cfp2per(Fmax,p,lim(2));
-    Frace = cfp2per(Frace,p,lim(2));
+    Fxyz = cfp2per(Fxyz,p);
+    Fmax = cfp2per(Fmax,p);
+    Frace = cfp2per(Frace,p);
 end
 
 % Compute difference
@@ -138,7 +148,7 @@ if nargout > 1
     
 end
 
-function [p,per,lim,dep,test,area] = decode_varargin(varargin)
+function [p,outlier,per,lim,dep,test,area] = decode_varargin(varargin)
 %decode_varargin Decode input variable arguments.
 %   [PARAM1,PARAM2,...] = DECODE_VARARGIN('PARAM1',VAL1,'PARAM2',VAL2,...)
 %   decodes the input variable arguments of the main function.
@@ -151,6 +161,14 @@ if any(strcmpi(varargin,'p')) && ~isempty(varargin{find(strcmpi(varargin,'p'))+1
     end
 else
     p = 0.05:0.1:0.95; % default: 0.05 to 0.95 in 0.1 increments
+end
+if any(strcmpi(varargin,'outlier')) && ~isempty(varargin{find(strcmpi(varargin,'outlier'))+1})
+    outlier = varargin{find(strcmpi(varargin,'outlier'))+1};
+    if ~isnumeric(outlier) || isscalar(outlier) || any(isnan(outlier)) || any(isinf(outlier)) || any(outlier<0) || outlier(1)>=outlier(2)
+        error('OUTLIER must be a 2-element vector of positive values.')
+    end
+else
+    outlier = []; % default: unspecified
 end
 if any(strcmpi(varargin,'per')) && ~isempty(varargin{find(strcmpi(varargin,'per'))+1})
     per = varargin{find(strcmpi(varargin,'per'))+1};

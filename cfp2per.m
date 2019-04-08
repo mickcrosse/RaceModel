@@ -1,9 +1,8 @@
-function [Fx] = cfp2per(Gx,q,rtmax)
+function [Gxp] = cfp2per(Gx,p)
 %cfp2per Convert cumulative frequency polygon to percentiles.
-%   FX = CFP2PER(GX,Q,RTMAX) returns the percentiles of the cumulative
-%   frequency polygon GX for the quantiles Q between the minimum RT value
-%   and RTMAX as described in Ulrich et al. (2007). This funciton was
-%   adapted from the code described in Appendix B, Ulrich et al. (2007).
+%   GXP = CFP2PER(GX,P) returns the percentiles of the cumulative frequency
+%   polygon GX for the probabilities P. This function was adapted from the
+%   code described in Appendix B, Ulrich et al. (2007).
 %
 %   See also RT2CFP, RT2CDF, RACEMODEL, SWITCHCOST, GETAUC.
 %
@@ -11,8 +10,8 @@ function [Fx] = cfp2per(Gx,q,rtmax)
 
 %   References:
 %       [1] Ulrich R, Miller J, Schroter H (2007) Testing the race model
-%           inequality: An algorithm and computer programs. Behav Res Meth
-%           39(2):291-302.
+%           inequality: An algorithm and computer programs. Behav Res
+%           Methods 39(2):291-302.
 
 %   Author: Mick Crosse
 %   Email: mickcrosse@gmail.com
@@ -20,22 +19,17 @@ function [Fx] = cfp2per(Gx,q,rtmax)
 %   Albert Einstein College of Medicine, NY
 %   Apr 2017; Last Revision: 4-Apr-2019
 
-% Round max RT value
-rtmax = round(rtmax);
+% Set default values
+if nargin < 2 || isempty(p)
+    p = 0.05:0.1:0.95;
+end
 
-% Compute RT value at each percentile
-Fx = zeros(length(q),1);
-for i = 1:length(q)
-    clim = 100;
-    for t = 1:rtmax
-        if abs(Gx(t)-q(i)) < clim
-            c = t;
-            clim = abs(Gx(t)-q(i));
-        end
-    end
-    if q(i) > Gx(c)
-        Fx(i) = c+(q(i)-Gx(c))/(Gx(c+1)-Gx(c));
-    else
-        Fx(i) = c+(q(i)-Gx(c))/(Gx(c)-Gx(c-1));
-    end
+% Get number of probabilities
+np = length(p);
+
+% Compute percentiles using linear interpolation
+Gxp = zeros(np,1);
+for i = 1:np
+    idx = find(Gx<=p(i),1,'last');
+    Gxp(i) = idx+(p(i)-Gx(idx))/(Gx(idx+1)-Gx(idx));
 end

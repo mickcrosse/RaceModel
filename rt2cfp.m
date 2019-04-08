@@ -2,10 +2,10 @@ function Gx = rt2cfp(x,rtmax)
 %rt2cfp Convert reaction times to a cumulative frequency polygon.
 %   GX = RT2CFP(X,RTMAX) returns the cumulative frequency polygon of the RT
 %   distribution X for every integer value between zero and RTMAX. GX is
-%   obtained by generating a step function with the sorted values of X,
+%   obtained by generating a step function using the sorted values of X,
 %   calculating the midpoint of each vertical step segment and linearly
-%   interpolating between adjacent midpoints. For mathematical description,
-%   see Appendix A, Ulrich et al. (2007).
+%   interpolating between adjacent midpoints. For a mathematical
+%   description, see Appendix A, Ulrich et al. (2007).
 %
 %   See also CFP2PER, RT2CDF, RACEMODEL, SWITCHCOST, GETAUC.
 %
@@ -13,8 +13,8 @@ function Gx = rt2cfp(x,rtmax)
 
 %   References:
 %       [1] Ulrich R, Miller J, Schroter H (2007) Testing the race model
-%           inequality: An algorithm and computer programs. Behav Res Meth
-%           39(2):291-302.
+%           inequality: An algorithm and computer programs. Behav Res
+%           Methods 39(2):291-302.
 
 %   Author: Mick Crosse
 %   Email: mickcrosse@gmail.com

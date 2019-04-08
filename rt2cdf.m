@@ -1,15 +1,15 @@
 function [Fx,q] = rt2cdf(x,p,lim)
 %rt2cdf Convert reaction times to cumulative probabilities.
 %   FX = RT2CDF(X,P,LIM) returns the cumulative distribution function (CDF)
-%   of the RT distribution X for the set of quantiles between the RT limits 
-%   LIM corresponding to the probabilities P. P must be a vector of values 
-%   between 0 and 1 and LIM must be a 2-element vector containing the lower 
-%   and upper RT limits. CDFs drawn from different samples can be averaged 
-%   as long as the same probabilities were used to compute the quantiles 
-%   (Ratcliff, 1979). This function treats NaNs as missing values, and 
+%   of the RT distribution X for the set of quantiles corresponding to the
+%   probabilities P between the RT limits LIM. P must be a vector of values
+%   between 0 and 1 and LIM must be a 2-element vector containing the lower
+%   and upper RT limits. CDFs drawn from different samples can be averaged
+%   as long as the same probabilities were used to compute the quantiles
+%   (Ratcliff, 1979). This function treats NaNs as missing values, and
 %   ignores them.
-% 
-%   [...,Q] = RT2CDF(...) returns the quantiles used to compute the CDF.
+%
+%   [...,Q] = RT2CDF(...) returns the RT quantiles used to compute the CDF.
 %
 %   See also RT2CFP, CFP2PER, RACEMODEL, SWITCHCOST, GETAUC.
 %
@@ -17,7 +17,8 @@ function [Fx,q] = rt2cdf(x,p,lim)
 
 %   References:
 %       [1] Ratcliff R (1979) Group reaction time distributions and an
-%           analysis of distribution statistics. Psychol Bull 86(3):446-461.
+%           analysis of distribution statistics. Psychol Bull
+%           86(3):446-461.
 
 %   Author: Mick Crosse
 %   Email: mickcrosse@gmail.com

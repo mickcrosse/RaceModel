@@ -11,8 +11,8 @@ function [MSE,Fdiff,q] = switchcost(sw,re,varargin)
 %   FDIFF = SWITCHCOST(...) returns the difference between the CDFs of the
 %   switch and repeat trials at every quantile.
 %
-%   [...,Q] = SWITCHCOST(...) returns the quantiles used to compute the
-%   CDFs.
+%   [...,Q] = SWITCHCOST(...) returns the RT quantiles used to compute the
+%   CDFs for the vertical test.
 %
 %   [...] = SWITCHCOST(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
 %   additional parameters and their values. Valid parameters are the
@@ -22,6 +22,8 @@ function [MSE,Fdiff,q] = switchcost(sw,re,varargin)
 %   'p'         a vector specifying the probabilities for computing the
 %               quantiles of a vertical test or the percentiles of a
 %               horizontal test (default=0.05:0.1:0.95)
+%   'outlier'   a 2-element vector specifying the lower and upper RT
+%               cutoffs for outlier correction (default=no correction).
 %   'per'       a 2-element vector specifying the lower and upper
 %               percentiles of RTs to consider (default=[0,100])
 %   'lim'       a 2-element vector specifying the lower and upper RT limits
@@ -52,7 +54,13 @@ function [MSE,Fdiff,q] = switchcost(sw,re,varargin)
 %   Apr 2017; Last Revision: 4-Apr-2019
 
 % Decode input variable arguments
-[p,per,lim,test,area] = decode_varargin(varargin);
+[p,outlier,per,lim,test,area] = decode_varargin(varargin);
+
+% Outlier correction procedure
+if ~isempty(outlier)
+    sw(sw<outlier(1)|sw>outlier(2)) = [];
+    re(re<outlier(1)|re>outlier(2)) = [];
+end
 
 % Get RT range for each condition
 lims = zeros(3,2);
@@ -79,8 +87,8 @@ end
 
 % Compute percentiles for horizontal test
 if strcmpi(test,'hor')
-    Fsw = cfp2per(Fsw,p,lim(2));
-    Fre = cfp2per(Fre,p,lim(2));
+    Fsw = cfp2per(Fsw,p);
+    Fre = cfp2per(Fre,p);
 end
 
 % Compute difference
@@ -93,7 +101,7 @@ end
 % Compute MSE
 MSE = getauc(p,Fdiff,area);
 
-function [p,per,lim,test,area] = decode_varargin(varargin)
+function [p,outlier,per,lim,test,area] = decode_varargin(varargin)
 %decode_varargin Decode input variable arguments.
 %   [PARAM1,PARAM2,...] = DECODE_VARARGIN('PARAM1',VAL1,'PARAM2',VAL2,...)
 %   decodes the input variable arguments of the main function.
@@ -106,6 +114,14 @@ if any(strcmpi(varargin,'p')) && ~isempty(varargin{find(strcmpi(varargin,'p'))+1
     end
 else
     p = 0.05:0.1:0.95; % default: 0.05 to 0.95 in 0.1 increments
+end
+if any(strcmpi(varargin,'outlier')) && ~isempty(varargin{find(strcmpi(varargin,'outlier'))+1})
+    outlier = varargin{find(strcmpi(varargin,'outlier'))+1};
+    if ~isnumeric(outlier) || isscalar(outlier) || any(isnan(outlier)) || any(isinf(outlier)) || any(outlier<0) || outlier(1)>=outlier(2)
+        error('OUTLIER must be a 2-element vector of positive values.')
+    end
+else
+    outlier = []; % default: unspecified
 end
 if any(strcmpi(varargin,'per')) && ~isempty(varargin{find(strcmpi(varargin,'per'))+1})
     per = varargin{find(strcmpi(varargin,'per'))+1};

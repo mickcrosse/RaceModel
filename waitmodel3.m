@@ -22,8 +22,8 @@ function [Fx,Fy,Fz,Fxyz,Fwait,Fdiff,q] = waitmodel3(x,y,z,xyz,varargin)
 %   [...,FDIFF] = WAITMODEL3(...) returns the difference between FXYZ and
 %   FWAIT to test for violations the wait model.
 %
-%   [...,Q] = WAITMODEL3(...) returns the quantiles used to compute the
-%   CDFs.
+%   [...,Q] = WAITMODEL3(...) returns the RT quantiles used to compute the
+%   CDFs for the vertical test.
 %
 %   [...] = WAITMODEL3(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
 %   additional parameters and their values. Valid parameters are the
@@ -33,6 +33,8 @@ function [Fx,Fy,Fz,Fxyz,Fwait,Fdiff,q] = waitmodel3(x,y,z,xyz,varargin)
 %   'p'         a vector specifying the probabilities for computing the
 %               quantiles of a vertical test or the percentiles of a
 %               horizontal test (default=0.05:0.1:0.95)
+%   'outlier'   a 2-element vector specifying the lower and upper RT
+%               cutoffs for outlier correction (default=no correction).
 %   'per'       a 2-element vector specifying the lower and upper
 %               percentiles of RTs to consider (default=[0,100])
 %   'lim'       a 2-element vector specifying the lower and upper RT limits
@@ -67,7 +69,15 @@ function [Fx,Fy,Fz,Fxyz,Fwait,Fdiff,q] = waitmodel3(x,y,z,xyz,varargin)
 %   Apr 2017; Last Revision: 4-Apr-2019
 
 % Decode input variable arguments
-[p,per,lim,dep,test] = decode_varargin(varargin);
+[p,outlier,per,lim,dep,test] = decode_varargin(varargin);
+
+% Outlier correction procedure
+if ~isempty(outlier)
+    x(x<outlier(1)|x>outlier(2)) = [];
+    y(y<outlier(1)|y>outlier(2)) = [];
+    z(z<outlier(1)|z>outlier(2)) = [];
+    xyz(xyz<outlier(1)|xyz>outlier(2)) = [];
+end
 
 % Get RT range for each condition
 lims = zeros(4,2);
@@ -105,21 +115,21 @@ if nargout > 4
     if dep == 0 % Wait Model
         Fwait = Fx.*Fy.*Fz;
     elseif dep == -1 % Colonius's Lower Bound
-        Fwait = max([Fx+Fy+Fz-2,zeros(size(Fxyz))],2);
+        Fwait = max(Fx+Fy+Fz-2,zeros(size(Fxyz)));
     elseif dep == 1 % Colonius's Upper Bound
         Fwait = min([Fx,Fy,Fz],[],2);
     end
     if strcmpi(test,'hor')
-        Fwait = cfp2per(Fwait,p,lim(2));
+        Fwait = cfp2per(Fwait,p);
     end
 end
 
 % Compute percentiles for horizontal test
 if strcmpi(test,'hor')
-    Fx = cfp2per(Fx,p,lim(2));
-    Fy = cfp2per(Fy,p,lim(2));
-    Fz = cfp2per(Fz,p,lim(2));
-    Fxyz = cfp2per(Fxyz,p,lim(2));
+    Fx = cfp2per(Fx,p);
+    Fy = cfp2per(Fy,p);
+    Fz = cfp2per(Fz,p);
+    Fxyz = cfp2per(Fxyz,p);
 end
 
 % Compute difference
@@ -131,7 +141,7 @@ if nargout > 5
     end
 end
 
-function [p,per,lim,dep,test] = decode_varargin(varargin)
+function [p,outlier,per,lim,dep,test] = decode_varargin(varargin)
 %decode_varargin Decode input variable arguments.
 %   [PARAM1,PARAM2,...] = DECODE_VARARGIN('PARAM1',VAL1,'PARAM2',VAL2,...)
 %   decodes the input variable arguments of the main function.
@@ -144,6 +154,14 @@ if any(strcmpi(varargin,'p')) && ~isempty(varargin{find(strcmpi(varargin,'p'))+1
     end
 else
     p = 0.05:0.1:0.95; % default: 0.05 to 0.95 in 0.1 increments
+end
+if any(strcmpi(varargin,'outlier')) && ~isempty(varargin{find(strcmpi(varargin,'outlier'))+1})
+    outlier = varargin{find(strcmpi(varargin,'outlier'))+1};
+    if ~isnumeric(outlier) || isscalar(outlier) || any(isnan(outlier)) || any(isinf(outlier)) || any(outlier<0) || outlier(1)>=outlier(2)
+        error('OUTLIER must be a 2-element vector of positive values.')
+    end
+else
+    outlier = []; % default: unspecified
 end
 if any(strcmpi(varargin,'per')) && ~isempty(varargin{find(strcmpi(varargin,'per'))+1})
     per = varargin{find(strcmpi(varargin,'per'))+1};

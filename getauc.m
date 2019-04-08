@@ -33,7 +33,7 @@ if size(y,2)>1, y = y'; end
 if ~strcmpi(p,'all')
     
     % Invert signal to get negative area
-    if strcmpi(p,'neg')
+    if strcmpi(p,'neg') || strcmpi(p,'negative')
         y = -y;
     end
     
@@ -61,7 +61,7 @@ if ~strcmpi(p,'all')
     y(neg) = 0;
     
     % Invert signal again for negative area
-    if strcmpi(p,'neg')
+    if strcmpi(p,'neg') || strcmpi(p,'negative')
         y = -y;
     end
     
