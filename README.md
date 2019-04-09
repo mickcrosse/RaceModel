@@ -8,11 +8,14 @@ RaceModel can perform both vertical and horizontal tests of the race model and c
  * racemodel.m - perform test of the race model
  * rsegain.m - compute multisensory gain
  * rsebenefit.m - compute empirical and predicted benefits
+ * competemodel.m - compute benefit predicted by competive interactions
+ * waitmodel.m - compute AND model for exhaustive processing
  
  ### Trisensory test
  * racemodel3.m - perform test of the race model
  * rsegain3.m - compute multisensory gain
  * rsebenefit3.m - compute empirical and predicted benefits
+ * waitmodel3.m - compute AND model for exhaustive processing
  
  ### Behavioral measures
  * switchcost.m - compute modality switch effects
