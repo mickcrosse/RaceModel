@@ -135,13 +135,13 @@ end
 Fmax = max(Fx,Fy);
 
 % Compute competition model
-if strcmpi(bias,'1X')
+if strcmpi(bias,'1X') % X bias
     Fcomp = (Fxx+Fxy+Fxxy)/3;
-elseif strcmpi(bias,'1Y')
+elseif strcmpi(bias,'1Y') % Y bias
     Fcomp = (Fyx+Fyy+Fyxy)/3;
-elseif strcmpi(bias,'2X')
+elseif strcmpi(bias,'2X') % n-1 and X bias
     Fcomp = (Fxx+Fyy+Fxxy)/3;
-elseif strcmpi(bias,'2Y')
+elseif strcmpi(bias,'2Y') % n-1 and Y bias
     Fcomp = (Fxx+Fyy+Fyxy)/3;
 end
 
