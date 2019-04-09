@@ -4,8 +4,8 @@ function gain = rsegain(x,y,xy,varargin)
 %   signals effect (RSE), quantified by the area between the cumulative
 %   distribution functions of the bisensory RT distribution XY, and the
 %   race model based on the unisensory RT distributions X and Y (Miller,
-%   1986; Colonius & Diederich, 2006). X, Y and XY are not required to have 
-%   an equal number of observations. This function treats NaNs as missing 
+%   1986; Colonius & Diederich, 2006). X, Y and XY are not required to have
+%   an equal number of observations. This function treats NaNs as missing
 %   values, and ignores them.
 %
 %   [...] = RSEGAIN(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
@@ -26,11 +26,11 @@ function gain = rsegain(x,y,xy,varargin)
 %               (default=[min([X,Y,XY]),max([X,Y,XY])])
 %   'dep'       a scalar specifying the model's assumption of statistical
 %               dependence between sensory channels: pass in 0 to assume
-%               independence (Raab, 1962; default) and -1 to assume a
-%               perfect negative dependence (Miller, 1982)
+%               independence (Raab's model; default), and -1 to assume 
+%               perfect negative dependence (Miller's bound)
 %   'test'      a string specifying how to test the race model
 %                   'ver'       vertical test (default)
-%                   'hor'       horizontal test
+%                   'hor'       horizontal test (Ulrich et al., 2007)
 %   'area'      a string specifying how to compute the area under the curve
 %                   'all'       use all values (default)
 %                   'pos'       use only positive values
@@ -50,6 +50,9 @@ function gain = rsegain(x,y,xy,varargin)
 %           times. Trans NY Acad Sci 24(5):574-590.
 %       [4] Miller J (1982) Divided attention: Evidence for coactivation
 %           with redundant signals. Cogn Psychol 14(2):247-279.
+%       [5] Ulrich R, Miller J, Schroter H (2007) Testing the race model
+%           inequality: An algorithm and computer programs. Behav Res
+%           Methods 39(2):291-302.
 
 %   Author: Mick Crosse
 %   Email: mickcrosse@gmail.com

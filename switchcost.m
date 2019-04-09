@@ -12,7 +12,8 @@ function [MSE,Fdiff,q] = switchcost(sw,re,varargin)
 %   switch and repeat trials at every quantile.
 %
 %   [...,Q] = SWITCHCOST(...) returns the RT quantiles used to compute the
-%   CDFs for the vertical test.
+%   CDFs for the vertical test and the probabilities used to compute the 
+%   percentiles for the horizontal test.
 %
 %   [...] = SWITCHCOST(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
 %   additional parameters and their values. Valid parameters are the
@@ -32,7 +33,7 @@ function [MSE,Fdiff,q] = switchcost(sw,re,varargin)
 %               (default=[min([SW,RE]),max([SW,RE])])
 %   'test'      a string specifying how to test the MSE
 %                   'ver'       vertical test (default)
-%                   'hor'       horizontal test
+%                   'hor'       horizontal test (Ulrich et al., 2007)
 %   'area'      a string specifying how to compute the area under the curve
 %                   'all'       use all values (default)
 %                   'pos'       use only positive values
@@ -100,6 +101,12 @@ end
 
 % Compute MSE
 MSE = getauc(p,Fdiff,area);
+
+% Get probabilities for horizontal test
+if nargout > 2 &&  strcmpi(test,'hor')
+    q = p;
+end
+
 
 function [p,outlier,per,lim,test,area] = decode_varargin(varargin)
 %decode_varargin Decode input variable arguments.

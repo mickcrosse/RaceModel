@@ -1,17 +1,17 @@
 function bpred = competemodel(Xx,Xy,Xxy,Yx,Yy,Yxy,varargin)
 %competemodel Multisensory benefit predicted by competition models.
-%   BPRED = COMPETEMODEL(XX,XY,XXY,YX,YY,YXY) returns the predicted benefit
-%   of multisensory competition, quantified by the area between the CDFs of
+%   BPRED = COMPETEMODEL(XX,XY,XXY,YX,YY,YXY) returns the benefit predicted
+%   by multisensory competition, quantified by the area between the CDFs of
 %   the most effective of the unisensory RT distributions X and Y, and the
-%   competition model biased towards X. Unisensory RT distributions X and Y
-%   should be separated by previous modality: XX, XY, XXY and YX, YY, YXY,
-%   respectively. Competition can be modelled as a bias towards a specific
-%   (i.e., dominant) modality (X or Y) or a bias towards the previous
-%   modality (n-1), except when the previous modality is XY (biased towards
-%   either X or Y). For a mathematical description, see Crosse et al.
-%   (2019). XX, XY, XXY, YX, YY and YXY are not required to have an equal
-%   number of observations. This function treats NaNs as missing values,
-%   and ignores them.
+%   competition model (default: biased towards modality X). Unisensory RT
+%   distributions X and Y should be separated by previous modality: XX, XY,
+%   XXY and YX, YY, YXY, respectively. Competition can be modelled as
+%   either a bias towards a specific (i.e., dominant) modality (X or Y) or
+%   a bias towards the previous modality (n-1), except when the previous
+%   modality is XY (biased towards either X or Y). For a mathematical
+%   description, see Crosse et al. (2019). XX, XY, XXY, YX, YY and YXY are
+%   not required to have an equal number of observations. This function
+%   treats NaNs as missing values, and ignores them.
 %
 %   [...] = COMPETEMODEL(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
 %   additional parameters and their values. Valid parameters are the
@@ -29,25 +29,21 @@ function bpred = competemodel(Xx,Xy,Xxy,Yx,Yy,Yxy,varargin)
 %               for computing CDFs: it is recommended to leave this
 %               unspecified unless comparing directly to other conditions
 %               (default=[min([X,Y]),max([X,Y])])
-%   'dep'       a scalar specifying the model's assumption of statistical
-%               dependence between sensory channels: pass in 0 to assume
-%               independence (Raab, 1962; default) and -1 to assume a
-%               perfect negative dependence (Miller, 1982)
-%   'test'      a string specifying how to test the race model
+%   'bias'      a string specifying whether competition is modelled as 1)
+%               a bias towards a specific (dominant) modality (X or Y), or
+%               2) a bias towards the previous modality (n-1), except when
+%               the previous modality is XY (biased towards either X or Y)
+%                   '1X'        X bias (default)
+%                   '1Y'        Y bias
+%                   '2X'        n-1 bias (and X bias when n-1=XY)
+%                   '2Y'        n-1 bias (and Y bias when n-1=XY)
+%   'test'      a string specifying how to test the competition model
 %                   'ver'       vertical test (default)
-%                   'hor'       horizontal test
+%                   'hor'       horizontal test (Ulrich et al., 2007)
 %   'area'      a string specifying how to compute the area under the curve
 %                   'all'       use all values (default)
 %                   'pos'       use only positive values
 %                   'neg'       use only negative values
-%   'model'     a string specifying whether competition is modelled as 1)
-%               a bias towards a specific (dominant) modality (X or Y), or
-%               2) a bias towards the previous modality (n-1), except when
-%               the previous modality is XY (biased towards either X or Y)
-%                   '1X'        X bias for all trials (default)
-%                   '1Y'        Y bias for all trials
-%                   '2X'        n-1 bias and X bias when previous is XY
-%                   '2Y'        n-1 bias and Y bias when previous is XY
 %
 %   See also COMPETEMODEL3, RSEBENEFIT, RSEGAIN, TPERMTEST, EFFECTSIZE.
 %
@@ -67,7 +63,7 @@ function bpred = competemodel(Xx,Xy,Xxy,Yx,Yy,Yxy,varargin)
 %   Apr 2017; Last Revision: 4-Apr-2019
 
 % Decode input variable arguments
-[p,outlier,per,lim,test,area] = decode_varargin(varargin);
+[p,outlier,per,lim,bias,test,area] = decode_varargin(varargin);
 
 % Outlier correction procedure
 if ~isempty(outlier)
@@ -97,10 +93,10 @@ Yy = Yy(Yy>=lims(5,1) & Yy<=lims(5,2));
 Yxy = Yxy(Yxy>=lims(6,1) & Yxy<=lims(6,2));
 
 % Get pooled distributions
-if size(Xx,2) == 1
+if iscolumn(Xx)
     x = [Xx;Xy;Xxy];
     y = [Yx;Yy;Yxy];
-elseif size(Xx,1) == 1
+elseif isrow(Xx)
     x = [Xx,Xy,Xxy];
     y = [Yx,Yy,Yxy];
 end
@@ -139,9 +135,9 @@ if strcmpi(bias,'1X') % X bias
     Fcomp = (Fxx+Fxy+Fxxy)/3;
 elseif strcmpi(bias,'1Y') % Y bias
     Fcomp = (Fyx+Fyy+Fyxy)/3;
-elseif strcmpi(bias,'2X') % n-1 and X bias
+elseif strcmpi(bias,'2X') % n-1 bias (and X bias when n-1=XY)
     Fcomp = (Fxx+Fyy+Fxxy)/3;
-elseif strcmpi(bias,'2Y') % n-1 and Y bias
+elseif strcmpi(bias,'2Y') % n-1 bias (and Y bias when n-1=XY)
     Fcomp = (Fxx+Fyy+Fyxy)/3;
 end
 
@@ -161,7 +157,7 @@ end
 % Compute predicted benefit
 bpred = getauc(p,Fdiff,area);
 
-function [p,outlier,per,lim,test,area] = decode_varargin(varargin)
+function [p,outlier,per,lim,bias,test,area] = decode_varargin(varargin)
 %decode_varargin Decode input variable arguments.
 %   [PARAM1,PARAM2,...] = DECODE_VARARGIN('PARAM1',VAL1,'PARAM2',VAL2,...)
 %   decodes the input variable arguments of the main function.
@@ -198,6 +194,14 @@ if any(strcmpi(varargin,'lim')) && ~isempty(varargin{find(strcmpi(varargin,'lim'
     end
 else
     lim = []; % default: unspecified
+end
+if any(strcmpi(varargin,'bias')) && ~isempty(varargin{find(strcmpi(varargin,'bias'))+1})
+    bias = varargin{find(strcmpi(varargin,'bias'))+1};
+    if ~any(strcmpi(bias,{'1X','1Y','2X','2Y'}))
+        error('Invalid value for argument BIAS. Valid values are: ''1X'', ''1Y'', ''2X'', ''2Y''.')
+    end
+else
+    bias = '1X'; % default: X bias
 end
 if any(strcmpi(varargin,'test')) && ~isempty(varargin{find(strcmpi(varargin,'test'))+1})
     test = varargin{find(strcmpi(varargin,'test'))+1};

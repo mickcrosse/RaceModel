@@ -12,18 +12,20 @@ function [Fx,Fy,Fz,Fxyz,Frace,Fdiff,q] = racemodel3(x,y,z,xyz,varargin)
 %   bisensory RTs. To compare across bisensory and trisensory conditions,
 %   use the same RT limits (see below).
 %
-%   [...,FRACE] = RACEMODEL3(...) returns the race model based on
-%   probability summation of X, Y and Z (Colonius et al., 2017). By
-%   default, channel independence is assumed (Raab, 1962). For valid
-%   estimates of FRACE, the stimuli used to generate X, Y, Z and XYZ should
-%   be presented in random order to meet the assumption of context
-%   invariance.
+%   [...,FRACE] = RACEMODEL3(...) returns the race model based on the
+%   probability summation of X and Y (Raab, 1962). By default, the model
+%   assumes statistical independence between RTs on different sensory
+%   channels, but this assumption can be specified using the DEP argument
+%   (see below). For valid estimates of FRACE, the stimuli used to generate
+%   X, Y and XY should be presented in random order to meet the assumption
+%   of context invariance.
 %
 %   [...,FDIFF] = RACEMODEL3(...) returns the difference between FXYZ and
-%   FRACE to test for violations the race model (Colonius et al., 2017).
+%   FRACE to test for violations the race model (Miller, 1982).
 %
 %   [...,Q] = RACEMODEL3(...) returns the RT quantiles used to compute the
-%   CDFs for the vertical test.
+%   CDFs for the vertical test and the probabilities used to compute the
+%   percentiles for the horizontal test.
 %
 %   [...] = RACEMODEL3(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
 %   additional parameters and their values. Valid parameters are the
@@ -43,28 +45,34 @@ function [Fx,Fy,Fz,Fxyz,Frace,Fdiff,q] = racemodel3(x,y,z,xyz,varargin)
 %               (default=[min([X,Y,Z,XYZ]),max([X,Y,Z,XYZ])])
 %   'dep'       a scalar specifying the model's assumption of statistical
 %               dependence between sensory channels: pass in 0 to assume
-%               independence (Raab, 1962; default), -1 to assume a perfect
-%               negative dependence (Miller, 1982) and 1 to assume a
-%               perfect positive dependence (Grice et al., 1984)
+%               independence (Raab's model; default), -1 to assume perfect
+%               negative dependence (Diederich's bound) and 1 to assume
+%               perfect positive dependence (Grice's bound)
 %   'test'      a string specifying how to test the race model
 %                   'ver'       vertical test (default)
-%                   'hor'       horizontal test
+%                   'hor'       horizontal test (Ulrich et al., 2007)
+%   'sharp'     a scalar specifying whether or not to sharpen the overly
+%               conservative upper bound: pass in 1 to sharpen (Diederich's
+%               bound; default) and 0 to not (Miller's bound)
 %
 %   See also RACEMODEL, RSEGAIN3, RSEBENEFIT3, TPERMTEST, EFFECTSIZE.
 %
 %   RaceModel https://github.com/mickcrosse/RaceModel
 
 %   References:
-%       [1] Colonius H, Wolff FH, Diederich A (2017) Trimodal race model
-%           inequalities in multisensory integration: I. Basics. Front
-%           Psychol 8:1141.
-%       [2] Raab DH (1962) Statistical facilitation of simple reaction
+%       [1] Raab DH (1962) Statistical facilitation of simple reaction
 %           times. Trans NY Acad Sci 24(5):574-590.
-%       [3] Miller J (1982) Divided attention: Evidence for coactivation
+%       [2] Miller J (1982) Divided attention: Evidence for coactivation
 %           with redundant signals. Cogn Psychol 14(2):247-279.
+%       [3] Diederich A (1992) Probability inequalities for testing
+%           separate activation models of divided attention. Percept
+%           Psychophys 14(2):247-279.
 %       [4] Grice GR, Canham L, Gwynne JW (1984) Absence of a redundant-
 %           signals effect in a reaction time task with divided attention.
 %           Percept Psychophys 36:565-570.
+%       [5] Ulrich R, Miller J, Schroter H (2007) Testing the race model
+%           inequality: An algorithm and computer programs. Behav Res
+%           Methods 39(2):291-302.
 
 %   Author: Mick Crosse
 %   Email: mickcrosse@gmail.com
@@ -73,7 +81,7 @@ function [Fx,Fy,Fz,Fxyz,Frace,Fdiff,q] = racemodel3(x,y,z,xyz,varargin)
 %   Apr 2017; Last Revision: 4-Apr-2019
 
 % Decode input variable arguments
-[p,outlier,per,lim,dep,test] = decode_varargin(varargin);
+[p,outlier,per,lim,dep,test,sharp] = decode_varargin(varargin);
 
 % Outlier correction procedure
 if ~isempty(outlier)
@@ -119,8 +127,13 @@ if nargout > 4
     if dep == 0 % Raab's Model
         Fxy = Fx+Fy-Fx.*Fy;
         Frace = Fxy+Fz-Fxy.*Fz;
-    elseif dep == -1 % Miller's Bound
-        Frace = min(Fx+Fy+Fz,ones(size(Fxyz)));
+    elseif dep == -1
+        if sharp == 1 % Diederich's Bound
+            Fxy = Fx+Fy-Fx.*Fy; Fyz = Fy+Fz-Fy.*Fz;
+            Frace = min(Fxy+Fyz-Fy,ones(size(Fxyz)));
+        elseif sharp == 0 % Miller's Bound
+            Frace = min(Fx+Fy+Fz,ones(size(Fxyz)));
+        end
     elseif dep == 1 % Grice's Bound
         Frace = max([Fx,Fy,Fz],[],2);
     end
@@ -146,7 +159,12 @@ if nargout > 5
     end
 end
 
-function [p,outlier,per,lim,dep,test] = decode_varargin(varargin)
+% Get probabilities for horizontal test
+if nargout > 6 &&  strcmpi(test,'hor')
+    q = p;
+end
+
+function [p,outlier,per,lim,dep,test,sharp] = decode_varargin(varargin)
 %decode_varargin Decode input variable arguments.
 %   [PARAM1,PARAM2,...] = DECODE_VARARGIN('PARAM1',VAL1,'PARAM2',VAL2,...)
 %   decodes the input variable arguments of the main function.
@@ -199,4 +217,12 @@ if any(strcmpi(varargin,'test')) && ~isempty(varargin{find(strcmpi(varargin,'tes
     end
 else
     test = 'ver'; % default: vertical test
+end
+if any(strcmpi(varargin,'sharp')) && ~isempty(varargin{find(strcmpi(varargin,'sharp'))+1})
+    sharp = varargin{find(strcmpi(varargin,'sharp'))+1};
+    if sharp~=0 && sharp~=1
+        error('SHARP must be a scalar with a value of 0 or 1.')
+    end
+else
+    sharp = 1; % default: sharpen (Diederich's Bound)
 end

@@ -10,8 +10,8 @@ function [bemp,bpred] = rsebenefit(x,y,xy,varargin)
 %
 %   [...,BPRED] = RSEBENEFIT(...) returns the predicted benefit of an RSE,
 %   quantified by the area between the CDFs of the most effective of the
-%   unisensory RT distributions X and Y, and the race model based on X and
-%   Y (Otto et al., 2013).
+%   unisensory RT distributions X and Y, and the race model based on the 
+%   probability summation of X and Y (Otto et al., 2013).
 %
 %   [...] = RSEBENEFIT(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
 %   additional parameters and their values. Valid parameters are the
@@ -31,11 +31,11 @@ function [bemp,bpred] = rsebenefit(x,y,xy,varargin)
 %               (default=[min([X,Y,XY]),max([X,Y,XY])])
 %   'dep'       a scalar specifying the model's assumption of statistical
 %               dependence between sensory channels: pass in 0 to assume
-%               independence (Raab, 1962; default) and -1 to assume a
-%               perfect negative dependence (Miller, 1982)
+%               independence (Raab's model; default), and -1 to assume 
+%               perfect negative dependence (Miller's bound)
 %   'test'      a string specifying how to test the race model
 %                   'ver'       vertical test (default)
-%                   'hor'       horizontal test
+%                   'hor'       horizontal test (Ulrich et al., 2007)
 %   'area'      a string specifying how to compute the area under the curve
 %                   'all'       use all values (default)
 %                   'pos'       use only positive values
@@ -52,6 +52,9 @@ function [bemp,bpred] = rsebenefit(x,y,xy,varargin)
 %           times. Trans NY Acad Sci 24(5):574-590.
 %       [3] Miller J (1982) Divided attention: Evidence for coactivation
 %           with redundant signals. Cogn Psychol 14(2):247-279.
+%       [4] Ulrich R, Miller J, Schroter H (2007) Testing the race model
+%           inequality: An algorithm and computer programs. Behav Res
+%           Methods 39(2):291-302.
 
 %   Author: Mick Crosse
 %   Email: mickcrosse@gmail.com

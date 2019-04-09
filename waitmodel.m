@@ -7,17 +7,19 @@ function [Fx,Fy,Fxy,Fwait,Fdiff,q] = waitmodel(x,y,xy,varargin)
 %   function treats NaNs as missing values, and ignores them.
 %
 %   [...,FWAIT] = WAITMODEL(...) returns the wait model based on the joint
-%   probability of X and Y. By default, the wait model assumes statistical
-%   independence between sensory channels (Townsend & Eidels, 2011). For
-%   valid estimates of FWAIT, the stimuli used to generate X, Y and XY
-%   should be presented in random order to meet the assumption of context
-%   invariance.
+%   probability of X and Y (Townsend & Ashby, 1983). By default, the model
+%   assumes statistical independence between RTs on different sensory
+%   channels, but this assumption can be specified using the DEP argument
+%   (see below). For valid estimates of FWAIT, the stimuli used to generate
+%   X, Y and XY should be presented in random order to meet the assumption
+%   of context invariance.
 %
 %   [...,FDIFF] = WAITMODEL(...) returns the difference between FXY and
 %   FWAIT to test for violations the wait model.
 %
 %   [...,Q] = WAITMODEL(...) returns the RT quantiles used to compute the
-%   CDFs for the vertical test.
+%   CDFs for the vertical test and the probabilities used to compute the
+%   percentiles for the horizontal test.
 %
 %   [...] = WAITMODEL(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
 %   additional parameters and their values. Valid parameters are the
@@ -37,24 +39,26 @@ function [Fx,Fy,Fxy,Fwait,Fdiff,q] = waitmodel(x,y,xy,varargin)
 %               (default=[min([X,Y,XY]),max([X,Y,XY])])
 %   'dep'       a scalar specifying the model's assumption of statistical
 %               dependence between sensory channels: pass in 0 to assume
-%               independence (Townsend & Eidels, 2011; default), -1 to
-%               assume a perfect negative dependence and 1 to assume a
-%               perfect positive dependence (Colonius & Vorberg, 1994)
+%               independence (AND model; default), -1 to assume perfect
+%               negative dependence (Colonius's lower bound) and 1 to
+%               assume perfect positive dependence (Colonius's upper bound)
 %   'test'      a string specifying how to test the wait model
 %                   'ver'       vertical test (default)
-%                   'hor'       horizontal test
+%                   'hor'       horizontal test (Ulrich et al., 2007)
 %
 %   See also WAITMODEL3, RACEMODEL, TPERMTEST, EFFECTSIZE.
 %
 %   RaceModel https://github.com/mickcrosse/RaceModel
 
 %   References:
-%       [1] Townsend JT, Eidels A (2011) Workload capacity spaces: A
-%           unified methodology for response time measures of efficiency as
-%           workload is varied. Psychon Bull Rev 18:659–681.
-%       [2] Colonius H, Vorberg D (1994) Distribution inequalities for
-%           parallel models with unlimited capacity. J Math Psychol
-%           38:35-58.
+%       [1] Townsend JT, Ashby FG (1983) Stochastic modeling of elementary 
+%           psychological processes. Cambridge University Press.
+%       [2] Townsend JT, Wenger MJ (2004) A Theory of Interactive Parallel
+%           Processing: New Capacity Measures and Predictions for a
+%           Response Time Inequality Series. Psychol Rev 111(4):1003-1035.
+%       [3] Ulrich R, Miller J, Schroter H (2007) Testing the race model
+%           inequality: An algorithm and computer programs. Behav Res
+%           Methods 39(2):291-302.
 
 %   Author: Mick Crosse
 %   Email: mickcrosse@gmail.com
@@ -101,7 +105,7 @@ end
 
 % Compute wait model
 if nargout > 3
-    if dep == 0 % Wait Model
+    if dep == 0 % AND Model
         Fwait = Fx.*Fy;
     elseif dep == -1 % Colonius's Lower Bound
         Fwait = max(Fx+Fy-1,zeros(size(Fxy)));
@@ -127,6 +131,11 @@ if nargout > 4
     elseif strcmpi(test,'hor')
         Fdiff = Fwait-Fxy;
     end
+end
+
+% Get probabilities for horizontal test
+if nargout > 5 &&  strcmpi(test,'hor')
+    q = p;
 end
 
 function [p,outlier,per,lim,dep,test] = decode_varargin(varargin)

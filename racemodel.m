@@ -6,17 +6,20 @@ function [Fx,Fy,Fxy,Frace,Fdiff,q] = racemodel(x,y,xy,varargin)
 %   XY are not required to have an equal number of observations. This
 %   function treats NaNs as missing values, and ignores them.
 %
-%   [...,FRACE] = RACEMODEL(...) returns the race model based on
-%   probability summation of X and Y. By default, channel independence is
-%   assumed (Raab, 1962). For valid estimates of FRACE, the stimuli used to
-%   generate X, Y and XY should be presented in random order to meet the
-%   assumption of context invariance.
+%   [...,FRACE] = RACEMODEL(...) returns the race model based on the
+%   probability summation of X and Y (Raab, 1962). By default, the model
+%   assumes statistical independence between RTs on different sensory
+%   channels, but this assumption can be specified using the DEP argument
+%   (see below). For valid estimates of FRACE, the stimuli used to generate
+%   X, Y and XY should be presented in random order to meet the assumption
+%   of context invariance.
 %
 %   [...,FDIFF] = RACEMODEL(...) returns the difference between FXY and
 %   FRACE to test for violations the race model (Miller, 1982).
 %
 %   [...,Q] = RACEMODEL(...) returns the RT quantiles used to compute the
-%   CDFs for the vertical test.
+%   CDFs for the vertical test and the probabilities used to compute the
+%   percentiles for the horizontal test.
 %
 %   [...] = RACEMODEL(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
 %   additional parameters and their values. Valid parameters are the
@@ -36,12 +39,12 @@ function [Fx,Fy,Fxy,Frace,Fdiff,q] = racemodel(x,y,xy,varargin)
 %               (default=[min([X,Y,XY]),max([X,Y,XY])])
 %   'dep'       a scalar specifying the model's assumption of statistical
 %               dependence between sensory channels: pass in 0 to assume
-%               independence (Raab, 1962; default), -1 to assume a perfect
-%               negative dependence (Miller, 1982) and 1 to assume a
-%               perfect positive dependence (Grice et al., 1984)
+%               independence (Raab's model; default), -1 to assume perfect
+%               negative dependence (Miller's bound) and 1 to assume
+%               perfect positive dependence (Grice's bound)
 %   'test'      a string specifying how to test the race model
 %                   'ver'       vertical test (default)
-%                   'hor'       horizontal test
+%                   'hor'       horizontal test (Ulrich et al., 2007)
 %
 %   See also RACEMODEL3, RSEGAIN, RSEBENEFIT, TPERMTEST, EFFECTSIZE.
 %
@@ -55,6 +58,9 @@ function [Fx,Fy,Fxy,Frace,Fdiff,q] = racemodel(x,y,xy,varargin)
 %       [3] Grice GR, Canham L, Gwynne JW (1984) Absence of a redundant-
 %           signals effect in a reaction time task with divided attention.
 %           Percept Psychophys 36:565-570.
+%       [4] Ulrich R, Miller J, Schroter H (2007) Testing the race model
+%           inequality: An algorithm and computer programs. Behav Res
+%           Methods 39(2):291-302.
 
 %   Author: Mick Crosse
 %   Email: mickcrosse@gmail.com
@@ -127,6 +133,11 @@ if nargout > 4
     elseif strcmpi(test,'hor')
         Fdiff = Frace-Fxy;
     end
+end
+
+% Get probabilities for horizontal test
+if nargout > 5 &&  strcmpi(test,'hor')
+    q = p;
 end
 
 function [p,outlier,per,lim,dep,test] = decode_varargin(varargin)

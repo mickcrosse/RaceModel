@@ -4,8 +4,8 @@ function [bemp,bpred] = rsebenefit3(x,y,z,xyz,varargin)
 %   redundant signals effect (RSE), quantified by the area between the
 %   cumulative distribution functions (CDFs) of the most effective of the
 %   unisensory RT distributions X, Y and Z, and the trisensory RT
-%   distribution XYZ (Otto et al., 2013). X, Y, Z and XYZ are not required 
-%   to have an equal number of observations. This function treats NaNs as 
+%   distribution XYZ (Otto et al., 2013). X, Y, Z and XYZ are not required
+%   to have an equal number of observations. This function treats NaNs as
 %   missing values, and ignores them.
 %
 %   To compute the benefit for the bisensory conditions XY, XZ and YZ, use
@@ -16,7 +16,7 @@ function [bemp,bpred] = rsebenefit3(x,y,z,xyz,varargin)
 %   [...,BPRED] = RSEBENEFIT3(...) returns the predicted benefit of an RSE,
 %   quantified by the area between the CDFs of the most effective of the
 %   unisensory RT distributions X, Y and Z, and the trisensory race model
-%   based on X, Y and Z (Otto et al., 2013).
+%   based on the probability summation of X, Y and Z (Otto et al., 2013).
 %
 %   [...] = RSEBENEFIT3(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
 %   additional parameters and their values. Valid parameters are the
@@ -36,15 +36,18 @@ function [bemp,bpred] = rsebenefit3(x,y,z,xyz,varargin)
 %               (default=[min([X,Y,Z,XYZ]),max([X,Y,Z,XYZ])])
 %   'dep'       a scalar specifying the model's assumption of statistical
 %               dependence between sensory channels: pass in 0 to assume
-%               independence (Raab, 1962; default) and -1 to assume a
-%               perfect negative dependence (Miller, 1982)
+%               independence (Raab's model; default), and -1 to assume
+%               perfect negative dependence (Miller's bound)
 %   'test'      a string specifying how to test the race model
 %                   'ver'       vertical test (default)
-%                   'hor'       horizontal test
+%                   'hor'       horizontal test (Ulrich et al., 2007)
 %   'area'      a string specifying how to compute the area under the curve
 %                   'all'       use all values (default)
 %                   'pos'       use only positive values
 %                   'neg'       use only negative values
+%   'sharp'     a scalar specifying whether or not to sharpen the overly
+%               conservative upper bound: pass in 1 to sharpen (Diederich's
+%               bound; default) and 0 to not (Miller's bound)
 %
 %   See also RSEBENEFIT, RACEMODEL3, RSEGAIN3, TPERMTEST, EFFECTSIZE.
 %
@@ -57,6 +60,9 @@ function [bemp,bpred] = rsebenefit3(x,y,z,xyz,varargin)
 %           times. Trans NY Acad Sci 24(5):574-590.
 %       [3] Miller J (1982) Divided attention: Evidence for coactivation
 %           with redundant signals. Cogn Psychol 14(2):247-279.
+%       [4] Ulrich R, Miller J, Schroter H (2007) Testing the race model
+%           inequality: An algorithm and computer programs. Behav Res
+%           Methods 39(2):291-302.
 
 %   Author: Mick Crosse
 %   Email: mickcrosse@gmail.com
@@ -65,7 +71,7 @@ function [bemp,bpred] = rsebenefit3(x,y,z,xyz,varargin)
 %   Apr 2017; Last Revision: 4-Apr-2019
 
 % Decode input variable arguments
-[p,outlier,per,lim,dep,test,area] = decode_varargin(varargin);
+[p,outlier,per,lim,dep,test,area,sharp] = decode_varargin(varargin);
 
 % Outlier correction procedure
 if ~isempty(outlier)
@@ -113,8 +119,13 @@ Fmax = max([Fx,Fy,Fz],[],2);
 if dep == 0 % Raab's Model
     Fxy = Fx+Fy-Fx.*Fy;
     Frace = Fxy+Fz-Fxy.*Fz;
-elseif dep == -1 % Miller's Bound
-    Frace = min(Fx+Fy+Fz,ones(size(Fxyz)));
+elseif dep == -1
+    if sharp == 1 % Diederich's Bound
+        Fxy = Fx+Fy-Fx.*Fy; Fyz = Fy+Fz-Fy.*Fz;
+        Frace = min(Fxy+Fyz-Fy,ones(size(Fxyz)));
+    elseif sharp == 0 % Miller's Bound
+        Frace = min(Fx+Fy+Fz,ones(size(Fxyz)));
+    end
 end
 
 % Compute percentiles for horizontal test
@@ -148,7 +159,7 @@ if nargout > 1
     
 end
 
-function [p,outlier,per,lim,dep,test,area] = decode_varargin(varargin)
+function [p,outlier,per,lim,dep,test,area,sharp] = decode_varargin(varargin)
 %decode_varargin Decode input variable arguments.
 %   [PARAM1,PARAM2,...] = DECODE_VARARGIN('PARAM1',VAL1,'PARAM2',VAL2,...)
 %   decodes the input variable arguments of the main function.
@@ -209,4 +220,12 @@ if any(strcmpi(varargin,'area')) && ~isempty(varargin{find(strcmpi(varargin,'are
     end
 else
     area = 'all'; % default: use all values
+end
+if any(strcmpi(varargin,'sharp')) && ~isempty(varargin{find(strcmpi(varargin,'sharp'))+1})
+    sharp = varargin{find(strcmpi(varargin,'sharp'))+1};
+    if sharp~=0 && sharp~=1
+        error('SHARP must be a scalar with a value of 0 or 1.')
+    end
+else
+    sharp = 1; % default: sharpen (Diederich's Bound)
 end
