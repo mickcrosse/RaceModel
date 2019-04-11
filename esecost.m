@@ -1,24 +1,19 @@
-function [Demp,Dpred] = esedeficit3(x,y,z,xyz,varargin)
-%esedeficit3 Multisensory deficit of a trisensory exhaustive search effect.
-%   DEMP = ESEDEFICIT3(X,Y,Z,XYZ) returns the empirical deficit of an
-%   exhaustive search effect (ESE), quantified by the area between the
-%   cumulative distribution functions (CDFs) of the slower of the
-%   unisensory RT distributions X, Y and Z, and the trisensory RT
-%   distribution XYZ (Otto et al., 2013). X, Y, Z and XYZ are not required
-%   to have an equal number of observations. This function treats NaNs as
-%   missing values, and ignores them.
+function [Cemp,Cpred] = esecost(x,y,xy,varargin)
+%esecost Multisensory cost of an exhaustive search effect.
+%   CEMP = ESECOST(X,Y,XY) returns the empirical cost of an exhaustive
+%   search effect (ESE), quantified by the area between the cumulative
+%   distribution functions (CDFs) of the slower of the unisensory RT
+%   distributions X and Y, and the bisensory RT distribution XY (Crosse et
+%   al., 2019). X, Y and XY are not required to have an equal number of
+%   observations. This function treats NaNs as missing values, and ignores
+%   them.
 %
-%   To compute the deficit for the bisensory conditions XY, XZ and YZ, use
-%   the function ESEDEFICIT on the corresponding unisensory and bisensory
-%   RTs. To compare across bisensory and trisensory conditions, use the
-%   same RT limits (see below).
-%
-%   [...,DPRED] = ESEDEFICIT3(...) returns the predicted deficit of an ESE,
+%   [...,CPRED] = ESECOST(...) returns the predicted cost of an ESE,
 %   quantified by the area between the CDFs of the slower of the unisensory
-%   RT distributions X, Y and Z, and the trisensory wait (AND) model based
-%   on the joint probability of X, Y and Z (Otto et al., 2013).
+%   RT distributions X and Y, and the wait (AND) model based on the joint
+%   probability of X and Y (Crosse et al., 2019).
 %
-%   [...] = ESEDEFICIT3(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
+%   [...] = ESECOST(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
 %   additional parameters and their values. Valid parameters are the
 %   following:
 %
@@ -33,7 +28,7 @@ function [Demp,Dpred] = esedeficit3(x,y,z,xyz,varargin)
 %   'lim'       a 2-element vector specifying the lower and upper RT limits
 %               for computing CDFs: it is recommended to leave this
 %               unspecified unless comparing directly to other conditions
-%               (default=[min([X,Y,Z,XYZ]),max([X,Y,Z,XYZ])])
+%               (default=[min([X,Y,XY]),max([X,Y,XY])])
 %   'dep'       a scalar specifying the model's assumption of statistical
 %               dependence between sensory channels: pass in 0 to assume
 %               independence (AND model; default), and -1 to assume perfect
@@ -45,11 +40,8 @@ function [Demp,Dpred] = esedeficit3(x,y,z,xyz,varargin)
 %                   'all'       use all values (default)
 %                   'pos'       use only positive values
 %                   'neg'       use only negative values
-%   'sharp'     a scalar specifying whether or not to sharpen the overly
-%               conservative upper bound: pass in 1 to sharpen (Diederich's
-%               bound; default) and 0 to not (Colonius's lower bound)
 %
-%   See also ESEDEFICIT, WAITMODEL3, ESELOSS3, TPERMTEST, EFFECTSIZE.
+%   See also ESECOST3, WAITMODEL, ESELOSS, TPERMTEST, EFFECTSIZE.
 %
 %   RaceModel https://github.com/mickcrosse/RaceModel
 
@@ -70,28 +62,25 @@ function [Demp,Dpred] = esedeficit3(x,y,z,xyz,varargin)
 %   Apr 2017; Last Revision: 11-Apr-2019
 
 % Decode input variable arguments
-[p,outlier,per,lim,dep,test,area,sharp] = decode_varargin(varargin);
+[p,outlier,per,lim,dep,test,area] = decode_varargin(varargin);
 
 % Outlier correction procedure
 if ~isempty(outlier)
     x(x<outlier(1)|x>outlier(2)) = [];
     y(y<outlier(1)|y>outlier(2)) = [];
-    z(z<outlier(1)|z>outlier(2)) = [];
-    xyz(xyz<outlier(1)|xyz>outlier(2)) = [];
+    xy(xy<outlier(1)|xy>outlier(2)) = [];
 end
 
 % Get RT range for each condition
-lims = zeros(4,2);
+lims = zeros(3,2);
 lims(1,:) = prctile(x,per);
 lims(2,:) = prctile(y,per);
-lims(3,:) = prctile(z,per);
-lims(4,:) = prctile(xyz,per);
+lims(3,:) = prctile(xy,per);
 
 % Limit RTs to specified range
 x = x(x>=lims(1,1) & x<=lims(1,2));
 y = y(y>=lims(2,1) & y<=lims(2,2));
-z = z(z>=lims(3,1) & z<=lims(3,2));
-xyz = xyz(xyz>=lims(4,1) & xyz<=lims(4,2));
+xy = xy(xy>=lims(3,1) & xy<=lims(3,2));
 
 % Get min and max RT limits
 if isempty(lim)
@@ -102,62 +91,55 @@ end
 if strcmpi(test,'ver')
     Fx = rt2cdf(x,p,lim);
     Fy = rt2cdf(y,p,lim);
-    Fz = rt2cdf(z,p,lim);
-    Fxyz = rt2cdf(xyz,p,lim);
+    Fxy = rt2cdf(xy,p,lim);
 elseif strcmpi(test,'hor')
     Fx = rt2cfp(x,lim(2));
     Fy = rt2cfp(y,lim(2));
-    Fz = rt2cfp(z,lim(2));
-    Fxyz = rt2cfp(xyz,lim(2));
+    Fxy = rt2cfp(xy,lim(2));
 end
 
-% Compute Colonius's upper bound
-Fmin = min([Fx,Fy,Fz],[],2);
+% Compute Grice's bound
+Fmax = max(Fx,Fy);
 
 % Compute wait model
 if dep == 0 % AND model
-    Fwait = Fx.*Fy.*Fz;
-elseif dep == -1
-    if sharp == 1 % Diederich's bound
-        Fxy = Fx.*Fy; Fyz = Fy.*Fz;
-        Fwait = min(Fxy+Fyz-Fy,ones(size(Fxyz)));
-    elseif sharp == 0 % Colonius's lower bound
-        Fwait = max(Fx+Fy+Fz-2,zeros(size(Fxyz)));
-    end
+    Fwait = Fx.*Fy;
+elseif dep == -1 % Colonius's lower bound
+    Fwait = max(Fx+Fy-1,zeros(size(Fxy)));
 end
 
 % Compute percentiles for horizontal test
 if strcmpi(test,'hor')
-    Fxyz = cfp2per(Fxyz,p);
-    Fmin = cfp2per(Fmin,p);
+    Fxy = cfp2per(Fxy,p);
+    Fmax = cfp2per(Fmax,p);
     Fwait = cfp2per(Fwait,p);
 end
 
 % Compute difference
 if strcmpi(test,'ver')
-    Femp = Fxyz-Fmin;
+    Femp = Fxy-Fmax;
 elseif strcmpi(test,'hor')
-    Femp = Fmin-Fxyz;
+    Femp = Fmax-Fxy;
 end
 
-% Compute empirical benefit
-Demp = getauc(p,Femp,area);
+% Compute empirical cost
+Cemp = getauc(p,Femp,area);
 
 if nargout > 1
     
     % Compute difference
     if strcmpi(test,'ver')
-        Fpred = Fwait-Fmin;
+        Fpred = Fwait-Fmax;
     elseif strcmpi(test,'hor')
-        Fpred = Fmin-Fwait;
+        Fpred = Fmax-Fwait;
     end
     
-    % Compute predicted benefit
-    Dpred = getauc(p,Fpred,area);
+    % Compute predicted cost
+    Cpred = getauc(p,Fpred,area);
     
 end
 
-function [p,outlier,per,lim,dep,test,area,sharp] = decode_varargin(varargin)
+function [p,outlier,per,lim,dep,test,area] = decode_varargin(varargin)
 %decode_varargin Decode input variable arguments.
 %   [PARAM1,PARAM2,...] = DECODE_VARARGIN('PARAM1',VAL1,'PARAM2',VAL2,...)
 %   decodes the input variable arguments of the main function.
@@ -218,12 +200,4 @@ if any(strcmpi(varargin,'area')) && ~isempty(varargin{find(strcmpi(varargin,'are
     end
 else
     area = 'all'; % default: use all values
-end
-if any(strcmpi(varargin,'sharp')) && ~isempty(varargin{find(strcmpi(varargin,'sharp'))+1})
-    sharp = varargin{find(strcmpi(varargin,'sharp'))+1};
-    if sharp~=0 && sharp~=1
-        error('SHARP must be a scalar with a value of 0 or 1.')
-    end
-else
-    sharp = 1; % default: sharpen (Diederich's Bound)
 end

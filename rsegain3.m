@@ -10,7 +10,7 @@ function gain = rsegain3(x,y,z,xyz,varargin)
 %
 %   To compute the gain for the bisensory conditions XY, XZ and YZ, use the
 %   function RSEGAIN on the corresponding unisensory and bisensory RTs. To
-%   compare across bisensory and trisensory conditions, use the same RT 
+%   compare across bisensory and trisensory conditions, use the same RT
 %   limits (see below).
 %
 %   [...] = RSEGAIN3(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies

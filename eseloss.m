@@ -3,8 +3,8 @@ function loss = eseloss(x,y,xy,varargin)
 %   LOSS = ESELOSS(X,Y,XY) returns the multisensory loss of an exhaustive
 %   search effect (ESE), quantified by the area between the cumulative
 %   distribution functions of the bisensory RT distribution XY, and the
-%   wait model based on the unisensory RT distributions X and Y (Townsend &
-%   Ashby, 1983). X, Y and XY are not required to have an equal number of
+%   wait model based on the unisensory RT distributions X and Y (Crosse et
+%   al., 2019). X, Y and XY are not required to have an equal number of
 %   observations. This function treats NaNs as missing values, and ignores
 %   them.
 %

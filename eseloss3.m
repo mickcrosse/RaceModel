@@ -3,14 +3,14 @@ function loss = eseloss3(x,y,z,xyz,varargin)
 %   LOSS = ESELOSS3(X,Y,Z,XYZ) returns the multisensory loss of an
 %   exhaustive search effect (ESE), quantified by the area between the
 %   cumulative distribution functions of the trisensory RT distribution
-%   XYZ, and the wait (AND) model based on the unisensory RT distributions 
-%   X, Y and Z (Townsend & Ashby, 1983). X, Y, Z and XYZ are not required 
-%   to have an equal number of observations. This function treats NaNs as
+%   XYZ, and the wait (AND) model based on the unisensory RT distributions
+%   X, Y and Z (Crosse et al., 2019). X, Y, Z and XYZ are not required to
+%   have an equal number of observations. This function treats NaNs as
 %   missing values, and ignores them.
 %
 %   To compute the loss for the bisensory conditions XY, XZ and YZ, use the
 %   function ESELOSS on the corresponding unisensory and bisensory RTs. To
-%   compare across bisensory and trisensory conditions, use the same RT 
+%   compare across bisensory and trisensory conditions, use the same RT
 %   limits (see below).
 %
 %   [...] = ESELOSS3(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
