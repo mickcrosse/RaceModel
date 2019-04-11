@@ -4,7 +4,7 @@ function [MSE,Fdiff,q] = switchcost(sw,re,varargin)
 %   response times for mixed stimulus presenation. MSE is quantified as the
 %   area between the cumulative distribution functions (CDFs) of the RT
 %   distributions of the switch trials SW, and repeat trials RE (Crosse et
-%   al., 2019). SW and RE are not required to have an equal number of
+%   al., 2019a,b). SW and RE are not required to have an equal number of
 %   observations. This function treats NaNs as missing values, and ignores
 %   them.
 %
@@ -12,7 +12,7 @@ function [MSE,Fdiff,q] = switchcost(sw,re,varargin)
 %   switch and repeat trials at every quantile.
 %
 %   [...,Q] = SWITCHCOST(...) returns the RT quantiles used to compute the
-%   CDFs for the vertical test and the probabilities used to compute the 
+%   CDFs for the vertical test and the probabilities used to compute the
 %   percentiles for the horizontal test.
 %
 %   [...] = SWITCHCOST(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
@@ -44,9 +44,15 @@ function [MSE,Fdiff,q] = switchcost(sw,re,varargin)
 %   RaceModel https://github.com/mickcrosse/RaceModel
 
 %   References:
-%       [1] Crosse MJ, Foxe JJ, Molholm S (2019) Developmental Recovery of
+%       [1] Crosse MJ, Foxe JJ, Molholm S (2019a) RaceModel: A MATLAB
+%           Package for Stochastic Modelling of Multisensory Reaction
+%           Times (In prep).
+%       [2] Crosse MJ, Foxe JJ, Molholm S (2019b) Developmental Recovery of
 %           Impaired Multisensory Processing in Autism and the Cost of
 %           Switching Sensory Modality. bioRxiv 10.1101/565333.
+%       [3] Ulrich R, Miller J, Schroter H (2007) Testing the race model
+%           inequality: An algorithm and computer programs. Behav Res
+%           Methods 39(2):291-302.
 
 %   Author: Mick Crosse
 %   Email: mickcrosse@gmail.com

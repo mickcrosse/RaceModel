@@ -1,4 +1,4 @@
-function [Fx,Fy,Fxy,Frace,Fdiff,q] = racemodel(x,y,xy,varargin)
+function [Fx,Fy,Fxy,Frace,Fdiff,q,lim] = racemodel(x,y,xy,varargin)
 %racemodel Generate a race model for bisensory reaction times.
 %   [FX,FY,FXY] = RACEMODEL(X,Y,XY) returns the cumulative distribution
 %   functions (CDFs) for the unisensory RT distributions X and Y, and the
@@ -6,7 +6,7 @@ function [Fx,Fy,Fxy,Frace,Fdiff,q] = racemodel(x,y,xy,varargin)
 %   XY are not required to have an equal number of observations. This
 %   function treats NaNs as missing values, and ignores them.
 %
-%   [...,FRACE] = RACEMODEL(...) returns the race model based on the
+%   [...,FRACE] = RACEMODEL(...) returns the race (OR) model based on the
 %   probability summation of X and Y (Raab, 1962). By default, the model
 %   assumes statistical independence between RTs on different sensory
 %   channels, but this assumption can be specified using the DEP argument
@@ -20,6 +20,10 @@ function [Fx,Fy,Fxy,Frace,Fdiff,q] = racemodel(x,y,xy,varargin)
 %   [...,Q] = RACEMODEL(...) returns the RT quantiles used to compute the
 %   CDFs for the vertical test and the probabilities used to compute the
 %   percentiles for the horizontal test.
+%
+%   [...,LIM] = RACEMODEL(...) returns the lower and upper RT limits used
+%               to compute the CDFs. These can be used to set the limits
+%
 %
 %   [...] = RACEMODEL(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
 %   additional parameters and their values. Valid parameters are the
@@ -39,7 +43,7 @@ function [Fx,Fy,Fxy,Frace,Fdiff,q] = racemodel(x,y,xy,varargin)
 %               (default=[min([X,Y,XY]),max([X,Y,XY])])
 %   'dep'       a scalar specifying the model's assumption of statistical
 %               dependence between sensory channels: pass in 0 to assume
-%               independence (Raab's model; default), -1 to assume perfect
+%               independence (OR model; default), -1 to assume perfect
 %               negative dependence (Miller's bound) and 1 to assume
 %               perfect positive dependence (Grice's bound)
 %   'test'      a string specifying how to test the race model
@@ -51,13 +55,13 @@ function [Fx,Fy,Fxy,Frace,Fdiff,q] = racemodel(x,y,xy,varargin)
 %   RaceModel https://github.com/mickcrosse/RaceModel
 
 %   References:
-%       [1] Raab DH (1962) Statistical facilitation of simple reaction
+%       [1] Crosse MJ, Foxe JJ, Molholm S (2019) RaceModel: A MATLAB
+%           Package for Stochastic Modelling of Multisensory Reaction
+%           Times (In prep).
+%       [2] Raab DH (1962) Statistical facilitation of simple reaction
 %           times. Trans NY Acad Sci 24(5):574-590.
-%       [2] Miller J (1982) Divided attention: Evidence for coactivation
+%       [3] Miller J (1982) Divided attention: Evidence for coactivation
 %           with redundant signals. Cogn Psychol 14(2):247-279.
-%       [3] Grice GR, Canham L, Gwynne JW (1984) Absence of a redundant-
-%           signals effect in a reaction time task with divided attention.
-%           Percept Psychophys 36:565-570.
 %       [4] Ulrich R, Miller J, Schroter H (2007) Testing the race model
 %           inequality: An algorithm and computer programs. Behav Res
 %           Methods 39(2):291-302.
@@ -107,11 +111,11 @@ end
 
 % Compute race model
 if nargout > 3
-    if dep == 0 % Raab's Model
+    if dep == 0 % OR model
         Frace = Fx+Fy-Fx.*Fy;
-    elseif dep == -1 % Miller's Bound
+    elseif dep == -1 % Miller's bound
         Frace = min(Fx+Fy,ones(size(Fxy)));
-    elseif dep == 1 % Grice's Bound
+    elseif dep == 1 % Grice's bound
         Frace = max(Fx,Fy);
     end
     if strcmpi(test,'hor')

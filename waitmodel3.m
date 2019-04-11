@@ -1,5 +1,5 @@
 function [Fx,Fy,Fz,Fxyz,Fwait,Fdiff,q] = waitmodel3(x,y,z,xyz,varargin)
-%waitmodel3 Generate a wait model of trisensory reaction times.
+%waitmodel3 Generate a wait model for trisensory reaction times.
 %   [FX,FY,FZ,FXYZ] = WAITMODEL3(X,Y,Z,XYZ) returns the cumulative
 %   distribution functions (CDFs) for the unisensory RT distributions X, Y
 %   and Z, and the trisensory RT distribution XYZ at 10 linearly-spaced
@@ -12,16 +12,16 @@ function [Fx,Fy,Fz,Fxyz,Fwait,Fdiff,q] = waitmodel3(x,y,z,xyz,varargin)
 %   bisensory RTs. To compare across bisensory and trisensory conditions,
 %   use the same RT limits (see below).
 %
-%   [...,FWAIT] = WAITMODEL(...) returns the wait model based on the joint
-%   probability of X, Y and Z (Townsend & Ashby, 1983). By default, the 
-%   model assumes statistical independence between RTs on different sensory
-%   channels, but this assumption can be specified using the DEP argument
-%   (see below). For valid estimates of FWAIT, the stimuli used to generate
-%   X, Y, Z and XYZ should be presented in random order to meet the
-%   assumption of context invariance.
+%   [...,FWAIT] = WAITMODEL(...) returns the wait (AND) model based on the
+%   joint probability of X, Y and Z (Townsend & Ashby, 1983). By default,
+%   the model assumes statistical independence between RTs on different
+%   sensory channels, but this assumption can be specified using the DEP
+%   argument (see below). For valid estimates of FWAIT, the stimuli used to
+%   generate X, Y, Z and XYZ should be presented in random order to meet
+%   the assumption of context invariance.
 %
 %   [...,FDIFF] = WAITMODEL3(...) returns the difference between FXYZ and
-%   FWAIT to test for violations the wait model.
+%   FWAIT to test for violations the wait model (Colonius, 1990).
 %
 %   [...,Q] = WAITMODEL3(...) returns the RT quantiles used to compute the
 %   CDFs for the vertical test and the probabilities used to compute the
@@ -45,7 +45,7 @@ function [Fx,Fy,Fz,Fxyz,Fwait,Fdiff,q] = waitmodel3(x,y,z,xyz,varargin)
 %               (default=[min([X,Y,Z,XYZ]),max([X,Y,Z,XYZ])])
 %   'dep'       a scalar specifying the model's assumption of statistical
 %               dependence between sensory channels: pass in 0 to assume
-%               independence (AND model; default), -1 to assume perfect 
+%               independence (AND model; default), -1 to assume perfect
 %               negative dependence (Diederich's bound) and 1 to assume
 %               perfect positive dependence (Colonius's upper bound)
 %   'test'      a string specifying how to test the wait model
@@ -60,16 +60,17 @@ function [Fx,Fy,Fz,Fxyz,Fwait,Fdiff,q] = waitmodel3(x,y,z,xyz,varargin)
 %   RaceModel https://github.com/mickcrosse/RaceModel
 
 %   References:
-%       [1] Townsend JT, Eidels A (2011) Workload capacity spaces: A
-%           unified methodology for response time measures of efficiency as
-%           workload is varied. Psychon Bull Rev 18:659–681.
-%       [2] Colonius H, Vorberg D (1994) Distribution inequalities for
-%           parallel models with unlimited capacity. J Math Psychol
-%           38:35-58.
-%       [2] Diederich A (1992) Probability inequalities for testing
+%       [1] Crosse MJ, Foxe JJ, Molholm S (2019) RaceModel: A MATLAB
+%           Package for Stochastic Modelling of Multisensory Reaction
+%           Times (In prep).
+%       [2] Townsend JT, Ashby FG (1983) Stochastic modeling of elementary
+%           psychological processes. Cambridge University Press.
+%       [3] Colonius H (1990) Possibly dependent probability summation of
+%           reaction time. J Math Psychol 34(3):253-275.
+%       [4] Diederich A (1992) Probability inequalities for testing
 %           separate activation models of divided attention. Percept
 %           Psychophys 14(2):247-279.
-%       [3] Ulrich R, Miller J, Schroter H (2007) Testing the race model
+%       [5] Ulrich R, Miller J, Schroter H (2007) Testing the race model
 %           inequality: An algorithm and computer programs. Behav Res
 %           Methods 39(2):291-302.
 
@@ -123,16 +124,16 @@ end
 
 % Compute wait model
 if nargout > 4
-    if dep == 0 % AND Model
+    if dep == 0 % AND model
         Fwait = Fx.*Fy.*Fz;
     elseif dep == -1
-        if sharp == 1 % Diederich's Bound
+        if sharp == 1 % Diederich's bound
             Fxy = Fx.*Fy; Fyz = Fy.*Fz;
             Fwait = min(Fxy+Fyz-Fy,ones(size(Fxyz)));
-        elseif sharp == 0 % Colonius's Lower Bound
+        elseif sharp == 0 % Colonius's lower bound
             Fwait = max(Fx+Fy+Fz-2,zeros(size(Fxyz)));
         end
-    elseif dep == 1 % Colonius's Upper Bound
+    elseif dep == 1 % Colonius's upper bound
         Fwait = min([Fx,Fy,Fz],[],2);
     end
     if strcmpi(test,'hor')

@@ -1,21 +1,21 @@
 function [Fx,Fy,Fxy,Fwait,Fdiff,q] = waitmodel(x,y,xy,varargin)
-%waitmodel Generate a wait model of bisensory reaction times.
+%waitmodel Generate a wait model for bisensory reaction times.
 %   [FX,FY,FXY] = WAITMODEL(X,Y,XY) returns the cumulative distribution
 %   functions (CDFs) for the unisensory RT distributions X and Y, and the
 %   bisensory RT distribution XY at 10 linearly-spaced quantiles. X, Y and
 %   XY are not required to have an equal number of observations. This
 %   function treats NaNs as missing values, and ignores them.
 %
-%   [...,FWAIT] = WAITMODEL(...) returns the wait model based on the joint
-%   probability of X and Y (Townsend & Ashby, 1983). By default, the model
-%   assumes statistical independence between RTs on different sensory
+%   [...,FWAIT] = WAITMODEL(...) returns the wait (AND) model based on the
+%   joint probability of X and Y (Townsend & Ashby, 1983). By default, the
+%   model assumes statistical independence between RTs on different sensory
 %   channels, but this assumption can be specified using the DEP argument
 %   (see below). For valid estimates of FWAIT, the stimuli used to generate
 %   X, Y and XY should be presented in random order to meet the assumption
 %   of context invariance.
 %
 %   [...,FDIFF] = WAITMODEL(...) returns the difference between FXY and
-%   FWAIT to test for violations the wait model.
+%   FWAIT to test for violations the wait model (Colonius, 1990).
 %
 %   [...,Q] = WAITMODEL(...) returns the RT quantiles used to compute the
 %   CDFs for the vertical test and the probabilities used to compute the
@@ -51,12 +51,14 @@ function [Fx,Fy,Fxy,Fwait,Fdiff,q] = waitmodel(x,y,xy,varargin)
 %   RaceModel https://github.com/mickcrosse/RaceModel
 
 %   References:
-%       [1] Townsend JT, Ashby FG (1983) Stochastic modeling of elementary 
+%       [1] Crosse MJ, Foxe JJ, Molholm S (2019) RaceModel: A MATLAB
+%           Package for Stochastic Modelling of Multisensory Reaction
+%           Times (In prep).
+%       [2] Townsend JT, Ashby FG (1983) Stochastic modeling of elementary
 %           psychological processes. Cambridge University Press.
-%       [2] Townsend JT, Wenger MJ (2004) A Theory of Interactive Parallel
-%           Processing: New Capacity Measures and Predictions for a
-%           Response Time Inequality Series. Psychol Rev 111(4):1003-1035.
-%       [3] Ulrich R, Miller J, Schroter H (2007) Testing the race model
+%       [3] Colonius H (1990) Possibly dependent probability summation of
+%           reaction time. J Math Psychol 34(3):253-275.
+%       [4] Ulrich R, Miller J, Schroter H (2007) Testing the race model
 %           inequality: An algorithm and computer programs. Behav Res
 %           Methods 39(2):291-302.
 
@@ -105,11 +107,11 @@ end
 
 % Compute wait model
 if nargout > 3
-    if dep == 0 % AND Model
+    if dep == 0 % AND model
         Fwait = Fx.*Fy;
-    elseif dep == -1 % Colonius's Lower Bound
+    elseif dep == -1 % Colonius's lower bound
         Fwait = max(Fx+Fy-1,zeros(size(Fxy)));
-    elseif dep == 1 % Colonius's Upper Bound
+    elseif dep == 1 % Colonius's upper bound
         Fwait = min(Fx,Fy);
     end
     if strcmpi(test,'hor')

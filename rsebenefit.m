@@ -1,16 +1,16 @@
-function [bemp,bpred] = rsebenefit(x,y,xy,varargin)
+function [Bemp,Bpred] = rsebenefit(x,y,xy,varargin)
 %rsebenefit Multisensory benefit of a redundant signals effect.
 %   BEMP = RSEBENEFIT(X,Y,XY) returns the empirical benefit of a redundant
 %   signals effect (RSE), quantified by the area between the cumulative
-%   distribution functions (CDFs) of the most effective of the unisensory
-%   RT distributions X and Y, and the bisensory RT distribution XY (Otto et
-%   al., 2013). X, Y and XY are not required to have an equal number of 
-%   observations. This function treats NaNs as missing values, and ignores 
+%   distribution functions (CDFs) of the faster of the unisensory RT
+%   distributions X and Y, and the bisensory RT distribution XY (Otto et
+%   al., 2013). X, Y and XY are not required to have an equal number of
+%   observations. This function treats NaNs as missing values, and ignores
 %   them.
 %
 %   [...,BPRED] = RSEBENEFIT(...) returns the predicted benefit of an RSE,
-%   quantified by the area between the CDFs of the most effective of the
-%   unisensory RT distributions X and Y, and the race model based on the 
+%   quantified by the area between the CDFs of the faster of the unisensory
+%   RT distributions X and Y, and the race (OR) model based on the
 %   probability summation of X and Y (Otto et al., 2013).
 %
 %   [...] = RSEBENEFIT(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
@@ -31,8 +31,8 @@ function [bemp,bpred] = rsebenefit(x,y,xy,varargin)
 %               (default=[min([X,Y,XY]),max([X,Y,XY])])
 %   'dep'       a scalar specifying the model's assumption of statistical
 %               dependence between sensory channels: pass in 0 to assume
-%               independence (Raab's model; default), and -1 to assume 
-%               perfect negative dependence (Miller's bound)
+%               independence (OR model; default), and -1 to assume perfect
+%               negative dependence (Miller's bound)
 %   'test'      a string specifying how to test the race model
 %                   'ver'       vertical test (default)
 %                   'hor'       horizontal test (Ulrich et al., 2007)
@@ -46,13 +46,12 @@ function [bemp,bpred] = rsebenefit(x,y,xy,varargin)
 %   RaceModel https://github.com/mickcrosse/RaceModel
 
 %   References:
-%       [1] Otto TU, Dassy B, Mamassian P (2013) Principles of multisensory
+%       [1] Crosse MJ, Foxe JJ, Molholm S (2019) RaceModel: A MATLAB
+%           Package for Stochastic Modelling of Multisensory Reaction
+%           Times (In prep).
+%       [2] Otto TU, Dassy B, Mamassian P (2013) Principles of multisensory
 %           behavior. J Neurosci 33(17):7463-7474.
-%       [2] Raab DH (1962) Statistical facilitation of simple reaction
-%           times. Trans NY Acad Sci 24(5):574-590.
-%       [3] Miller J (1982) Divided attention: Evidence for coactivation
-%           with redundant signals. Cogn Psychol 14(2):247-279.
-%       [4] Ulrich R, Miller J, Schroter H (2007) Testing the race model
+%       [3] Ulrich R, Miller J, Schroter H (2007) Testing the race model
 %           inequality: An algorithm and computer programs. Behav Res
 %           Methods 39(2):291-302.
 
@@ -103,9 +102,9 @@ end
 Fmax = max(Fx,Fy);
 
 % Compute race model
-if dep == 0 % Raab's Model
+if dep == 0 % OR model
     Frace = Fx+Fy-Fx.*Fy;
-elseif dep == -1 % Miller's Bound
+elseif dep == -1 % Miller's bound
     Frace = min(Fx+Fy,ones(size(Fxy)));
 end
 
@@ -124,7 +123,7 @@ elseif strcmpi(test,'hor')
 end
 
 % Compute empirical benefit
-bemp = getauc(p,Femp,area);
+Bemp = getauc(p,Femp,area);
 
 if nargout > 1
     
@@ -136,7 +135,7 @@ if nargout > 1
     end
     
     % Compute predicted benefit
-    bpred = getauc(p,Fpred,area);
+    Bpred = getauc(p,Fpred,area);
     
 end
 

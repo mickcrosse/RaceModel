@@ -3,9 +3,9 @@ function gain = rsegain(x,y,xy,varargin)
 %   GAIN = RSEGAIN(X,Y,XY) returns the multisensory gain of a redundant
 %   signals effect (RSE), quantified by the area between the cumulative
 %   distribution functions of the bisensory RT distribution XY, and the
-%   race model based on the unisensory RT distributions X and Y (Miller,
-%   1986; Colonius & Diederich, 2006). X, Y and XY are not required to have
-%   an equal number of observations. This function treats NaNs as missing
+%   race (OR) model based on the unisensory RT distributions X and Y
+%   (Colonius & Diederich, 2006). X, Y and XY are not required to have an
+%   equal number of observations. This function treats NaNs as missing
 %   values, and ignores them.
 %
 %   [...] = RSEGAIN(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
@@ -26,8 +26,8 @@ function gain = rsegain(x,y,xy,varargin)
 %               (default=[min([X,Y,XY]),max([X,Y,XY])])
 %   'dep'       a scalar specifying the model's assumption of statistical
 %               dependence between sensory channels: pass in 0 to assume
-%               independence (Raab's model; default), and -1 to assume 
-%               perfect negative dependence (Miller's bound)
+%               independence (OR model; default), and -1 to assume perfect
+%               negative dependence (Miller's bound)
 %   'test'      a string specifying how to test the race model
 %                   'ver'       vertical test (default)
 %                   'hor'       horizontal test (Ulrich et al., 2007)
@@ -41,16 +41,13 @@ function gain = rsegain(x,y,xy,varargin)
 %   RaceModel https://github.com/mickcrosse/RaceModel
 
 %   References:
-%       [1] Miller J (1986) Timecourse of coactivation in bimodal divided
-%           attention. Percept Psychophys 40(5):331-343.
+%       [1] Crosse MJ, Foxe JJ, Molholm S (2019) RaceModel: A MATLAB
+%           Package for Stochastic Modelling of Multisensory Reaction
+%           Times (In prep).
 %       [2] Colonius H, Diederich A (2006) The Race Model Inequality:
 %           Interpreting a Geometric Measure of the Amount of Violation.
 %           Psychol Rev 113(1):148–154.
-%       [3] Raab DH (1962) Statistical facilitation of simple reaction
-%           times. Trans NY Acad Sci 24(5):574-590.
-%       [4] Miller J (1982) Divided attention: Evidence for coactivation
-%           with redundant signals. Cogn Psychol 14(2):247-279.
-%       [5] Ulrich R, Miller J, Schroter H (2007) Testing the race model
+%       [3] Ulrich R, Miller J, Schroter H (2007) Testing the race model
 %           inequality: An algorithm and computer programs. Behav Res
 %           Methods 39(2):291-302.
 
@@ -98,9 +95,9 @@ elseif strcmpi(test,'hor')
 end
 
 % Compute race model
-if dep == 0 % Raab's Model
+if dep == 0 % OR model
     Frace = Fx+Fy-Fx.*Fy;
-elseif dep == -1 % Miller's Bound
+elseif dep == -1 % Miller's bound
     Frace = min(Fx+Fy,ones(size(Fxy)));
 end
 

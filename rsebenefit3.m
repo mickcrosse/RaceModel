@@ -1,8 +1,8 @@
-function [bemp,bpred] = rsebenefit3(x,y,z,xyz,varargin)
+function [Bemp,Bpred] = rsebenefit3(x,y,z,xyz,varargin)
 %rsebenefit3 Multisensory benefit of a trisensory redundant signals effect.
 %   BEMP = RSEBENEFIT3(X,Y,Z,XYZ) returns the empirical benefit of a
 %   redundant signals effect (RSE), quantified by the area between the
-%   cumulative distribution functions (CDFs) of the most effective of the
+%   cumulative distribution functions (CDFs) of the faster of the
 %   unisensory RT distributions X, Y and Z, and the trisensory RT
 %   distribution XYZ (Otto et al., 2013). X, Y, Z and XYZ are not required
 %   to have an equal number of observations. This function treats NaNs as
@@ -11,12 +11,12 @@ function [bemp,bpred] = rsebenefit3(x,y,z,xyz,varargin)
 %   To compute the benefit for the bisensory conditions XY, XZ and YZ, use
 %   the function RSEBENEFIT on the corresponding unisensory and bisensory
 %   RTs. To compare across bisensory and trisensory conditions, use the
-%   same lower and upper RT limits (see below).
+%   same RT limits (see below).
 %
 %   [...,BPRED] = RSEBENEFIT3(...) returns the predicted benefit of an RSE,
-%   quantified by the area between the CDFs of the most effective of the
-%   unisensory RT distributions X, Y and Z, and the trisensory race model
-%   based on the probability summation of X, Y and Z (Otto et al., 2013).
+%   quantified by the area between the CDFs of the faster of the unisensory
+%   RT distributions X, Y and Z, and the trisensory race (OR) model based
+%   on the probability summation of X, Y and Z (Otto et al., 2013).
 %
 %   [...] = RSEBENEFIT3(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
 %   additional parameters and their values. Valid parameters are the
@@ -36,8 +36,8 @@ function [bemp,bpred] = rsebenefit3(x,y,z,xyz,varargin)
 %               (default=[min([X,Y,Z,XYZ]),max([X,Y,Z,XYZ])])
 %   'dep'       a scalar specifying the model's assumption of statistical
 %               dependence between sensory channels: pass in 0 to assume
-%               independence (Raab's model; default), and -1 to assume
-%               perfect negative dependence (Miller's bound)
+%               independence (OR model; default), and -1 to assume perfect
+%               negative dependence (Miller's bound)
 %   'test'      a string specifying how to test the race model
 %                   'ver'       vertical test (default)
 %                   'hor'       horizontal test (Ulrich et al., 2007)
@@ -54,13 +54,12 @@ function [bemp,bpred] = rsebenefit3(x,y,z,xyz,varargin)
 %   RaceModel https://github.com/mickcrosse/RaceModel
 
 %   References:
-%       [1] Otto TU, Dassy B, Mamassian P (2013) Principles of multisensory
+%       [1] Crosse MJ, Foxe JJ, Molholm S (2019) RaceModel: A MATLAB
+%           Package for Stochastic Modelling of Multisensory Reaction
+%           Times (In prep).
+%       [2] Otto TU, Dassy B, Mamassian P (2013) Principles of multisensory
 %           behavior. J Neurosci 33(17):7463-7474.
-%       [2] Raab DH (1962) Statistical facilitation of simple reaction
-%           times. Trans NY Acad Sci 24(5):574-590.
-%       [3] Miller J (1982) Divided attention: Evidence for coactivation
-%           with redundant signals. Cogn Psychol 14(2):247-279.
-%       [4] Ulrich R, Miller J, Schroter H (2007) Testing the race model
+%       [3] Ulrich R, Miller J, Schroter H (2007) Testing the race model
 %           inequality: An algorithm and computer programs. Behav Res
 %           Methods 39(2):291-302.
 
@@ -116,14 +115,14 @@ end
 Fmax = max([Fx,Fy,Fz],[],2);
 
 % Compute race model
-if dep == 0 % Raab's Model
+if dep == 0 % OR model
     Fxy = Fx+Fy-Fx.*Fy;
     Frace = Fxy+Fz-Fxy.*Fz;
 elseif dep == -1
-    if sharp == 1 % Diederich's Bound
+    if sharp == 1 % Diederich's bound
         Fxy = Fx+Fy-Fx.*Fy; Fyz = Fy+Fz-Fy.*Fz;
         Frace = min(Fxy+Fyz-Fy,ones(size(Fxyz)));
-    elseif sharp == 0 % Miller's Bound
+    elseif sharp == 0 % Miller's bound
         Frace = min(Fx+Fy+Fz,ones(size(Fxyz)));
     end
 end
@@ -143,7 +142,7 @@ elseif strcmpi(test,'hor')
 end
 
 % Compute empirical benefit
-bemp = getauc(p,Femp,area);
+Bemp = getauc(p,Femp,area);
 
 if nargout > 1
     
@@ -155,7 +154,7 @@ if nargout > 1
     end
     
     % Compute predicted benefit
-    bpred = getauc(p,Fpred,area);
+    Bpred = getauc(p,Fpred,area);
     
 end
 
