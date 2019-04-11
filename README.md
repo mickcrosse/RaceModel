@@ -26,14 +26,14 @@ RaceModel can perform both vertical and horizontal tests of the race model and c
 * eseloss3.m - compute multisensory loss
 * esecost3.m - compute multisensory cost
 
-### Competitive (n-1) modelling
+### Competitive ('n'-1) modelling
  * competemodel.m - compute benefit predicted by competive interactions
  
-### Behavioral measures
+### Other measures
 * switchcost.m - compute modality switch effects
 * f1score.m - compute F1 score of detection accuracy
  
-### Other
+### Preprocessing
 * rt2cdf.m - convert reaction times to cumulative probabilities
 * rt2cfp.m - convert reaction times to a cumulative frequency polygon 
 * cfp2per.m - convert a cumulative frequency polygon to percentiles
