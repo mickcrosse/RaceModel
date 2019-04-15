@@ -1,31 +1,28 @@
-function [Fx,Fy,Fxy,Frace,Fdiff,q,lim] = racemodel(x,y,xy,varargin)
-%racemodel Generate a race model for bisensory reaction times.
-%   [FX,FY,FXY] = RACEMODEL(X,Y,XY) returns the cumulative distribution
+function [Fx,Fy,Fxy,Fmodel,q,lim] = ormodel(x,y,xy,varargin)
+%ormodel Model bisensory reaction times for an OR task.
+%   [FX,FY,FXY] = ORMODEL(X,Y,XY) returns the cumulative distribution
 %   functions (CDFs) for the unisensory RT distributions X and Y, and the
 %   bisensory RT distribution XY at 10 linearly-spaced quantiles. X, Y and
 %   XY are not required to have an equal number of observations. This
 %   function treats NaNs as missing values, and ignores them.
 %
-%   [...,FRACE] = RACEMODEL(...) returns the race (OR) model based on the
+%   [...,FMODEL] = ORMODEL(...) returns the OR (race) model based on the
 %   probability summation of X and Y (Raab, 1962). By default, the model
 %   assumes statistical independence between RTs on different sensory
 %   channels, but this assumption can be specified using the DEP argument
-%   (see below). For valid estimates of FRACE, the stimuli used to generate
-%   X, Y and XY should be presented in random order to meet the assumption
-%   of context invariance.
+%   (see below). For valid estimates of FMODEL, the stimuli used to
+%   generate X, Y and XY should be presented in random order to meet the
+%   assumption of context invariance.
 %
-%   [...,FDIFF] = RACEMODEL(...) returns the difference between FXY and
-%   FRACE to test for violations the race model (Miller, 1982).
-%
-%   [...,Q] = RACEMODEL(...) returns the RT quantiles used to compute the
+%   [...,Q] = ORMODEL(...) returns the RT quantiles used to compute the
 %   CDFs for the vertical test and the probabilities used to compute the
 %   percentiles for the horizontal test.
 %
-%   [...,LIM] = RACEMODEL(...) returns the lower and upper RT limits used
-%               to compute the CDFs. These can be used to set the limits
+%   [...,LIM] = ORMODEL(...) returns the lower and upper RT limits used
+%   to compute the CDFs. These values can be used to set the CDF limits of
+%   subsequent tests that are to be compared with this one.
 %
-%
-%   [...] = RACEMODEL(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
+%   [...] = ORMODEL(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
 %   additional parameters and their values. Valid parameters are the
 %   following:
 %
@@ -39,18 +36,18 @@ function [Fx,Fy,Fxy,Frace,Fdiff,q,lim] = racemodel(x,y,xy,varargin)
 %               percentiles of RTs to consider (default=[0,100])
 %   'lim'       a 2-element vector specifying the lower and upper RT limits
 %               for computing CDFs: it is recommended to leave this
-%               unspecified unless comparing directly to other conditions
+%               unspecified unless comparing directly with other conditions
 %               (default=[min([X,Y,XY]),max([X,Y,XY])])
 %   'dep'       a scalar specifying the model's assumption of statistical
 %               dependence between sensory channels: pass in 0 to assume
 %               independence (OR model; default), -1 to assume perfect
 %               negative dependence (Miller's bound) and 1 to assume
 %               perfect positive dependence (Grice's bound)
-%   'test'      a string specifying how to test the race model
+%   'test'      a string specifying how to test the model
 %                   'ver'       vertical test (default)
 %                   'hor'       horizontal test (Ulrich et al., 2007)
 %
-%   See also RACEMODEL3, RSEGAIN, RSEBENEFIT, TPERMTEST, EFFECTSIZE.
+%   See also ORMODEL3, ORGAIN, ORBENEFIT, TPERMTEST, EFFECTSIZE.
 %
 %   RaceModel https://github.com/mickcrosse/RaceModel
 
@@ -109,17 +106,17 @@ elseif strcmpi(test,'hor')
     Fxy = rt2cfp(xy,lim(2));
 end
 
-% Compute race model
+% Compute model
 if nargout > 3
     if dep == 0 % OR model
-        Frace = Fx+Fy-Fx.*Fy;
+        Fmodel = Fx+Fy-Fx.*Fy;
     elseif dep == -1 % Miller's bound
-        Frace = min(Fx+Fy,ones(size(Fxy)));
+        Fmodel = min(Fx+Fy,ones(size(Fxy)));
     elseif dep == 1 % Grice's bound
-        Frace = max(Fx,Fy);
+        Fmodel = max(Fx,Fy);
     end
     if strcmpi(test,'hor')
-        Frace = cfp2per(Frace,p);
+        Fmodel = cfp2per(Fmodel,p);
     end
 end
 
@@ -130,17 +127,8 @@ if strcmpi(test,'hor')
     Fxy = cfp2per(Fxy,p);
 end
 
-% Compute difference
-if nargout > 4
-    if strcmpi(test,'ver')
-        Fdiff = Fxy-Frace;
-    elseif strcmpi(test,'hor')
-        Fdiff = Frace-Fxy;
-    end
-end
-
-% Get probabilities for horizontal test
-if nargout > 5 &&  strcmpi(test,'hor')
+% Get y-values for horizontal test
+if nargout > 4 &&  strcmpi(test,'hor')
     q = p;
 end
 
@@ -184,11 +172,11 @@ else
 end
 if any(strcmpi(varargin,'dep')) && ~isempty(varargin{find(strcmpi(varargin,'dep'))+1})
     dep = varargin{find(strcmpi(varargin,'dep'))+1};
-    if dep~=0 && dep~=-1 && dep~=1
+    if dep~=-1 && dep~=0 && dep~=1
         error('DEP must be a scalar with a value of -1, 0 or 1.')
     end
 else
-    dep = 0; % default: assume statistical independence (Raab's Model)
+    dep = 0; % default: assume statistical independence
 end
 if any(strcmpi(varargin,'test')) && ~isempty(varargin{find(strcmpi(varargin,'test'))+1})
     test = varargin{find(strcmpi(varargin,'test'))+1};

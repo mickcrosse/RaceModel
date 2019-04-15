@@ -1,14 +1,29 @@
-function loss = eseloss(x,y,xy,varargin)
-%eseloss Multisensory loss of an exhaustive search effect.
-%   LOSS = ESELOSS(X,Y,XY) returns the multisensory loss of an exhaustive
-%   search effect (ESE), quantified by the area between the cumulative
-%   distribution functions of the bisensory RT distribution XY, and the
-%   wait model based on the unisensory RT distributions X and Y (Crosse et
-%   al., 2019). X, Y and XY are not required to have an equal number of
-%   observations. This function treats NaNs as missing values, and ignores
-%   them.
+function [gain,Fdiff,q,lim] = andgain3(x,y,z,xyz,varargin)
+%andgain3 Multisensory gain for a trisensory AND task.
+%   GAIN = ANDGAIN3(X,Y,Z,XYZ) returns the multisensory gain for a
+%   trisensory AND task, quantified by the area between the CDFs of the
+%   trisensory RT distribution XYZ, and the AND model based on the joint
+%   probability of  X, Y and Z (Colonius & Diederich, 2006). X, Y, Z and
+%   XYZ are not required to have an equal number of observations. This
+%   function treats NaNs as missing values, and ignores them.
 %
-%   [...] = ESELOSS(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
+%   To compute multisensory gain for the bisensory conditions XY, XZ and
+%   YZ, use the function ANDGAIN on the corresponding unisensory and
+%   bisensory RTs. To compare across bisensory and trisensory conditions,
+%   use the same RT limits (see below).
+%
+%   [...,FDIFF] = ANDGAIN3(...) returns the difference at each quantile to
+%   test for violations of the model (Colonius & Vorberg, 1994).
+%
+%   [...,Q] = ANDGAIN3(...) returns the RT quantiles used to compute the
+%   CDFs for the vertical test and the probabilities used to compute the
+%   percentiles for the horizontal test.
+%
+%   [...,LIM] = ANDGAIN3(...) returns the lower and upper RT limits used to
+%   compute the CDFs. These values can be used to set the CDF limits of
+%   subsequent tests that are to be compared with this one.
+%
+%   [...] = ANDGAIN3(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
 %   additional parameters and their values. Valid parameters are the
 %   following:
 %
@@ -22,21 +37,25 @@ function loss = eseloss(x,y,xy,varargin)
 %               percentiles of RTs to consider (default=[0,100])
 %   'lim'       a 2-element vector specifying the lower and upper RT limits
 %               for computing CDFs: it is recommended to leave this
-%               unspecified unless comparing directly to other conditions
-%               (default=[min([X,Y,XY]),max([X,Y,XY])])
+%               unspecified unless comparing directly with other conditions
+%               (default=[min([X,Y,Z,XYZ]),max([X,Y,Z,XYZ])])
 %   'dep'       a scalar specifying the model's assumption of statistical
 %               dependence between sensory channels: pass in 0 to assume
-%               independence (AND model; default), and -1 to assume perfect
-%               negative dependence (Colonius's lower bound)
-%   'test'      a string specifying how to test the wait model
+%               independence (AND model; default), -1 to assume perfect
+%               negative dependence (Diederich's bound) and 1 to assume
+%               perfect positive dependence (Colonius-Vorberg upper bound)
+%   'test'      a string specifying how to test the model
 %                   'ver'       vertical test (default)
 %                   'hor'       horizontal test (Ulrich et al., 2007)
 %   'area'      a string specifying how to compute the area under the curve
 %                   'all'       use all values (default)
 %                   'pos'       use only positive values
 %                   'neg'       use only negative values
+%   'sharp'     a scalar specifying whether or not to sharpen the overly
+%               conservative upper bound: pass in 1 to sharpen (Diederich's
+%               bound; default) and 0 to not (Colonius-Vorberg lower bound)
 %
-%   See also ESELOSS3, WAITMODEL, ESEDEFICIT, TPERMTEST, EFFECTSIZE.
+%   See also ANDGAIN, ANDMODEL3, ANDBENEFIT3, TPERMTEST, EFFECTSIZE.
 %
 %   RaceModel https://github.com/mickcrosse/RaceModel
 
@@ -58,25 +77,28 @@ function loss = eseloss(x,y,xy,varargin)
 %   Apr 2017; Last Revision: 11-Apr-2019
 
 % Decode input variable arguments
-[p,outlier,per,lim,dep,test,area] = decode_varargin(varargin);
+[p,outlier,per,lim,dep,test,area,sharp] = decode_varargin(varargin);
 
 % Outlier correction procedure
 if ~isempty(outlier)
     x(x<outlier(1)|x>outlier(2)) = [];
     y(y<outlier(1)|y>outlier(2)) = [];
-    xy(xy<outlier(1)|xy>outlier(2)) = [];
+    z(z<outlier(1)|z>outlier(2)) = [];
+    xyz(xyz<outlier(1)|xyz>outlier(2)) = [];
 end
 
 % Get RT range for each condition
-lims = zeros(3,2);
+lims = zeros(4,2);
 lims(1,:) = prctile(x,per);
 lims(2,:) = prctile(y,per);
-lims(3,:) = prctile(xy,per);
+lims(3,:) = prctile(z,per);
+lims(4,:) = prctile(xyz,per);
 
 % Limit RTs to specified range
 x = x(x>=lims(1,1) & x<=lims(1,2));
 y = y(y>=lims(2,1) & y<=lims(2,2));
-xy = xy(xy>=lims(3,1) & xy<=lims(3,2));
+z = z(z>=lims(3,1) & z<=lims(3,2));
+xyz = xyz(xyz>=lims(4,1) & xyz<=lims(4,2));
 
 % Get min and max RT limits
 if isempty(lim)
@@ -87,37 +109,51 @@ end
 if strcmpi(test,'ver')
     Fx = rt2cdf(x,p,lim);
     Fy = rt2cdf(y,p,lim);
-    Fxy = rt2cdf(xy,p,lim);
+    Fz = rt2cdf(z,p,lim);
+    [Fxyz,q] = rt2cdf(xyz,p,lim);
 elseif strcmpi(test,'hor')
     Fx = rt2cfp(x,lim(2));
     Fy = rt2cfp(y,lim(2));
-    Fxy = rt2cfp(xy,lim(2));
+    Fz = rt2cfp(z,lim(2));
+    Fxyz = rt2cfp(xyz,lim(2));
 end
 
-% Compute wait model
+% Compute model
 if dep == 0 % AND model
-    Fwait = Fx.*Fy;
-elseif dep == -1 % Colonius's lower bound
-    Fwait = max(Fx+Fy-1,zeros(size(Fxy)));
+    Fmodel = Fx.*Fy.*Fz;
+elseif dep == -1
+    if sharp == 1 % Diederich's bound
+        Fxy = Fx.*Fy; Fyz = Fy.*Fz;
+        Fmodel = min(Fxy+Fyz-Fy,ones(size(Fxyz)));
+    elseif sharp == 0 % Colonius-Vorberg lower bound
+        Fmodel = max(Fx+Fy+Fz-2,zeros(size(Fxyz)));
+    end
+elseif dep == 1 % Colonius-Vorberg upper bound
+    Fmodel = min([Fx,Fy,Fz],[],2);
 end
 
 % Compute percentiles for horizontal test
 if strcmpi(test,'hor')
-    Fxy = cfp2per(Fxy,p);
-    Fwait = cfp2per(Fwait,p);
+    Fxyz = cfp2per(Fxyz,p);
+    Fmodel = cfp2per(Fmodel,p);
 end
 
 % Compute difference
 if strcmpi(test,'ver')
-    Fdiff = Fxy-Fwait;
+    Fdiff = Fxyz-Fmodel;
 elseif strcmpi(test,'hor')
-    Fdiff = Fwait-Fxy;
+    Fdiff = Fmodel-Fxyz;
 end
 
 % Compute multisensory gain
-loss = getauc(p,Fdiff,area);
+gain = getauc(p,Fdiff,area);
 
-function [p,outlier,per,lim,dep,test,area] = decode_varargin(varargin)
+% Get y-values for horizontal test
+if nargout > 2 &&  strcmpi(test,'hor')
+    q = p;
+end
+
+function [p,outlier,per,lim,dep,test,area,sharp] = decode_varargin(varargin)
 %decode_varargin Decode input variable arguments.
 %   [PARAM1,PARAM2,...] = DECODE_VARARGIN('PARAM1',VAL1,'PARAM2',VAL2,...)
 %   decodes the input variable arguments of the main function.
@@ -157,11 +193,11 @@ else
 end
 if any(strcmpi(varargin,'dep')) && ~isempty(varargin{find(strcmpi(varargin,'dep'))+1})
     dep = varargin{find(strcmpi(varargin,'dep'))+1};
-    if dep~=0 && dep~=-1 && dep~=1
+    if dep~=-1 && dep~=0 && dep~=1
         error('DEP must be a scalar with a value of -1, 0 or 1.')
     end
 else
-    dep = 0; % default: assume statistical independence (Raab's Model)
+    dep = 0; % default: assume statistical independence
 end
 if any(strcmpi(varargin,'test')) && ~isempty(varargin{find(strcmpi(varargin,'test'))+1})
     test = varargin{find(strcmpi(varargin,'test'))+1};
@@ -178,4 +214,12 @@ if any(strcmpi(varargin,'area')) && ~isempty(varargin{find(strcmpi(varargin,'are
     end
 else
     area = 'all'; % default: use all values
+end
+if any(strcmpi(varargin,'sharp')) && ~isempty(varargin{find(strcmpi(varargin,'sharp'))+1})
+    sharp = varargin{find(strcmpi(varargin,'sharp'))+1};
+    if sharp~=0 && sharp~=1
+        error('SHARP must be a scalar with a value of 0 or 1.')
+    end
+else
+    sharp = 1; % default: sharpen (Diederich's Bound)
 end

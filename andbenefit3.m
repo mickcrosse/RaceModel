@@ -1,33 +1,35 @@
-function [Fx,Fy,Fz,Fxyz,Fwait,Fdiff,q] = waitmodel3(x,y,z,xyz,varargin)
-%waitmodel3 Generate a wait model for trisensory reaction times.
-%   [FX,FY,FZ,FXYZ] = WAITMODEL3(X,Y,Z,XYZ) returns the cumulative
-%   distribution functions (CDFs) for the unisensory RT distributions X, Y
-%   and Z, and the trisensory RT distribution XYZ at 10 linearly-spaced
-%   quantiles. X, Y, Z and XYZ are not required to have an equal number of
-%   observations. This function treats NaNs as missing values, and ignores
-%   them.
+function [Bemp,Bpred,Femp,Fpred,q,lim] = andbenefit3(x,y,z,xyz,varargin)
+%andbenefit3 Multisensory benefit for a trisensory AND task.
+%   BEMP = ANDBENEFIT3(X,Y,Z,XYZ) returns the empirical multisensory
+%   benefit for a trisensory AND task, quantified by the area between the
+%   CDFs of the slower of the unisensory RT distributions X, Y and Z, and
+%   the trisensory RT distribution XYZ (Otto et al., 2013). X, Y, Z and XYZ
+%   are not required to have an equal number of observations. This function
+%   treats NaNs as missing values, and ignores them.
 %
-%   To generate CDFs and wait models for the bisensory conditions XY, XZ
-%   and YZ, use the function WAITMODEL on the corresponding unisensory and
+%   To compute multisensory benefits for the bisensory conditions XY, XZ
+%   and YZ, use the function ANDBENEFIT on the corresponding unisensory and
 %   bisensory RTs. To compare across bisensory and trisensory conditions,
 %   use the same RT limits (see below).
 %
-%   [...,FWAIT] = WAITMODEL(...) returns the wait (AND) model based on the
-%   joint probability of X, Y and Z (Townsend & Ashby, 1983). By default,
-%   the model assumes statistical independence between RTs on different
-%   sensory channels, but this assumption can be specified using the DEP
-%   argument (see below). For valid estimates of FWAIT, the stimuli used to
-%   generate X, Y, Z and XYZ should be presented in random order to meet
-%   the assumption of context invariance.
+%   [...,BPRED] = ANDBENEFIT3(...) returns the predicted multisensory
+%   benefit for a trisensory AND task, quantified by the area between the
+%   CDFs of the slower of the unisensory RT distributions X, Y and Z, and
+%   the AND model based on the joint probability of X, Y and Z (Otto et
+%   al., 2013).
 %
-%   [...,FDIFF] = WAITMODEL3(...) returns the difference between FXYZ and
-%   FWAIT to test for violations the wait model (Colonius, 1990).
+%   [...,FEMP,FPRED] = ANDBENEFIT(...) returns the difference at each
+%   quantile for empirical and predicted benefits, respectively.
 %
-%   [...,Q] = WAITMODEL3(...) returns the RT quantiles used to compute the
+%   [...,Q] = ANDBENEFIT3(...) returns the RT quantiles used to compute the
 %   CDFs for the vertical test and the probabilities used to compute the
 %   percentiles for the horizontal test.
 %
-%   [...] = WAITMODEL3(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
+%   [...,LIM] = ANDBENEFIT3(...) returns the lower and upper RT limits used
+%   to compute the CDFs. These values can be used to set the CDF limits of
+%   subsequent tests that are to be compared with this one.
+%
+%   [...] = ANDBENEFIT3(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
 %   additional parameters and their values. Valid parameters are the
 %   following:
 %
@@ -41,21 +43,24 @@ function [Fx,Fy,Fz,Fxyz,Fwait,Fdiff,q] = waitmodel3(x,y,z,xyz,varargin)
 %               percentiles of RTs to consider (default=[0,100])
 %   'lim'       a 2-element vector specifying the lower and upper RT limits
 %               for computing CDFs: it is recommended to leave this
-%               unspecified unless comparing directly to other conditions
+%               unspecified unless comparing directly with other conditions
 %               (default=[min([X,Y,Z,XYZ]),max([X,Y,Z,XYZ])])
 %   'dep'       a scalar specifying the model's assumption of statistical
 %               dependence between sensory channels: pass in 0 to assume
-%               independence (AND model; default), -1 to assume perfect
-%               negative dependence (Diederich's bound) and 1 to assume
-%               perfect positive dependence (Colonius's upper bound)
-%   'test'      a string specifying how to test the wait model
+%               independence (AND model; default), and -1 to assume perfect
+%               negative dependence (Colonius-Vorberg lower bound)
+%   'test'      a string specifying how to test the model
 %                   'ver'       vertical test (default)
 %                   'hor'       horizontal test (Ulrich et al., 2007)
+%   'area'      a string specifying how to compute the area under the curve
+%                   'all'       use all values (default)
+%                   'pos'       use only positive values
+%                   'neg'       use only negative values
 %   'sharp'     a scalar specifying whether or not to sharpen the overly
-%               conservative lower bound: pass in 1 to sharpen (Diederich's
-%               bound; default) and 0 to not (Colonius's lower bound)
+%               conservative upper bound: pass in 1 to sharpen (Diederich's
+%               bound; default) and 0 to not (Colonius-Vorberg lower bound)
 %
-%   See also WAITMODEL, RACEMODEL3, TPERMTEST, EFFECTSIZE.
+%   See also ANDBENEFIT, ANDMODEL3, ANDGAIN3, TPERMTEST, EFFECTSIZE.
 %
 %   RaceModel https://github.com/mickcrosse/RaceModel
 
@@ -63,14 +68,9 @@ function [Fx,Fy,Fz,Fxyz,Fwait,Fdiff,q] = waitmodel3(x,y,z,xyz,varargin)
 %       [1] Crosse MJ, Foxe JJ, Molholm S (2019) RaceModel: A MATLAB
 %           Package for Stochastic Modelling of Multisensory Reaction
 %           Times (In prep).
-%       [2] Townsend JT, Ashby FG (1983) Stochastic modeling of elementary
-%           psychological processes. Cambridge University Press.
-%       [3] Colonius H (1990) Possibly dependent probability summation of
-%           reaction time. J Math Psychol 34(3):253-275.
-%       [4] Diederich A (1992) Probability inequalities for testing
-%           separate activation models of divided attention. Percept
-%           Psychophys 14(2):247-279.
-%       [5] Ulrich R, Miller J, Schroter H (2007) Testing the race model
+%       [2] Otto TU, Dassy B, Mamassian P (2013) Principles of multisensory
+%           behavior. J Neurosci 33(17):7463-7474.
+%       [3] Ulrich R, Miller J, Schroter H (2007) Testing the race model
 %           inequality: An algorithm and computer programs. Behav Res
 %           Methods 39(2):291-302.
 
@@ -78,10 +78,10 @@ function [Fx,Fy,Fz,Fxyz,Fwait,Fdiff,q] = waitmodel3(x,y,z,xyz,varargin)
 %   Email: mickcrosse@gmail.com
 %   Cognitive Neurophysiology Laboratory,
 %   Albert Einstein College of Medicine, NY
-%   Apr 2017; Last Revision: 4-Apr-2019
+%   Apr 2017; Last Revision: 11-Apr-2019
 
 % Decode input variable arguments
-[p,outlier,per,lim,dep,test] = decode_varargin(varargin);
+[p,outlier,per,lim,dep,test,area,sharp] = decode_varargin(varargin);
 
 % Outlier correction procedure
 if ~isempty(outlier)
@@ -114,7 +114,7 @@ if strcmpi(test,'ver')
     Fx = rt2cdf(x,p,lim);
     Fy = rt2cdf(y,p,lim);
     Fz = rt2cdf(z,p,lim);
-    [Fxyz,q] = rt2cdf(xyz,p,lim);
+    Fxyz = rt2cdf(xyz,p,lim);
 elseif strcmpi(test,'hor')
     Fx = rt2cfp(x,lim(2));
     Fy = rt2cfp(y,lim(2));
@@ -122,48 +122,58 @@ elseif strcmpi(test,'hor')
     Fxyz = rt2cfp(xyz,lim(2));
 end
 
-% Compute wait model
-if nargout > 4
-    if dep == 0 % AND model
-        Fwait = Fx.*Fy.*Fz;
-    elseif dep == -1
-        if sharp == 1 % Diederich's bound
-            Fxy = Fx.*Fy; Fyz = Fy.*Fz;
-            Fwait = min(Fxy+Fyz-Fy,ones(size(Fxyz)));
-        elseif sharp == 0 % Colonius's lower bound
-            Fwait = max(Fx+Fy+Fz-2,zeros(size(Fxyz)));
-        end
-    elseif dep == 1 % Colonius's upper bound
-        Fwait = min([Fx,Fy,Fz],[],2);
-    end
-    if strcmpi(test,'hor')
-        Fwait = cfp2per(Fwait,p);
+% Compute Colonius-Vorberg upper bound
+Fmin = min([Fx,Fy,Fz],[],2);
+
+% Compute model
+if dep == 0 % AND model
+    Fmodel = Fx.*Fy.*Fz;
+elseif dep == -1
+    if sharp == 1 % Diederich's bound
+        Fxy = Fx.*Fy; Fyz = Fy.*Fz;
+        Fmodel = min(Fxy+Fyz-Fy,ones(size(Fxyz)));
+    elseif sharp == 0 % Colonius-Vorberg lower bound
+        Fmodel = max(Fx+Fy+Fz-2,zeros(size(Fxyz)));
     end
 end
 
 % Compute percentiles for horizontal test
 if strcmpi(test,'hor')
-    Fx = cfp2per(Fx,p);
-    Fy = cfp2per(Fy,p);
-    Fz = cfp2per(Fz,p);
     Fxyz = cfp2per(Fxyz,p);
+    Fmin = cfp2per(Fmin,p);
+    Fmodel = cfp2per(Fmodel,p);
 end
 
 % Compute difference
-if nargout > 5
-    if strcmpi(test,'ver')
-        Fdiff = Fxyz-Fwait;
-    elseif strcmpi(test,'hor')
-        Fdiff = Fwait-Fxyz;
-    end
+if strcmpi(test,'ver')
+    Femp = Fxyz-Fmin;
+elseif strcmpi(test,'hor')
+    Femp = Fmin-Fxyz;
 end
 
-% Get probabilities for horizontal test
-if nargout > 5 &&  strcmpi(test,'hor')
+% Compute empirical cost
+Bemp = getauc(p,Femp,area);
+
+if nargout > 1
+    
+    % Compute difference
+    if strcmpi(test,'ver')
+        Fpred = Fmodel-Fmin;
+    elseif strcmpi(test,'hor')
+        Fpred = Fmin-Fmodel;
+    end
+    
+    % Compute predicted cost
+    Bpred = getauc(p,Fpred,area);
+    
+end
+
+% Get y-values for horizontal test
+if nargout > 4 &&  strcmpi(test,'hor')
     q = p;
 end
 
-function [p,outlier,per,lim,dep,test] = decode_varargin(varargin)
+function [p,outlier,per,lim,dep,test,area,sharp] = decode_varargin(varargin)
 %decode_varargin Decode input variable arguments.
 %   [PARAM1,PARAM2,...] = DECODE_VARARGIN('PARAM1',VAL1,'PARAM2',VAL2,...)
 %   decodes the input variable arguments of the main function.
@@ -203,11 +213,11 @@ else
 end
 if any(strcmpi(varargin,'dep')) && ~isempty(varargin{find(strcmpi(varargin,'dep'))+1})
     dep = varargin{find(strcmpi(varargin,'dep'))+1};
-    if dep~=0 && dep~=-1 && dep~=1
-        error('DEP must be a scalar with a value of -1, 0 or 1.')
+    if dep~=-1 && dep~=0
+        error('DEP must be a scalar with a value of -1 or 0.')
     end
 else
-    dep = 0; % default: assume statistical independence (Raab's Model)
+    dep = 0; % default: assume statistical independence
 end
 if any(strcmpi(varargin,'test')) && ~isempty(varargin{find(strcmpi(varargin,'test'))+1})
     test = varargin{find(strcmpi(varargin,'test'))+1};
@@ -216,4 +226,20 @@ if any(strcmpi(varargin,'test')) && ~isempty(varargin{find(strcmpi(varargin,'tes
     end
 else
     test = 'ver'; % default: vertical test
+end
+if any(strcmpi(varargin,'area')) && ~isempty(varargin{find(strcmpi(varargin,'area'))+1})
+    area = varargin{find(strcmpi(varargin,'area'))+1};
+    if ~any(strcmpi(area,{'all','pos','neg'}))
+        error('Invalid value for argument AREA. Valid values are: ''all'', ''pos'', ''neg''.')
+    end
+else
+    area = 'all'; % default: use all values
+end
+if any(strcmpi(varargin,'sharp')) && ~isempty(varargin{find(strcmpi(varargin,'sharp'))+1})
+    sharp = varargin{find(strcmpi(varargin,'sharp'))+1};
+    if sharp~=0 && sharp~=1
+        error('SHARP must be a scalar with a value of 0 or 1.')
+    end
+else
+    sharp = 1; % default: sharpen (Diederich's Bound)
 end

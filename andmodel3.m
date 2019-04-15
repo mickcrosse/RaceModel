@@ -1,27 +1,34 @@
-function [Fx,Fy,Fxy,Fwait,Fdiff,q] = waitmodel(x,y,xy,varargin)
-%waitmodel Generate a wait model for bisensory reaction times.
-%   [FX,FY,FXY] = WAITMODEL(X,Y,XY) returns the cumulative distribution
-%   functions (CDFs) for the unisensory RT distributions X and Y, and the
-%   bisensory RT distribution XY at 10 linearly-spaced quantiles. X, Y and
-%   XY are not required to have an equal number of observations. This
-%   function treats NaNs as missing values, and ignores them.
+function [Fx,Fy,Fz,Fxyz,Fmodel,q,lim] = andmodel3(x,y,z,xyz,varargin)
+%andmodel3 Model trisensory reaction times for an AND task.
+%   [FX,FY,FZ,FXYZ] = ANDMODEL3(X,Y,Z,XYZ) returns the cumulative
+%   distribution functions (CDFs) for the unisensory RT distributions X, Y
+%   and Z, and the trisensory RT distribution XYZ at 10 linearly-spaced
+%   quantiles. X, Y, Z and XYZ are not required to have an equal number of
+%   observations. This function treats NaNs as missing values, and ignores
+%   them.
 %
-%   [...,FWAIT] = WAITMODEL(...) returns the wait (AND) model based on the
-%   joint probability of X and Y (Townsend & Ashby, 1983). By default, the
+%   To compute CDFs and models for the bisensory conditions XY, XZ and YZ,
+%   use the function ANDMODEL on the corresponding unisensory and bisensory
+%   RTs. To compare across bisensory and trisensory conditions, use the
+%   same RT limits (see below).
+%
+%   [...,FMODEL] = ANDMODEL3(...) returns the AND model based on the joint
+%   probability of X, Y and Z (Townsend & Ashby, 1983). By default, the
 %   model assumes statistical independence between RTs on different sensory
 %   channels, but this assumption can be specified using the DEP argument
-%   (see below). For valid estimates of FWAIT, the stimuli used to generate
-%   X, Y and XY should be presented in random order to meet the assumption
-%   of context invariance.
+%   (see below). For valid estimates of FMODEL, the stimuli used to
+%   generate X, Y, Z and XYZ should be presented in random order to meet
+%   the assumption of context invariance.
 %
-%   [...,FDIFF] = WAITMODEL(...) returns the difference between FXY and
-%   FWAIT to test for violations the wait model (Colonius, 1990).
-%
-%   [...,Q] = WAITMODEL(...) returns the RT quantiles used to compute the
+%   [...,Q] = ANDMODEL3(...) returns the RT quantiles used to compute the
 %   CDFs for the vertical test and the probabilities used to compute the
 %   percentiles for the horizontal test.
 %
-%   [...] = WAITMODEL(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
+%   [...,LIM] = ANDMODEL3(...) returns the lower and upper RT limits used
+%   to compute the CDFs. These values can be used to set the CDF limits of
+%   subsequent tests that are to be compared with this one.
+%
+%   [...] = ANDMODEL3(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
 %   additional parameters and their values. Valid parameters are the
 %   following:
 %
@@ -35,18 +42,21 @@ function [Fx,Fy,Fxy,Fwait,Fdiff,q] = waitmodel(x,y,xy,varargin)
 %               percentiles of RTs to consider (default=[0,100])
 %   'lim'       a 2-element vector specifying the lower and upper RT limits
 %               for computing CDFs: it is recommended to leave this
-%               unspecified unless comparing directly to other conditions
-%               (default=[min([X,Y,XY]),max([X,Y,XY])])
+%               unspecified unless comparing directly with other conditions
+%               (default=[min([X,Y,Z,XYZ]),max([X,Y,Z,XYZ])])
 %   'dep'       a scalar specifying the model's assumption of statistical
 %               dependence between sensory channels: pass in 0 to assume
 %               independence (AND model; default), -1 to assume perfect
-%               negative dependence (Colonius's lower bound) and 1 to
-%               assume perfect positive dependence (Colonius's upper bound)
-%   'test'      a string specifying how to test the wait model
+%               negative dependence (Diederich's bound) and 1 to assume
+%               perfect positive dependence (Colonius-Vorberg upper bound)
+%   'test'      a string specifying how to test the model
 %                   'ver'       vertical test (default)
 %                   'hor'       horizontal test (Ulrich et al., 2007)
+%   'sharp'     a scalar specifying whether or not to sharpen the overly
+%               conservative lower bound: pass in 1 to sharpen (Diederich's
+%               bound; default) and 0 to not (Colonius-Vorberg lower bound)
 %
-%   See also WAITMODEL3, RACEMODEL, TPERMTEST, EFFECTSIZE.
+%   See also ANDMODEL, ANDGAIN3, ANDBENEFIT3, TPERMTEST, EFFECTSIZE.
 %
 %   RaceModel https://github.com/mickcrosse/RaceModel
 
@@ -56,9 +66,13 @@ function [Fx,Fy,Fxy,Fwait,Fdiff,q] = waitmodel(x,y,xy,varargin)
 %           Times (In prep).
 %       [2] Townsend JT, Ashby FG (1983) Stochastic modeling of elementary
 %           psychological processes. Cambridge University Press.
-%       [3] Colonius H (1990) Possibly dependent probability summation of
-%           reaction time. J Math Psychol 34(3):253-275.
-%       [4] Ulrich R, Miller J, Schroter H (2007) Testing the race model
+%       [3] Colonius H, Vorberg D (1994) Distribution Inequalities for
+%           Parallel Models with Unlimited Capacity. J Math Psychol
+%           38:35-58.
+%       [4] Diederich A (1992) Probability inequalities for testing
+%           separate activation models of divided attention. Percept
+%           Psychophys 14(2):247-279.
+%       [5] Ulrich R, Miller J, Schroter H (2007) Testing the race model
 %           inequality: An algorithm and computer programs. Behav Res
 %           Methods 39(2):291-302.
 
@@ -75,19 +89,22 @@ function [Fx,Fy,Fxy,Fwait,Fdiff,q] = waitmodel(x,y,xy,varargin)
 if ~isempty(outlier)
     x(x<outlier(1)|x>outlier(2)) = [];
     y(y<outlier(1)|y>outlier(2)) = [];
-    xy(xy<outlier(1)|xy>outlier(2)) = [];
+    z(z<outlier(1)|z>outlier(2)) = [];
+    xyz(xyz<outlier(1)|xyz>outlier(2)) = [];
 end
 
 % Get RT range for each condition
-lims = zeros(3,2);
+lims = zeros(4,2);
 lims(1,:) = prctile(x,per);
 lims(2,:) = prctile(y,per);
-lims(3,:) = prctile(xy,per);
+lims(3,:) = prctile(z,per);
+lims(4,:) = prctile(xyz,per);
 
 % Limit RTs to specified range
 x = x(x>=lims(1,1) & x<=lims(1,2));
 y = y(y>=lims(2,1) & y<=lims(2,2));
-xy = xy(xy>=lims(3,1) & xy<=lims(3,2));
+z = z(z>=lims(3,1) & z<=lims(3,2));
+xyz = xyz(xyz>=lims(4,1) & xyz<=lims(4,2));
 
 % Get min and max RT limits
 if isempty(lim)
@@ -98,24 +115,31 @@ end
 if strcmpi(test,'ver')
     Fx = rt2cdf(x,p,lim);
     Fy = rt2cdf(y,p,lim);
-    [Fxy,q] = rt2cdf(xy,p,lim);
+    Fz = rt2cdf(z,p,lim);
+    [Fxyz,q] = rt2cdf(xyz,p,lim);
 elseif strcmpi(test,'hor')
     Fx = rt2cfp(x,lim(2));
     Fy = rt2cfp(y,lim(2));
-    Fxy = rt2cfp(xy,lim(2));
+    Fz = rt2cfp(z,lim(2));
+    Fxyz = rt2cfp(xyz,lim(2));
 end
 
-% Compute wait model
-if nargout > 3
+% Compute model
+if nargout > 4
     if dep == 0 % AND model
-        Fwait = Fx.*Fy;
-    elseif dep == -1 % Colonius's lower bound
-        Fwait = max(Fx+Fy-1,zeros(size(Fxy)));
-    elseif dep == 1 % Colonius's upper bound
-        Fwait = min(Fx,Fy);
+        Fmodel = Fx.*Fy.*Fz;
+    elseif dep == -1
+        if sharp == 1 % Diederich's bound
+            Fxy = Fx.*Fy; Fyz = Fy.*Fz;
+            Fmodel = min(Fxy+Fyz-Fy,ones(size(Fxyz)));
+        elseif sharp == 0 % Colonius-Vorberg lower bound
+            Fmodel = max(Fx+Fy+Fz-2,zeros(size(Fxyz)));
+        end
+    elseif dep == 1 % Colonius-Vorberg upper bound
+        Fmodel = min([Fx,Fy,Fz],[],2);
     end
     if strcmpi(test,'hor')
-        Fwait = cfp2per(Fwait,p);
+        Fmodel = cfp2per(Fmodel,p);
     end
 end
 
@@ -123,16 +147,8 @@ end
 if strcmpi(test,'hor')
     Fx = cfp2per(Fx,p);
     Fy = cfp2per(Fy,p);
-    Fxy = cfp2per(Fxy,p);
-end
-
-% Compute difference
-if nargout > 4
-    if strcmpi(test,'ver')
-        Fdiff = Fxy-Fwait;
-    elseif strcmpi(test,'hor')
-        Fdiff = Fwait-Fxy;
-    end
+    Fz = cfp2per(Fz,p);
+    Fxyz = cfp2per(Fxyz,p);
 end
 
 % Get probabilities for horizontal test
@@ -180,11 +196,11 @@ else
 end
 if any(strcmpi(varargin,'dep')) && ~isempty(varargin{find(strcmpi(varargin,'dep'))+1})
     dep = varargin{find(strcmpi(varargin,'dep'))+1};
-    if dep~=0 && dep~=-1 && dep~=1
+    if dep~=-1 && dep~=0 && dep~=1
         error('DEP must be a scalar with a value of -1, 0 or 1.')
     end
 else
-    dep = 0; % default: assume statistical independence (Raab's Model)
+    dep = 0; % default: assume statistical independence
 end
 if any(strcmpi(varargin,'test')) && ~isempty(varargin{find(strcmpi(varargin,'test'))+1})
     test = varargin{find(strcmpi(varargin,'test'))+1};

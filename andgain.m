@@ -1,14 +1,24 @@
-function gain = rsegain(x,y,xy,varargin)
-%rsegain Multisensory gain of a redundant signals effect.
-%   GAIN = RSEGAIN(X,Y,XY) returns the multisensory gain of a redundant
-%   signals effect (RSE), quantified by the area between the cumulative
-%   distribution functions of the bisensory RT distribution XY, and the
-%   race (OR) model based on the unisensory RT distributions X and Y
-%   (Colonius & Diederich, 2006). X, Y and XY are not required to have an
-%   equal number of observations. This function treats NaNs as missing
-%   values, and ignores them.
+function [gain,Fdiff,q,lim] = andgain(x,y,xy,varargin)
+%andgain Multisensory gain for a bisensory AND task.
+%   GAIN = ANDGAIN(X,Y,XY) returns the multisensory gain for a bisensory
+%   AND task, quantified by the area between the CDFs of the bisensory RT
+%   distribution XY, and the AND model based on the joint probability of X
+%   and Y (Colonius & Diederich, 2006). X, Y and XY are not required to
+%   have an equal number of observations. This function treats NaNs as
+%   missing values, and ignores them.
 %
-%   [...] = RSEGAIN(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
+%   [...,FDIFF] = ANDGAIN(...) returns the difference at each quantile to
+%   test for violations of the model (Colonius & Vorberg, 1994).
+%
+%   [...,Q] = ANDGAIN(...) returns the RT quantiles used to compute the
+%   CDFs for the vertical test and the probabilities used to compute the
+%   percentiles for the horizontal test.
+%
+%   [...,LIM] = ANDGAIN(...) returns the lower and upper RT limits used to
+%   compute the CDFs. These values can be used to set the CDF limits of
+%   subsequent tests that are to be compared with this one.
+%
+%   [...] = ANDGAIN(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
 %   additional parameters and their values. Valid parameters are the
 %   following:
 %
@@ -22,13 +32,15 @@ function gain = rsegain(x,y,xy,varargin)
 %               percentiles of RTs to consider (default=[0,100])
 %   'lim'       a 2-element vector specifying the lower and upper RT limits
 %               for computing CDFs: it is recommended to leave this
-%               unspecified unless comparing directly to other conditions
+%               unspecified unless comparing directly with other conditions
 %               (default=[min([X,Y,XY]),max([X,Y,XY])])
 %   'dep'       a scalar specifying the model's assumption of statistical
 %               dependence between sensory channels: pass in 0 to assume
-%               independence (OR model; default), and -1 to assume perfect
-%               negative dependence (Miller's bound)
-%   'test'      a string specifying how to test the race model
+%               independence (AND model; default), -1 to assume perfect
+%               negative dependence (Colonius-Vorberg lower bound) and 1 to
+%               assume perfect positive dependence (Colonius-Vorberg upper
+%               bound)
+%   'test'      a string specifying how to test the model
 %                   'ver'       vertical test (default)
 %                   'hor'       horizontal test (Ulrich et al., 2007)
 %   'area'      a string specifying how to compute the area under the curve
@@ -36,7 +48,7 @@ function gain = rsegain(x,y,xy,varargin)
 %                   'pos'       use only positive values
 %                   'neg'       use only negative values
 %
-%   See also RSEGAIN3, RACEMODEL, RSEBENEFIT, TPERMTEST, EFFECTSIZE.
+%   See also ANDGAIN3, ANDMODEL, ANDBENEFIT, TPERMTEST, EFFECTSIZE.
 %
 %   RaceModel https://github.com/mickcrosse/RaceModel
 
@@ -55,7 +67,7 @@ function gain = rsegain(x,y,xy,varargin)
 %   Email: mickcrosse@gmail.com
 %   Cognitive Neurophysiology Laboratory,
 %   Albert Einstein College of Medicine, NY
-%   Apr 2017; Last Revision: 4-Apr-2019
+%   Apr 2017; Last Revision: 11-Apr-2019
 
 % Decode input variable arguments
 [p,outlier,per,lim,dep,test,area] = decode_varargin(varargin);
@@ -87,35 +99,42 @@ end
 if strcmpi(test,'ver')
     Fx = rt2cdf(x,p,lim);
     Fy = rt2cdf(y,p,lim);
-    Fxy = rt2cdf(xy,p,lim);
+    [Fxy,q] = rt2cdf(xy,p,lim);
 elseif strcmpi(test,'hor')
     Fx = rt2cfp(x,lim(2));
     Fy = rt2cfp(y,lim(2));
     Fxy = rt2cfp(xy,lim(2));
 end
 
-% Compute race model
-if dep == 0 % OR model
-    Frace = Fx+Fy-Fx.*Fy;
-elseif dep == -1 % Miller's bound
-    Frace = min(Fx+Fy,ones(size(Fxy)));
+% Compute model
+if dep == 0 % AND model
+    Fmodel = Fx.*Fy;
+elseif dep == -1 % Colonius-Vorberg lower bound
+    Fmodel = max(Fx+Fy-1,zeros(size(Fxy)));
+elseif dep == 1 % Colonius-Vorberg upper bound
+    Fmodel = min(Fx,Fy);
 end
 
 % Compute percentiles for horizontal test
 if strcmpi(test,'hor')
     Fxy = cfp2per(Fxy,p);
-    Frace = cfp2per(Frace,p);
+    Fmodel = cfp2per(Fmodel,p);
 end
 
 % Compute difference
 if strcmpi(test,'ver')
-    Fdiff = Fxy-Frace;
+    Fdiff = Fxy-Fmodel;
 elseif strcmpi(test,'hor')
-    Fdiff = Frace-Fxy;
+    Fdiff = Fmodel-Fxy;
 end
 
 % Compute multisensory gain
 gain = getauc(p,Fdiff,area);
+
+% Get y-values for horizontal test
+if nargout > 2 &&  strcmpi(test,'hor')
+    q = p;
+end
 
 function [p,outlier,per,lim,dep,test,area] = decode_varargin(varargin)
 %decode_varargin Decode input variable arguments.
@@ -157,11 +176,11 @@ else
 end
 if any(strcmpi(varargin,'dep')) && ~isempty(varargin{find(strcmpi(varargin,'dep'))+1})
     dep = varargin{find(strcmpi(varargin,'dep'))+1};
-    if dep~=0 && dep~=-1 && dep~=1
+    if dep~=-1 && dep~=0 && dep~=1
         error('DEP must be a scalar with a value of -1, 0 or 1.')
     end
 else
-    dep = 0; % default: assume statistical independence (Raab's Model)
+    dep = 0; % default: assume statistical independence
 end
 if any(strcmpi(varargin,'test')) && ~isempty(varargin{find(strcmpi(varargin,'test'))+1})
     test = varargin{find(strcmpi(varargin,'test'))+1};

@@ -1,24 +1,35 @@
-function [Bemp,Bpred] = rsebenefit3(x,y,z,xyz,varargin)
-%rsebenefit3 Multisensory benefit of a trisensory redundant signals effect.
-%   BEMP = RSEBENEFIT3(X,Y,Z,XYZ) returns the empirical benefit of a
-%   redundant signals effect (RSE), quantified by the area between the
-%   cumulative distribution functions (CDFs) of the faster of the
-%   unisensory RT distributions X, Y and Z, and the trisensory RT
-%   distribution XYZ (Otto et al., 2013). X, Y, Z and XYZ are not required
-%   to have an equal number of observations. This function treats NaNs as
-%   missing values, and ignores them.
+function [Bemp,Bpred,Femp,Fpred,q,lim] = orbenefit3(x,y,z,xyz,varargin)
+%orbenefit3 Multisensory benefit for a trisensory OR task.
+%   BEMP = ORBENEFIT3(X,Y,Z,XYZ) returns the empirical multisensory benefit
+%   for a trisensory OR task, quantified by the area between the CDFs of
+%   the faster of the unisensory RT distributions X, Y and Z, and the
+%   trisensory RT distribution XYZ (Otto et al., 2013). X, Y, Z and XYZ are
+%   not required to have an equal number of observations. This function
+%   treats NaNs as missing values, and ignores them.
 %
-%   To compute the benefit for the bisensory conditions XY, XZ and YZ, use
-%   the function RSEBENEFIT on the corresponding unisensory and bisensory
-%   RTs. To compare across bisensory and trisensory conditions, use the
-%   same RT limits (see below).
+%   To compute multisensory benefits for the bisensory conditions XY, XZ
+%   and YZ, use the function ORBENEFIT on the corresponding unisensory and
+%   bisensory RTs. To compare across bisensory and trisensory conditions,
+%   use the same RT limits (see below).
 %
-%   [...,BPRED] = RSEBENEFIT3(...) returns the predicted benefit of an RSE,
-%   quantified by the area between the CDFs of the faster of the unisensory
-%   RT distributions X, Y and Z, and the trisensory race (OR) model based
-%   on the probability summation of X, Y and Z (Otto et al., 2013).
+%   [...,BPRED] = ORBENEFIT3(...) returns the predicted multisensory
+%   benefit for a trisensory OR task, quantified by the area between the
+%   CDFs of the faster of the unisensory RT distributions X, Y and Z, and
+%   the OR (race) model based on the probability summation of X, Y and Z
+%   (Otto et al., 2013).
 %
-%   [...] = RSEBENEFIT3(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
+%   [...,FEMP,FPRED] = ORBENEFIT3(...) returns the difference at each
+%   quantile for empirical and predicted benefits, respectively.
+%
+%   [...,Q] = ORBENEFIT3(...) returns the RT quantiles used to compute the
+%   CDFs for the vertical test and the probabilities used to compute the
+%   percentiles for the horizontal test.
+%
+%   [...,LIM] = ORBENEFIT3(...) returns the lower and upper RT limits used
+%   to compute the CDFs. These values can be used to set the CDF limits of
+%   subsequent tests that are to be compared with this one.
+%
+%   [...] = ORBENEFIT3(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
 %   additional parameters and their values. Valid parameters are the
 %   following:
 %
@@ -32,13 +43,13 @@ function [Bemp,Bpred] = rsebenefit3(x,y,z,xyz,varargin)
 %               percentiles of RTs to consider (default=[0,100])
 %   'lim'       a 2-element vector specifying the lower and upper RT limits
 %               for computing CDFs: it is recommended to leave this
-%               unspecified unless comparing directly to other conditions
+%               unspecified unless comparing directly with other conditions
 %               (default=[min([X,Y,Z,XYZ]),max([X,Y,Z,XYZ])])
 %   'dep'       a scalar specifying the model's assumption of statistical
 %               dependence between sensory channels: pass in 0 to assume
 %               independence (OR model; default), and -1 to assume perfect
 %               negative dependence (Miller's bound)
-%   'test'      a string specifying how to test the race model
+%   'test'      a string specifying how to test the model
 %                   'ver'       vertical test (default)
 %                   'hor'       horizontal test (Ulrich et al., 2007)
 %   'area'      a string specifying how to compute the area under the curve
@@ -49,7 +60,7 @@ function [Bemp,Bpred] = rsebenefit3(x,y,z,xyz,varargin)
 %               conservative upper bound: pass in 1 to sharpen (Diederich's
 %               bound; default) and 0 to not (Miller's bound)
 %
-%   See also RSEBENEFIT, RACEMODEL3, RSEGAIN3, TPERMTEST, EFFECTSIZE.
+%   See also ORBENEFIT, ORMODEL3, ORGAIN3, TPERMTEST, EFFECTSIZE.
 %
 %   RaceModel https://github.com/mickcrosse/RaceModel
 
@@ -103,7 +114,7 @@ if strcmpi(test,'ver')
     Fx = rt2cdf(x,p,lim);
     Fy = rt2cdf(y,p,lim);
     Fz = rt2cdf(z,p,lim);
-    Fxyz = rt2cdf(xyz,p,lim);
+    [Fxyz,q] = rt2cdf(xyz,p,lim);
 elseif strcmpi(test,'hor')
     Fx = rt2cfp(x,lim(2));
     Fy = rt2cfp(y,lim(2));
@@ -114,16 +125,16 @@ end
 % Compute Grice's bound
 Fmax = max([Fx,Fy,Fz],[],2);
 
-% Compute race model
+% Compute model
 if dep == 0 % OR model
     Fxy = Fx+Fy-Fx.*Fy;
-    Frace = Fxy+Fz-Fxy.*Fz;
+    Fmodel = Fxy+Fz-Fxy.*Fz;
 elseif dep == -1
     if sharp == 1 % Diederich's bound
         Fxy = Fx+Fy-Fx.*Fy; Fyz = Fy+Fz-Fy.*Fz;
-        Frace = min(Fxy+Fyz-Fy,ones(size(Fxyz)));
+        Fmodel = min(Fxy+Fyz-Fy,ones(size(Fxyz)));
     elseif sharp == 0 % Miller's bound
-        Frace = min(Fx+Fy+Fz,ones(size(Fxyz)));
+        Fmodel = min(Fx+Fy+Fz,ones(size(Fxyz)));
     end
 end
 
@@ -131,7 +142,7 @@ end
 if strcmpi(test,'hor')
     Fxyz = cfp2per(Fxyz,p);
     Fmax = cfp2per(Fmax,p);
-    Frace = cfp2per(Frace,p);
+    Fmodel = cfp2per(Fmodel,p);
 end
 
 % Compute difference
@@ -148,14 +159,19 @@ if nargout > 1
     
     % Compute difference
     if strcmpi(test,'ver')
-        Fpred = Frace-Fmax;
+        Fpred = Fmodel-Fmax;
     elseif strcmpi(test,'hor')
-        Fpred = Fmax-Frace;
+        Fpred = Fmax-Fmodel;
     end
     
     % Compute predicted benefit
     Bpred = getauc(p,Fpred,area);
     
+end
+
+% Get y-values for horizontal test
+if nargout > 4 &&  strcmpi(test,'hor')
+    q = p;
 end
 
 function [p,outlier,per,lim,dep,test,area,sharp] = decode_varargin(varargin)
@@ -198,11 +214,11 @@ else
 end
 if any(strcmpi(varargin,'dep')) && ~isempty(varargin{find(strcmpi(varargin,'dep'))+1})
     dep = varargin{find(strcmpi(varargin,'dep'))+1};
-    if dep~=0 && dep~=-1 && dep~=1
-        error('DEP must be a scalar with a value of -1, 0 or 1.')
+    if dep~=-1 && dep~=0
+        error('DEP must be a scalar with a value of -1 or 0.')
     end
 else
-    dep = 0; % default: assume statistical independence (Raab's Model)
+    dep = 0; % default: assume statistical independence
 end
 if any(strcmpi(varargin,'test')) && ~isempty(varargin{find(strcmpi(varargin,'test'))+1})
     test = varargin{find(strcmpi(varargin,'test'))+1};

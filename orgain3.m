@@ -1,24 +1,29 @@
-function [Cemp,Cpred] = esecost3(x,y,z,xyz,varargin)
-%esecost3 Multisensory cost of a trisensory exhaustive search effect.
-%   CEMP = ESECOST3(X,Y,Z,XYZ) returns the empirical cost of an exhaustive
-%   search effect (ESE), quantified by the area between the cumulative
-%   distribution functions (CDFs) of the slower of the unisensory RT
-%   distributions X, Y and Z, and the trisensory RT distribution XYZ
-%   (Crosse et al., 2019). X, Y, Z and XYZ are not required to have an
-%   equal number of observations. This function treats NaNs as  missing
-%   values, and ignores them.
+function [gain,Fdiff,q,lim] = orgain3(x,y,z,xyz,varargin)
+%orgain3 Multisensory gain for a trisensory OR task.
+%   GAIN = ORGAIN3(X,Y,Z,XYZ) returns the multisensory gain for a
+%   trisensory OR task, quantified by the area between the CDFs of the
+%   trisensory RT distribution XYZ, and the OR (race) model based on the
+%   probability summation of X, Y and Z (Colonius & Diederich, 2006). X, Y,
+%   Z and XYZ are not required to have an equal number of observations.
+%   This function treats NaNs as missing values, and ignores them.
 %
-%   To compute the cost for the bisensory conditions XY, XZ and YZ, use the
-%   function ESECOST on the corresponding unisensory and bisensory RTs. To
-%   compare across bisensory and trisensory conditions, use the same RT
-%   limits (see below).
+%   To compute multisensory gain for the bisensory conditions XY, XZ and
+%   YZ, use the function ORGAIN on the corresponding unisensory and
+%   bisensory RTs. To compare across bisensory and trisensory conditions,
+%   use the same RT limits (see below).
 %
-%   [...,CPRED] = ESECOST3(...) returns the predicted cost of an ESE,
-%   quantified by the area between the CDFs of the slower of the unisensory
-%   RT distributions X, Y and Z, and the trisensory wait (AND) model based
-%   on the joint probability of X, Y and Z (Crosse et al., 2019).
+%   [...,FDIFF] = ORGAIN3(...) returns the difference at each quantile to
+%   test for violations of the model (Miller, 1982).
 %
-%   [...] = ESECOST3(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
+%   [...,Q] = ORGAIN3(...) returns the RT quantiles used to compute the
+%   CDFs for the vertical test and the probabilities used to compute the
+%   percentiles for the horizontal test.
+%
+%   [...,LIM] = ORGAIN3(...) returns the lower and upper RT limits used to
+%   compute the CDFs. These values can be used to set the CDF limits of
+%   subsequent tests that are to be compared with this one.
+%
+%   [...] = ORGAIN3(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
 %   additional parameters and their values. Valid parameters are the
 %   following:
 %
@@ -32,13 +37,14 @@ function [Cemp,Cpred] = esecost3(x,y,z,xyz,varargin)
 %               percentiles of RTs to consider (default=[0,100])
 %   'lim'       a 2-element vector specifying the lower and upper RT limits
 %               for computing CDFs: it is recommended to leave this
-%               unspecified unless comparing directly to other conditions
+%               unspecified unless comparing directly with other conditions
 %               (default=[min([X,Y,Z,XYZ]),max([X,Y,Z,XYZ])])
 %   'dep'       a scalar specifying the model's assumption of statistical
 %               dependence between sensory channels: pass in 0 to assume
-%               independence (AND model; default), and -1 to assume perfect
-%               negative dependence (Colonius's lower bound)
-%   'test'      a string specifying how to test the wait model
+%               independence (OR model; default), -1 to assume perfect
+%               negative dependence (Diederich's bound) and 1 to assume
+%               perfect positive dependence (Grice's bound)
+%   'test'      a string specifying how to test the model
 %                   'ver'       vertical test (default)
 %                   'hor'       horizontal test (Ulrich et al., 2007)
 %   'area'      a string specifying how to compute the area under the curve
@@ -47,9 +53,9 @@ function [Cemp,Cpred] = esecost3(x,y,z,xyz,varargin)
 %                   'neg'       use only negative values
 %   'sharp'     a scalar specifying whether or not to sharpen the overly
 %               conservative upper bound: pass in 1 to sharpen (Diederich's
-%               bound; default) and 0 to not (Colonius's lower bound)
+%               bound; default) and 0 to not (Miller's bound)
 %
-%   See also ESECOST, WAITMODEL3, ESELOSS3, TPERMTEST, EFFECTSIZE.
+%   See also ORGAIN, ORMODEL3, ORBENEFIT3, TPERMTEST, EFFECTSIZE.
 %
 %   RaceModel https://github.com/mickcrosse/RaceModel
 
@@ -57,8 +63,9 @@ function [Cemp,Cpred] = esecost3(x,y,z,xyz,varargin)
 %       [1] Crosse MJ, Foxe JJ, Molholm S (2019) RaceModel: A MATLAB
 %           Package for Stochastic Modelling of Multisensory Reaction
 %           Times (In prep).
-%       [2] Otto TU, Dassy B, Mamassian P (2013) Principles of multisensory
-%           behavior. J Neurosci 33(17):7463-7474.
+%       [2] Colonius H, Diederich A (2006) The Race Model Inequality:
+%           Interpreting a Geometric Measure of the Amount of Violation.
+%           Psychol Rev 113(1):148–154.
 %       [3] Ulrich R, Miller J, Schroter H (2007) Testing the race model
 %           inequality: An algorithm and computer programs. Behav Res
 %           Methods 39(2):291-302.
@@ -67,7 +74,7 @@ function [Cemp,Cpred] = esecost3(x,y,z,xyz,varargin)
 %   Email: mickcrosse@gmail.com
 %   Cognitive Neurophysiology Laboratory,
 %   Albert Einstein College of Medicine, NY
-%   Apr 2017; Last Revision: 11-Apr-2019
+%   Apr 2017; Last Revision: 4-Apr-2019
 
 % Decode input variable arguments
 [p,outlier,per,lim,dep,test,area,sharp] = decode_varargin(varargin);
@@ -103,7 +110,7 @@ if strcmpi(test,'ver')
     Fx = rt2cdf(x,p,lim);
     Fy = rt2cdf(y,p,lim);
     Fz = rt2cdf(z,p,lim);
-    Fxyz = rt2cdf(xyz,p,lim);
+    [Fxyz,q] = rt2cdf(xyz,p,lim);
 elseif strcmpi(test,'hor')
     Fx = rt2cfp(x,lim(2));
     Fy = rt2cfp(y,lim(2));
@@ -111,50 +118,40 @@ elseif strcmpi(test,'hor')
     Fxyz = rt2cfp(xyz,lim(2));
 end
 
-% Compute Colonius's upper bound
-Fmin = min([Fx,Fy,Fz],[],2);
-
-% Compute wait model
-if dep == 0 % AND model
-    Fwait = Fx.*Fy.*Fz;
+% Compute model
+if dep == 0 % OR model
+    Fxy = Fx+Fy-Fx.*Fy;
+    Fmodel = Fxy+Fz-Fxy.*Fz;
 elseif dep == -1
     if sharp == 1 % Diederich's bound
-        Fxy = Fx.*Fy; Fyz = Fy.*Fz;
-        Fwait = min(Fxy+Fyz-Fy,ones(size(Fxyz)));
-    elseif sharp == 0 % Colonius's lower bound
-        Fwait = max(Fx+Fy+Fz-2,zeros(size(Fxyz)));
+        Fxy = Fx+Fy-Fx.*Fy; Fyz = Fy+Fz-Fy.*Fz;
+        Fmodel = min(Fxy+Fyz-Fy,ones(size(Fxyz)));
+    elseif sharp == 0 % Miller's bound
+        Fmodel = min(Fx+Fy+Fz,ones(size(Fxyz)));
     end
+elseif dep == 1 % Grice's bound
+    Fmodel = max([Fx,Fy,Fz],[],2);
 end
 
 % Compute percentiles for horizontal test
 if strcmpi(test,'hor')
     Fxyz = cfp2per(Fxyz,p);
-    Fmin = cfp2per(Fmin,p);
-    Fwait = cfp2per(Fwait,p);
+    Fmodel = cfp2per(Fmodel,p);
 end
 
 % Compute difference
 if strcmpi(test,'ver')
-    Femp = Fxyz-Fmin;
+    Fdiff = Fxyz-Fmodel;
 elseif strcmpi(test,'hor')
-    Femp = Fmin-Fxyz;
+    Fdiff = Fmodel-Fxyz;
 end
 
-% Compute empirical cost
-Cemp = getauc(p,Femp,area);
+% Compute multisensory gain
+gain = getauc(p,Fdiff,area);
 
-if nargout > 1
-    
-    % Compute difference
-    if strcmpi(test,'ver')
-        Fpred = Fwait-Fmin;
-    elseif strcmpi(test,'hor')
-        Fpred = Fmin-Fwait;
-    end
-    
-    % Compute predicted cost
-    Cpred = getauc(p,Fpred,area);
-    
+% Get y-values for horizontal test
+if nargout > 2 &&  strcmpi(test,'hor')
+    q = p;
 end
 
 function [p,outlier,per,lim,dep,test,area,sharp] = decode_varargin(varargin)
@@ -201,7 +198,7 @@ if any(strcmpi(varargin,'dep')) && ~isempty(varargin{find(strcmpi(varargin,'dep'
         error('DEP must be a scalar with a value of -1, 0 or 1.')
     end
 else
-    dep = 0; % default: assume statistical independence (Raab's Model)
+    dep = 0; % default: assume statistical independence
 end
 if any(strcmpi(varargin,'test')) && ~isempty(varargin{find(strcmpi(varargin,'test'))+1})
     test = varargin{find(strcmpi(varargin,'test'))+1};

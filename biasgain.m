@@ -1,19 +1,26 @@
-function bpred = competemodel(Xx,Xy,Xxy,Yx,Yy,Yxy,varargin)
-%competemodel Multisensory benefit predicted by competition models.
-%   BPRED = COMPETEMODEL(XX,XY,XXY,YX,YY,YXY) returns the benefit predicted
-%   by multisensory competition, quantified by the area between the CDFs of
-%   the most effective of the unisensory RT distributions X and Y, and the
-%   competition model (default: biased towards modality X). Unisensory RT
-%   distributions X and Y should be separated by previous modality: XX, XY,
-%   XXY and YX, YY, YXY, respectively. Competition can be modelled as
-%   either a bias towards a specific (i.e., dominant) modality (X or Y) or
-%   a bias towards the previous modality (n-1), except when the previous
-%   modality is XY (biased towards either X or Y). For a mathematical
-%   description, see Crosse et al. (2019). XX, XY, XXY, YX, YY and YXY are
-%   not required to have an equal number of observations. This function
-%   treats NaNs as missing values, and ignores them.
+function [gain,Fdiff,q,lim] = biasgain(Xx,Xy,Xxy,Yx,Yy,Yxy,xy,varargin)
+%biasgain Multisensory gain with a bias towards X or Y.
+%   GAIN = BIASGAIN(XX,XY,XXY,YX,YY,YXY,XY) returns the multisensory gain
+%   for a bisensory OR or AND task, quantified by the area between the CDFs
+%   of the bisensory RT distribution XY, and the bias model based on the
+%   probability mean of XX, XY and XXY (Crosse et al., 2019). By default,
+%   the model is biased towards X, but this bias can be specified using the
+%   BIAS argument (see below). X, Y and XY are not required to have an
+%   equal number of observations. This function treats NaNs as missing
+%   values, and ignores them.
 %
-%   [...] = COMPETEMODEL(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
+%   [...,FDIFF] = BIASGAIN(...) returns the difference at each quantile to
+%   test for violations of the model (Crosse et al., 2019).
+%
+%   [...,Q] = BIASGAIN(...) returns the RT quantiles used to compute the
+%   CDFs for the vertical test and the probabilities used to compute the
+%   percentiles for the horizontal test.
+%
+%   [...,LIM] = BIASGAIN(...) returns the lower and upper RT limits used to
+%   compute the CDFs. These values can be used to set the CDF limits of
+%   subsequent tests that are to be compared with this one.
+%
+%   [...] = BIASGAIN(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
 %   additional parameters and their values. Valid parameters are the
 %   following:
 %
@@ -28,33 +35,36 @@ function bpred = competemodel(Xx,Xy,Xxy,Yx,Yy,Yxy,varargin)
 %   'lim'       a 2-element vector specifying the lower and upper RT limits
 %               for computing CDFs: it is recommended to leave this
 %               unspecified unless comparing directly to other conditions
-%               (default=[min([X,Y]),max([X,Y])])
-%   'bias'      a string specifying whether competition is modelled as 1)
-%               a bias towards a specific (dominant) modality (X or Y), or
-%               2) a bias towards the previous modality (n-1), except when
-%               the previous modality is XY (biased towards either X or Y)
+%               (default=[min([X,Y,XY]),max([X,Y,XY])])
+%   'bias'      a string specifying how to bias the model: 1) bias towards
+%               a specific (dominant) modality (X or Y), or 2) bias towards
+%               the previous modality (n-1), except when the previous
+%               modality is XY (bias towards X or Y)
 %                   '1X'        X bias (default)
 %                   '1Y'        Y bias
-%                   '2X'        n-1 bias (and X bias when n-1=XY)
-%                   '2Y'        n-1 bias (and Y bias when n-1=XY)
+%                   '2X'        n-1 bias (X bias when n-1=XY)
+%                   '2Y'        n-1 bias (Y bias when n-1=XY)
 %   'test'      a string specifying how to test the competition model
 %                   'ver'       vertical test (default)
 %                   'hor'       horizontal test (Ulrich et al., 2007)
-%   'area'      a string specifying how to compute the area under the curve
-%                   'all'       use all values (default)
-%                   'pos'       use only positive values
-%                   'neg'       use only negative values
 %
-%   See also COMPETEMODEL3, RSEBENEFIT, RSEGAIN, TPERMTEST, EFFECTSIZE.
+%   See also ORGAIN, BIASMODEL, BIASBENEFIT, TPERMTEST, EFFECTSIZE.
 %
 %   RaceModel https://github.com/mickcrosse/RaceModel
 
 %   References:
-%       [1] Crosse MJ, Foxe JJ, Molholm S (2019) Developmental Recovery of
+%       [1] Crosse MJ, Foxe JJ, Molholm S (2019) RaceModel: A MATLAB
+%           Package for Stochastic Modelling of Multisensory Reaction
+%           Times (In prep).
+%       [2] Crosse MJ, Foxe JJ, Molholm S (2019) Developmental Recovery of
 %           Impaired Multisensory Processing in Autism and the Cost of
 %           Switching Sensory Modality. bioRxiv 10.1101/565333.
-%       [2] Otto TU, Dassy B, Mamassian P (2013) Principles of multisensory
-%           behavior. J Neurosci 33(17):7463-7474.
+%       [3] Yu L, Cuppini C, Xu J, Rowland BA, Stein B (2019) Cross-Modal
+%           Competition: The Default Computation for Multisensory
+%           Processing. J Neurosci 39(8):1374–1385.
+%       [4] Ulrich R, Miller J, Schroter H (2007) Testing the race model
+%           inequality: An algorithm and computer programs. Behav Res
+%           Methods 39(2):291-302.
 
 %   Author: Mick Crosse
 %   Email: mickcrosse@gmail.com
@@ -63,7 +73,7 @@ function bpred = competemodel(Xx,Xy,Xxy,Yx,Yy,Yxy,varargin)
 %   Apr 2017; Last Revision: 4-Apr-2019
 
 % Decode input variable arguments
-[p,outlier,per,lim,bias,test,area] = decode_varargin(varargin);
+[p,outlier,per,lim,bias,test] = decode_varargin(varargin);
 
 % Outlier correction procedure
 if ~isempty(outlier)
@@ -73,16 +83,18 @@ if ~isempty(outlier)
     Yx(Yx<outlier(1)|Yx>outlier(2)) = [];
     Yy(Yy<outlier(1)|Yy>outlier(2)) = [];
     Yxy(Yxy<outlier(1)|Yxy>outlier(2)) = [];
+    xy(xy<outlier(1)|xy>outlier(2)) = [];
 end
 
 % Get RT range for each condition
-lims = zeros(6,2);
+lims = zeros(7,2);
 lims(1,:) = prctile(Xx,per);
 lims(2,:) = prctile(Xy,per);
 lims(3,:) = prctile(Xxy,per);
 lims(4,:) = prctile(Yx,per);
 lims(5,:) = prctile(Yy,per);
 lims(6,:) = prctile(Yxy,per);
+lims(7,:) = prctile(xy,per);
 
 % Limit RTs to specified range
 Xx = Xx(Xx>=lims(1,1) & Xx<=lims(1,2));
@@ -91,15 +103,7 @@ Xxy = Xxy(Xxy>=lims(3,1) & Xxy<=lims(3,2));
 Yx = Yx(Yx>=lims(4,1) & Yx<=lims(4,2));
 Yy = Yy(Yy>=lims(5,1) & Yy<=lims(5,2));
 Yxy = Yxy(Yxy>=lims(6,1) & Yxy<=lims(6,2));
-
-% Get pooled distributions
-if iscolumn(Xx)
-    x = [Xx;Xy;Xxy];
-    y = [Yx;Yy;Yxy];
-elseif isrow(Xx)
-    x = [Xx,Xy,Xxy];
-    y = [Yx,Yy,Yxy];
-end
+xy = Xy(Xy>=lims(7,1) & xy<=lims(7,2));
 
 % Get min and max RT limits
 if isempty(lim)
@@ -108,56 +112,56 @@ end
 
 % Compute CDFs
 if strcmpi(test,'ver')
-    Fx = rt2cdf(x,p,lim);
-    Fy = rt2cdf(y,p,lim);
-    Fxx = rt2cdf(Xx,p,lim);
-    Fxy = rt2cdf(Xy,p,lim);
-    Fxxy = rt2cdf(Xxy,p,lim);
-    Fyx = rt2cdf(Yx,p,lim);
-    Fyy = rt2cdf(Yy,p,lim);
-    Fyxy = rt2cdf(Yxy,p,lim);
+    FXx = rt2cdf(Xx,p,lim);
+    FXy = rt2cdf(Xy,p,lim);
+    FXxy = rt2cdf(Xxy,p,lim);
+    FYx = rt2cdf(Yx,p,lim);
+    FYy = rt2cdf(Yy,p,lim);
+    FYxy = rt2cdf(Yxy,p,lim);
+    [Fxy,q] = rt2cdf(xy,p,lim);
 elseif strcmpi(test,'hor')
-    Fx = rt2cfp(x,lim(2));
-    Fy = rt2cfp(y,lim(2));
-    Fxx = rt2cfp(Xx,lim(2));
-    Fxy = rt2cfp(Xy,lim(2));
-    Fxxy = rt2cfp(Xxy,lim(2));
-    Fyx = rt2cfp(Yx,lim(2));
-    Fyy = rt2cfp(Yy,lim(2));
-    Fyxy = rt2cfp(Yxy,lim(2));
+    FXx = rt2cfp(Xx,lim(2));
+    FXy = rt2cfp(Xy,lim(2));
+    FXxy = rt2cfp(Xxy,lim(2));
+    FYx = rt2cfp(Yx,lim(2));
+    FYy = rt2cfp(Yy,lim(2));
+    FYxy = rt2cfp(Yxy,lim(2));
+    Fxy = rt2cfp(xy,lim(2));
 end
 
-% Compute Grice's bound
-Fmax = max(Fx,Fy);
-
-% Compute competition model
+% Compute model
 if strcmpi(bias,'1X') % X bias
-    Fcomp = (Fxx+Fxy+Fxxy)/3;
+    Fmodel = (FXx+FXy+FXxy)/3;
 elseif strcmpi(bias,'1Y') % Y bias
-    Fcomp = (Fyx+Fyy+Fyxy)/3;
-elseif strcmpi(bias,'2X') % n-1 bias (and X bias when n-1=XY)
-    Fcomp = (Fxx+Fyy+Fxxy)/3;
-elseif strcmpi(bias,'2Y') % n-1 bias (and Y bias when n-1=XY)
-    Fcomp = (Fxx+Fyy+Fyxy)/3;
+    Fmodel = (FYx+FYy+FYxy)/3;
+elseif strcmpi(bias,'2X') % n-1 bias (X bias when n-1=XY)
+    Fmodel = (FXx+FYy+FXxy)/3;
+elseif strcmpi(bias,'2Y') % n-1 bias (Y bias when n-1=XY)
+    Fmodel = (FXx+FYy+FYxy)/3;
 end
 
 % Compute percentiles for horizontal test
 if strcmpi(test,'hor')
-    Fmax = cfp2per(Fmax,p);
-    Fcomp = cfp2per(Fcomp,p);
+    Fxy = cfp2per(Fmodel,p);
+    Fmodel = cfp2per(Fmodel,p);
 end
 
 % Compute difference
 if strcmpi(test,'ver')
-    Fdiff = Fcomp-Fmax;
+    Fdiff = Fxy-Fmodel;
 elseif strcmpi(test,'hor')
-    Fdiff = Fmax-Fcomp;
+    Fdiff = Fmodel-Fxy;
 end
 
-% Compute predicted benefit
-bpred = getauc(p,Fdiff,area);
+% Compute multisensory gain
+gain = getauc(p,Fdiff,area);
 
-function [p,outlier,per,lim,bias,test,area] = decode_varargin(varargin)
+% Get y-values for horizontal test
+if nargout > 2 &&  strcmpi(test,'hor')
+    q = p;
+end
+
+function [p,outlier,per,lim,bias,test] = decode_varargin(varargin)
 %decode_varargin Decode input variable arguments.
 %   [PARAM1,PARAM2,...] = DECODE_VARARGIN('PARAM1',VAL1,'PARAM2',VAL2,...)
 %   decodes the input variable arguments of the main function.
@@ -210,12 +214,4 @@ if any(strcmpi(varargin,'test')) && ~isempty(varargin{find(strcmpi(varargin,'tes
     end
 else
     test = 'ver'; % default: vertical test
-end
-if any(strcmpi(varargin,'area')) && ~isempty(varargin{find(strcmpi(varargin,'area'))+1})
-    area = varargin{find(strcmpi(varargin,'area'))+1};
-    if ~any(strcmpi(area,{'all','pos','neg'}))
-        error('Invalid value for argument AREA. Valid values are: ''all'', ''pos'', ''neg''.')
-    end
-else
-    area = 'all'; % default: use all values
 end
