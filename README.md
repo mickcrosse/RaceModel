@@ -6,28 +6,30 @@ RaceModel can perform both vertical and horizontal tests of the race model and c
 ## Index
 ### Redundant signals (OR) task
 #### Bisensory
-* racemodel.m - compute race model
-* rsegain.m - compute multisensory gain
-* rsebenefit.m - compute empirical and predicted benefits
+* ormodel.m - compute OR (race) model
+* orgain.m - compute multisensory gain
+* orbenefit.m - compute empirical and predicted benefits
  
 #### Trisensory
-* racemodel3.m - compute race model
-* rsegain3.m - compute multisensory gain
-* rsebenefit3.m - compute empirical and predicted benefits
+* ormodel3.m - compute OR (race) model
+* orgain3.m - compute multisensory gain
+* orbenefit3.m - compute empirical and predicted benefits
 
 ### Exhaustive search (AND) task
 #### Bisensory
-* waitmodel.m - compute wait model
-* eseloss.m - compute multisensory loss
-* esecost.m - compute multisensory cost
+* andmodel.m - compute AND model
+* andgain.m - compute multisensory gain
+* andbenefit.m - compute empirical and predicted benefits
 
 #### Trisensory
-* waitmodel3.m - compute wait model
-* eseloss3.m - compute multisensory loss
-* esecost3.m - compute multisensory cost
+* andmodel3.m - compute AND model
+* andgain3.m - compute multisensory gain
+* andbenefit3.m - compute empirical and predicted benefits
 
 ### Bias (*n*−1) model
- * competemodel.m - compute benefit predicted by competive interactions
+* biasmodel.m - compute bias model
+* biasgain.m - compute multisensory gain
+* biasbenefit.m - compute empirical and predicted benefits
  
 ### Other measures
 * switchcost.m - compute modality switch effects
