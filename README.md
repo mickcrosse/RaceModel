@@ -1,9 +1,7 @@
 # RaceModel
-RaceModel is a MATLAB-based psychophysics toolbox for testing the race model on reaction times (RTs) generated using a multisensory detection task. Bi- or tri-sensory RT distributions can be compared to the statistical facilitation predicted by the corresponding unisensory RT distributions. The race model can be generated under the assumption that RTs on separate sensory channels are statistically independent (Raab's model), perfectly negatively dependent (Miller's bound) or perfectly positively dependent (Grice's bound). 
+RaceModel is a MATLAB package for stochastic modelling of multisensory reaction times. Models can be generated for both OR and AND task designs, as well as bisensory and trisensory paradigms. Models can be generated under the assumption that RTs on separate sensory channels are statistically independent, perfectly negatively dependent or perfectly positively dependent, and can be tested using either vertical or horizontal tests. RaceModel can compute geometric measures of multisensory gain, multisensory benefit and modality switch effects and can handle variables of unequal size and missing values (entered as NaNs).
 
-RaceModel can perform both vertical and horizontal tests of the race model and can handle data of different sizes and with missing values. There are also several functions for computing geometric measures of multisensory gain, empirical and predicted benefits, and modality switch effects, as well as a function for computing F1 scores of detection accuracy.
- 
-## Index
+## Contents
 ### Redundant signals (OR) task
 #### Bisensory
 * ormodel.m - compute OR (race) model
