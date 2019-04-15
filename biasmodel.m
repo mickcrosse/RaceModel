@@ -59,13 +59,7 @@ function [Fx,Fy,Fxy,Fmodel,q,lim] = biasmodel(Xx,Xy,Xxy,Yx,Yy,Yxy,xy,varargin)
 %       [1] Crosse MJ, Foxe JJ, Molholm S (2019) RaceModel: A MATLAB
 %           Package for Stochastic Modelling of Multisensory Reaction
 %           Times (In prep).
-%       [2] Crosse MJ, Foxe JJ, Molholm S (2019) Developmental Recovery of
-%           Impaired Multisensory Processing in Autism and the Cost of
-%           Switching Sensory Modality. bioRxiv 10.1101/565333.
-%       [3] Yu L, Cuppini C, Xu J, Rowland BA, Stein B (2019) Cross-Modal
-%           Competition: The Default Computation for Multisensory
-%           Processing. J Neurosci 39(8):1374–1385.
-%       [4] Ulrich R, Miller J, Schroter H (2007) Testing the race model
+%       [2] Ulrich R, Miller J, Schroter H (2007) Testing the race model
 %           inequality: An algorithm and computer programs. Behav Res
 %           Methods 39(2):291-302.
 
@@ -73,7 +67,7 @@ function [Fx,Fy,Fxy,Fmodel,q,lim] = biasmodel(Xx,Xy,Xxy,Yx,Yy,Yxy,xy,varargin)
 %   Email: mickcrosse@gmail.com
 %   Cognitive Neurophysiology Laboratory,
 %   Albert Einstein College of Medicine, NY
-%   Apr 2017; Last Revision: 4-Apr-2019
+%   Apr 2017; Last Revision: 14-Apr-2019
 
 % Decode input variable arguments
 [p,outlier,per,lim,bias,test] = decode_varargin(varargin);

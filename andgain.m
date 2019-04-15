@@ -3,12 +3,12 @@ function [gain,Fdiff,q,lim] = andgain(x,y,xy,varargin)
 %   GAIN = ANDGAIN(X,Y,XY) returns the multisensory gain for a bisensory
 %   AND task, quantified by the area between the CDFs of the bisensory RT
 %   distribution XY, and the AND model based on the joint probability of X
-%   and Y (Colonius & Diederich, 2006). X, Y and XY are not required to
-%   have an equal number of observations. This function treats NaNs as
-%   missing values, and ignores them.
+%   and Y (Crosse et al., 2019). X, Y and XY are not required to have an
+%   equal number of observations. This function treats NaNs as missing
+%   values, and ignores them.
 %
 %   [...,FDIFF] = ANDGAIN(...) returns the difference at each quantile to
-%   test for violations of the model (Colonius & Vorberg, 1994).
+%   test for violations of the model.
 %
 %   [...,Q] = ANDGAIN(...) returns the RT quantiles used to compute the
 %   CDFs for the vertical test and the probabilities used to compute the
@@ -67,7 +67,7 @@ function [gain,Fdiff,q,lim] = andgain(x,y,xy,varargin)
 %   Email: mickcrosse@gmail.com
 %   Cognitive Neurophysiology Laboratory,
 %   Albert Einstein College of Medicine, NY
-%   Apr 2017; Last Revision: 11-Apr-2019
+%   Apr 2017; Last Revision: 14-Apr-2019
 
 % Decode input variable arguments
 [p,outlier,per,lim,dep,test,area] = decode_varargin(varargin);

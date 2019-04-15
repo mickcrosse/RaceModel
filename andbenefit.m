@@ -3,15 +3,15 @@ function [Bemp,Bpred,Femp,Fpred,q,lim] = andbenefit(x,y,xy,varargin)
 %   BEMP = ANDBENEFIT(X,Y,XY) returns the empirical multisensory benefit
 %   for a bisensory AND task, quantified by the area between the CDFs of
 %   the slower of the unisensory RT distributions X and Y, and the
-%   bisensory RT distribution XY (Otto et al., 2013). X, Y and XY are not
+%   bisensory RT distribution XY (Crosse et al., 2019). X, Y and XY are not
 %   required to have an equal number of observations. This function treats
 %   NaNs as missing values, and ignores them.
 %
 %   [...,BPRED] = ANDBENEFIT(...) returns the predicted multisensory
 %   benefit for a bisensory AND task, quantified by the area between the
 %   CDFs of the slower of the unisensory RT distributions X and Y, and the
-%   AND model based on the joint probability of X and Y (Otto et al.,
-%   2013).
+%   AND model based on the joint probability of X and Y (Crosse et al.,
+%   2019).
 %
 %   [...,FEMP,FPRED] = ANDBENEFIT(...) returns the difference at each
 %   quantile for empirical and predicted benefits, respectively.
@@ -70,7 +70,7 @@ function [Bemp,Bpred,Femp,Fpred,q,lim] = andbenefit(x,y,xy,varargin)
 %   Email: mickcrosse@gmail.com
 %   Cognitive Neurophysiology Laboratory,
 %   Albert Einstein College of Medicine, NY
-%   Apr 2017; Last Revision: 11-Apr-2019
+%   Apr 2017; Last Revision: 14-Apr-2019
 
 % Decode input variable arguments
 [p,outlier,per,lim,dep,test,area] = decode_varargin(varargin);

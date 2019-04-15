@@ -3,9 +3,9 @@ function [Bemp,Bpred,Femp,Fpred,q,lim] = andbenefit3(x,y,z,xyz,varargin)
 %   BEMP = ANDBENEFIT3(X,Y,Z,XYZ) returns the empirical multisensory
 %   benefit for a trisensory AND task, quantified by the area between the
 %   CDFs of the slower of the unisensory RT distributions X, Y and Z, and
-%   the trisensory RT distribution XYZ (Otto et al., 2013). X, Y, Z and XYZ
-%   are not required to have an equal number of observations. This function
-%   treats NaNs as missing values, and ignores them.
+%   the trisensory RT distribution XYZ (Crosse et al., 2019). X, Y, Z and
+%   XYZ are not required to have an equal number of observations. This
+%   function treats NaNs as missing values, and ignores them.
 %
 %   To compute multisensory benefits for the bisensory conditions XY, XZ
 %   and YZ, use the function ANDBENEFIT on the corresponding unisensory and
@@ -15,8 +15,8 @@ function [Bemp,Bpred,Femp,Fpred,q,lim] = andbenefit3(x,y,z,xyz,varargin)
 %   [...,BPRED] = ANDBENEFIT3(...) returns the predicted multisensory
 %   benefit for a trisensory AND task, quantified by the area between the
 %   CDFs of the slower of the unisensory RT distributions X, Y and Z, and
-%   the AND model based on the joint probability of X, Y and Z (Otto et
-%   al., 2013).
+%   the AND model based on the joint probability of X, Y and Z (Crosse et
+%   al., 2019).
 %
 %   [...,FEMP,FPRED] = ANDBENEFIT(...) returns the difference at each
 %   quantile for empirical and predicted benefits, respectively.
@@ -78,7 +78,7 @@ function [Bemp,Bpred,Femp,Fpred,q,lim] = andbenefit3(x,y,z,xyz,varargin)
 %   Email: mickcrosse@gmail.com
 %   Cognitive Neurophysiology Laboratory,
 %   Albert Einstein College of Medicine, NY
-%   Apr 2017; Last Revision: 11-Apr-2019
+%   Apr 2017; Last Revision: 14-Apr-2019
 
 % Decode input variable arguments
 [p,outlier,per,lim,dep,test,area,sharp] = decode_varargin(varargin);

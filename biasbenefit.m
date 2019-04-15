@@ -14,7 +14,7 @@ function [Bemp,Bpred,Femp,Fpred,q,lim] = biasbenefit(Xx,Xy,Xxy,Yx,Yy,Yxy,xy,vara
 %   benefit for a bisensory OR task, quantified by the area between the
 %   CDFs of the faster of the unisensory RT distributions X and Y, and the
 %   bias model based on the probability mean of XX, XY and XXY (Crosse et
-%   al., 2019). By default, the model is biased towards X, but this bias
+%   al., 2019a,b). By default, the model is biased towards X, but this bias
 %   can be specified using the BIAS argument (see below).
 %
 %   [...,FEMP,FPRED] = BIASBENEFIT(...) returns the difference at each
@@ -64,15 +64,14 @@ function [Bemp,Bpred,Femp,Fpred,q,lim] = biasbenefit(Xx,Xy,Xxy,Yx,Yy,Yxy,xy,vara
 %   RaceModel https://github.com/mickcrosse/RaceModel
 
 %   References:
-%       [1] Crosse MJ, Foxe JJ, Molholm S (2019) RaceModel: A MATLAB
+%       [1] Crosse MJ, Foxe JJ, Molholm S (2019a) RaceModel: A MATLAB
 %           Package for Stochastic Modelling of Multisensory Reaction
 %           Times (In prep).
-%       [2] Crosse MJ, Foxe JJ, Molholm S (2019) Developmental Recovery of
+%       [2] Crosse MJ, Foxe JJ, Molholm S (2019b) Developmental Recovery of
 %           Impaired Multisensory Processing in Autism and the Cost of
 %           Switching Sensory Modality. bioRxiv 10.1101/565333.
-%       [3] Yu L, Cuppini C, Xu J, Rowland BA, Stein B (2019) Cross-Modal
-%           Competition: The Default Computation for Multisensory
-%           Processing. J Neurosci 39(8):1374–1385.
+%       [3] Otto TU, Dassy B, Mamassian P (2013) Principles of multisensory
+%           behavior. J Neurosci 33(17):7463-7474.
 %       [4] Ulrich R, Miller J, Schroter H (2007) Testing the race model
 %           inequality: An algorithm and computer programs. Behav Res
 %           Methods 39(2):291-302.
@@ -81,7 +80,7 @@ function [Bemp,Bpred,Femp,Fpred,q,lim] = biasbenefit(Xx,Xy,Xxy,Yx,Yy,Yxy,xy,vara
 %   Email: mickcrosse@gmail.com
 %   Cognitive Neurophysiology Laboratory,
 %   Albert Einstein College of Medicine, NY
-%   Apr 2017; Last Revision: 4-Apr-2019
+%   Apr 2017; Last Revision: 14-Apr-2019
 
 % Decode input variable arguments
 [p,outlier,per,lim,bias,test,task] = decode_varargin(varargin);

@@ -78,7 +78,7 @@ function [Bemp,Bpred,Femp,Fpred,q,lim] = orbenefit3(x,y,z,xyz,varargin)
 %   Email: mickcrosse@gmail.com
 %   Cognitive Neurophysiology Laboratory,
 %   Albert Einstein College of Medicine, NY
-%   Apr 2017; Last Revision: 4-Apr-2019
+%   Apr 2017; Last Revision: 14-Apr-2019
 
 % Decode input variable arguments
 [p,outlier,per,lim,dep,test,area,sharp] = decode_varargin(varargin);
