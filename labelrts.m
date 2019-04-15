@@ -1,4 +1,4 @@
-function [xsw,] = labelrts(x,y,xy,xlabel,ylabel,xylabel)
+function [xsw,ysw,xysw] = labelrts(x,y,xy,xlabel,ylabel,xylabel)
 %labelrts Label RTs as swtich, repeat.
 %   AUC = GETAUC(X,Y,P) returns the area under the curve Y with respect to
 %   X based on the portion of the curve P using trapezoidal numerical

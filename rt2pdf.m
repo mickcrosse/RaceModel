@@ -1,0 +1,54 @@
+function [fx,q] = rt2pdf(x,p,lim)
+%rt2pdf Convert reaction times to probability density function.
+%   FX = RT2PDF(X,P,LIM) returns the probability density function (PDF)
+%   of the RT distribution X for the set of quantiles corresponding to the
+%   probabilities P between the RT limits LIM. P must be a vector of values
+%   between 0 and 1 and LIM must be a 2-element vector containing the lower
+%   and upper RT limits. PDFs drawn from different samples can be averaged
+%   as long as the same probabilities were used to compute the quantiles
+%   (Ratcliff, 1979). This function treats NaNs as missing values, and
+%   ignores them.
+%
+%   [...,Q] = RT2PDF(...) returns the RT quantiles used to compute the CDF.
+%
+%   See also RT2CDF, RT2CFP, CFP2PER, RACEMODEL, SWITCHCOST, GETAUC.
+%
+%   RaceModel https://github.com/mickcrosse/RaceModel
+
+%   References:
+%       [1] Ratcliff R (1979) Group reaction time distributions and an
+%           analysis of distribution statistics. Psychol Bull
+%           86(3):446-461.
+
+%   Author: Mick Crosse
+%   Email: mickcrosse@gmail.com
+%   Cognitive Neurophysiology Laboratory,
+%   Albert Einstein College of Medicine, NY
+%   Apr 2017; Last Revision: 4-Apr-2019
+
+% Set default values
+if nargin < 3 || isempty(lim)
+    lim = [min(x),max(x)];
+elseif lim(1) > lim(2)
+    error('Value of LIM(1) must be < LIM(2).')
+end
+if nargin < 2 || isempty(p)
+    p = 0.05:0.1:0.95;
+end
+
+% Get number of observations
+nx = sum(~isnan(x));
+nq = length(p);
+
+% Compute quantiles
+q = lim(1)+p*(lim(2)-lim(1));
+
+% Compute CDF
+fx = zeros(nq,1);
+for i = 1:nq
+    if i == 1
+        fx(i) = sum(x<=q(i))/nx;
+    else
+        fx(i) = sum(x>q(i-1) & x<=q(i))/nx;
+    end
+end

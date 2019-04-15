@@ -80,10 +80,10 @@ function [Fx,Fy,Fz,Fxyz,Fmodel,q,lim] = andmodel3(x,y,z,xyz,varargin)
 %   Email: mickcrosse@gmail.com
 %   Cognitive Neurophysiology Laboratory,
 %   Albert Einstein College of Medicine, NY
-%   Apr 2017; Last Revision: 14-Apr-2019
+%   Apr 2017; Last Revision: 15-Apr-2019
 
 % Decode input variable arguments
-[p,outlier,per,lim,dep,test] = decode_varargin(varargin);
+[p,outlier,per,lim,dep,test,sharp] = decode_varargin(varargin);
 
 % Outlier correction procedure
 if ~isempty(outlier)
@@ -156,7 +156,7 @@ if nargout > 5 &&  strcmpi(test,'hor')
     q = p;
 end
 
-function [p,outlier,per,lim,dep,test] = decode_varargin(varargin)
+function [p,outlier,per,lim,dep,test,sharp] = decode_varargin(varargin)
 %decode_varargin Decode input variable arguments.
 %   [PARAM1,PARAM2,...] = DECODE_VARARGIN('PARAM1',VAL1,'PARAM2',VAL2,...)
 %   decodes the input variable arguments of the main function.
@@ -209,4 +209,12 @@ if any(strcmpi(varargin,'test')) && ~isempty(varargin{find(strcmpi(varargin,'tes
     end
 else
     test = 'ver'; % default: vertical test
+end
+if any(strcmpi(varargin,'sharp')) && ~isempty(varargin{find(strcmpi(varargin,'sharp'))+1})
+    sharp = varargin{find(strcmpi(varargin,'sharp'))+1};
+    if sharp~=0 && sharp~=1
+        error('SHARP must be a scalar with a value of 0 or 1.')
+    end
+else
+    sharp = 1; % default: sharpen (Diederich's Bound)
 end
