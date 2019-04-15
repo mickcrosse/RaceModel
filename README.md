@@ -41,7 +41,8 @@ Crosse MJ, Foxe JJ, Molholm S (2019) RaceModel: A MATLAB Package for Stochastic 
 * f1score.m - compute F1 score (detection accuracy)
  
 ### Preprocessing
-* rt2cdf.m - convert reaction times to cumulative probabilities
+* rt2pdf.m - convert reaction times to probability density function
+* rt2cdf.m - convert reaction times to cumulative distribution function
 * rt2cfp.m - convert reaction times to a cumulative frequency polygon 
 * cfp2per.m - convert a cumulative frequency polygon to percentiles
 * getauc.m - compute area under the curve
