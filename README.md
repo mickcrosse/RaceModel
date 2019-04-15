@@ -10,22 +10,26 @@ Crosse MJ, Foxe JJ, Molholm S (2019) RaceModel: A MATLAB Package for Stochastic 
 * ormodel.m - compute OR (race) model
 * orgain.m - compute multisensory gain
 * orbenefit.m - compute empirical and predicted benefits
+* orcapacity.m - compute capacity coefficient and bounds
  
 #### Trisensory
 * ormodel3.m - compute OR (race) model
 * orgain3.m - compute multisensory gain
 * orbenefit3.m - compute empirical and predicted benefits
+* orcapacity3.m - compute capacity coefficient and bounds
 
 ### Exhaustive search (AND) task
 #### Bisensory
 * andmodel.m - compute AND model
 * andgain.m - compute multisensory gain
 * andbenefit.m - compute empirical and predicted benefits
+* andcapacity.m - compute capacity coefficient and bounds
 
 #### Trisensory
 * andmodel3.m - compute AND model
 * andgain3.m - compute multisensory gain
 * andbenefit3.m - compute empirical and predicted benefits
+* andcapacity3.m - compute capacity coefficient and bounds
 
 ### Bias (*n*−1) model
 * biasmodel.m - compute bias model
