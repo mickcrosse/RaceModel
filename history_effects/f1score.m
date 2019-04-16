@@ -17,9 +17,9 @@ function [F1,hitrate,errorrate] = f1score(x,rtmin,rtmax,nresp,ntarget)
 %   [...] = F1SCORE(...,NTARGET) computes the F1 score by specifying the
 %   exact number of targets NTARGET. This is useful if NTARGET does not
 %   equal the number of elements in X because misses were not included in
-%   X as NaNs or if RTs were removed due to outlier correction procedures.
+%   X as NaNs, or if RTs were removed due to outlier correction procedures.
 %
-%   See also RACEMODEL, RSEGAIN, RSEBENEFIT, TPERMTEST, EFFECTSIZE.
+%   See also ORCAPACITY, ANDCAPACITY, TPERMTEST, EFFECTSIZE.
 %
 %   RaceModel https://github.com/mickcrosse/RaceModel
 

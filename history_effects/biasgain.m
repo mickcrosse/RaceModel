@@ -48,7 +48,7 @@ function [gain,Fdiff,q,lim] = biasgain(Xx,Xy,Xxy,Yx,Yy,Yxy,xy,varargin)
 %                   'ver'       vertical test (default)
 %                   'hor'       horizontal test (Ulrich et al., 2007)
 %
-%   See also ORGAIN, BIASMODEL, BIASBENEFIT, TPERMTEST, EFFECTSIZE.
+%   See also TRIALHISTORY, BIASMODEL, BIASBENEFIT, TPERMTEST, EFFECTSIZE.
 %
 %   RaceModel https://github.com/mickcrosse/RaceModel
 
@@ -56,8 +56,9 @@ function [gain,Fdiff,q,lim] = biasgain(Xx,Xy,Xxy,Yx,Yy,Yxy,xy,varargin)
 %       [1] Crosse MJ, Foxe JJ, Molholm S (2019) RaceModel: A MATLAB
 %           Package for Stochastic Modelling of Multisensory Reaction
 %           Times (In prep).
-%       [2] Otto TU, Dassy B, Mamassian P (2013) Principles of multisensory
-%           behavior. J Neurosci 33(17):7463-7474.
+%       [2] Colonius H, Diederich A (2006) The Race Model Inequality:
+%           Interpreting a Geometric Measure of the Amount of Violation.
+%           Psychol Rev 113(1):148–154.
 %       [3] Ulrich R, Miller J, Schroter H (2007) Testing the race model
 %           inequality: An algorithm and computer programs. Behav Res
 %           Methods 39(2):291-302.

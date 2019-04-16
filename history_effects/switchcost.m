@@ -1,8 +1,7 @@
-function [MSE,Fdiff,q] = switchcost(sw,re,varargin)
-%switchcost Modality switch effect of RTs for mixed stimulus presenation.
-%   MSE = SWITCHCOST(SW,RE) returns the modality switch effect (MSE) of
-%   response times for mixed stimulus presenation. MSE is quantified as the
-%   area between the cumulative distribution functions (CDFs) of the RT
+function [cost,Fdiff,q] = switchcost(sw,re,varargin)
+%switchcost Switch cost of reaction times to mixed stimuli.
+%   COST = SWITCHCOST(SW,RE) returns the switch cost of reaction times to
+%   mixed stimuli, quantified as the area between the CDFs of the RT
 %   distributions of the switch trials SW, and repeat trials RE (Crosse et
 %   al., 2019a,b). SW and RE are not required to have an equal number of
 %   observations. This function treats NaNs as missing values, and ignores
@@ -39,7 +38,7 @@ function [MSE,Fdiff,q] = switchcost(sw,re,varargin)
 %                   'pos'       use only positive values
 %                   'neg'       use only negative values
 %
-%   See also RACEMODEL, RSEGAIN, RSEBENEFIT, TPERMTEST, EFFECTSIZE.
+%   See also TRIALHISTORY, ORGAIN, BIASMODEL, TPERMTEST, EFFECTSIZE.
 %
 %   RaceModel https://github.com/mickcrosse/RaceModel
 
@@ -106,13 +105,12 @@ elseif strcmpi(test,'hor')
 end
 
 % Compute MSE
-MSE = getauc(p,Fdiff,area);
+cost = getauc(p,Fdiff,area);
 
 % Get probabilities for horizontal test
 if nargout > 2 &&  strcmpi(test,'hor')
     q = p;
 end
-
 
 function [p,outlier,per,lim,test,area] = decode_varargin(varargin)
 %decode_varargin Decode input variable arguments.

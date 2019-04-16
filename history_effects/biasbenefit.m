@@ -59,7 +59,7 @@ function [Bemp,Bpred,Femp,Fpred,q,lim] = biasbenefit(Xx,Xy,Xxy,Yx,Yy,Yxy,xy,vara
 %                   'OR'        OR task (default)
 %                   'AND'       AND task
 %
-%   See also ORGAIN, BIASMODEL, BIASBENEFIT, TPERMTEST, EFFECTSIZE.
+%   See also TRIALHISTORY, BIASMODEL, BIASGAIN, TPERMTEST, EFFECTSIZE.
 %
 %   RaceModel https://github.com/mickcrosse/RaceModel
 

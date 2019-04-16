@@ -51,7 +51,7 @@ function [Fx,Fy,Fxy,Fmodel,q,lim] = biasmodel(Xx,Xy,Xxy,Yx,Yy,Yxy,xy,varargin)
 %                   'ver'       vertical test (default)
 %                   'hor'       horizontal test (Ulrich et al., 2007)
 %
-%   See also ORMODEL, BIASGAIN, BIASBENEFIT, TPERMTEST, EFFECTSIZE.
+%   See also TRIALHISTORY, BIASGAIN, BIASBENEFIT, TPERMTEST, EFFECTSIZE.
 %
 %   RaceModel https://github.com/mickcrosse/RaceModel
 
