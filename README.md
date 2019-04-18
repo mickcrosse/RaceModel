@@ -8,26 +8,26 @@ Crosse MJ, Foxe JJ, Molholm S (2019) RaceModel: A MATLAB Package for Stochastic 
 ### Redundant signals (OR) task
 #### Bisensory
 * ormodel.m - compute OR (race) model
-* orgain.m - compute multisensory gain
+* orgain.m - compute multisensory gain (violations)
 * orbenefit.m - compute empirical and predicted benefits
 * orcapacity.m - compute capacity coefficient and bounds
  
 #### Trisensory
 * ormodel3.m - compute OR (race) model
-* orgain3.m - compute multisensory gain
+* orgain3.m - compute multisensory gain (violations)
 * orbenefit3.m - compute empirical and predicted benefits
 * orcapacity3.m - compute capacity coefficient and bounds
 
 ### Exhaustive search (AND) task
 #### Bisensory
 * andmodel.m - compute AND model
-* andgain.m - compute multisensory gain
+* andgain.m - compute multisensory gain (violations)
 * andbenefit.m - compute empirical and predicted benefits
 * andcapacity.m - compute capacity coefficient and bounds
 
 #### Trisensory
 * andmodel3.m - compute AND model
-* andgain3.m - compute multisensory gain
+* andgain3.m - compute multisensory gain (violations)
 * andbenefit3.m - compute empirical and predicted benefits
 * andcapacity3.m - compute capacity coefficient and bounds
 
@@ -35,7 +35,7 @@ Crosse MJ, Foxe JJ, Molholm S (2019) RaceModel: A MATLAB Package for Stochastic 
 * trialhistory.m - separate RTs based on trial history
 * switchcost.m - compute modality switch effects
 * biasmodel.m - compute bias model
-* biasgain.m - compute multisensory gain
+* biasgain.m - compute multisensory gain (violations)
 * biasbenefit.m - compute empirical and predicted benefits
  
 ### Accuracy
