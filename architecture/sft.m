@@ -1,26 +1,34 @@
-function [Ccoef,Clim,Csup,q,lim] = orcapacity(x,y,xy,varargin)
-%orcapacity Capacity coefficient for a bisensory OR task.
-%   CCOEF = ORCAPACITY(X,Y,XY) returns the capacity coefficient for a
-%   bisensory OR task at 10 linearly-spaced quantiles. CCOEF values of 1
-%   imply that the system has unlimited capacity, values below 1 imply
-%   limited capacity and values above 1 imply super capacity (Townsend &
-%   Eidels, 2011). X, Y and XY are not required to have an equal number of
-%   observations. This function treats NaNs as missing values, and ignores
-%   them.
+function [MIC,SIC,q,lim] = sft(xhh,xll,xhl,xlh,varargin)
+%sft Systems factorial technology.
+%   MIC = SFT(XHH,XLL,XHL,XLH) returns the mean interaction contrast (MIC)
+%   based on the mean values of the bisensory conditions XHH, XLL, XHL and
+%   XLH, where H indicates high salience and L indicates low salience on
+%   the respective channels. XHH, XLL, XHL and XLH are not required to have
+%   an equal number of observations. This function treats NaNs as missing
+%   values, and ignores them.
 %
-%   [...,CLIM,CSUP] = ORCAPACITY(...) returns the predicted bounds of
-%   limited and super capacity, respectively.
+%   [...,SIC] = SFT(...) returns survivor interaction contrast (SIC) based
+%   on the survivor functions of the bisensory conditions XHH, XLL, XHL and
+%   XLH.
 %
-%   [...,Q] = ORCAPACITY(...) returns the RT quantiles used to compute the
-%   CDFs.
+%   The architecture and stopping rule can be inferred by the combined
+%   outcome of MIC and SIC using the following reference table:
 %
-%   [...,LIM] = ORCAPACITY(...) returns the lower and upper RT limits used
-%   to compute the CDFs. These values can be used to set the CDF limits of
+%   Model           MIC     SIC
+%   Serial, OR      0       0
+%   Serial, AND     0       -to+
+%   Parallel, OR	>0      >0
+%   Parallel, AND	<0      <0
+%   Coactive        >0      -to+
+%
+%   [...,Q] = SFT(...) returns the RT quantiles used to compute the CDFs.
+%
+%   [...,LIM] = SFT(...) returns the lower and upper RT limits used to
+%   compute the CDFs. These values can be used to set the CDF limits of
 %   subsequent tests that are to be compared with this one.
 %
-%   [...] = ORCAPACITY(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
-%   additional parameters and their values. Valid parameters are the
-%   following:
+%   [...] = SFT(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies additional
+%   parameters and their values. Valid parameters are the following:
 %
 %   Parameter   Value
 %   'p'         a vector specifying the probabilities for computing the
@@ -33,9 +41,9 @@ function [Ccoef,Clim,Csup,q,lim] = orcapacity(x,y,xy,varargin)
 %   'lim'       a 2-element vector specifying the lower and upper RT limits
 %               for computing CDFs: it is recommended to leave this
 %               unspecified unless comparing directly with other conditions
-%               (default=[min([X,Y,XY]),max([X,Y,XY])])
+%               (default=[min([X,Y,Z,XYZ]),max([X,Y,Z,XYZ])])
 %
-%   See also ORCAPACITY3, ANDCAPACITY, TPERMTEST, EFFECTSIZE.
+%   See also ORCAPACITY, ANDCAPACITY, TPERMTEST, EFFECTSIZE.
 %
 %   RaceModel https://github.com/mickcrosse/RaceModel
 
@@ -43,36 +51,42 @@ function [Ccoef,Clim,Csup,q,lim] = orcapacity(x,y,xy,varargin)
 %       [1] Crosse MJ, Foxe JJ, Molholm S (2019) RaceModel: A MATLAB
 %           Package for Stochastic Modelling of Multisensory Reaction
 %           Times (In prep).
-%       [2] Townsend JT, Eidels A (2011) Workload capacity spaces: A
-%           unified methodology for response time measures of efficiency as
-%           workload is varied. Psychon Bull Rev 18:659–681.
+%       [2] Townsend JT, Nozawa G (1995) Spatio-temporal properties of
+%           elementary perception: An investigation of parallel, serial,
+%           and coactive theories. J Math Psychol 39(4):321–359.
+%       [3] Little DR, Altieri N, Fific M, Yang CT (2017) Systems factorial
+%           technology: A theory driven methodology for the identification
+%           of perceptual and cognitive mechanisms. Academic Press.
 %
 %   Author: Mick Crosse
 %   Email: mickcrosse@gmail.com
 %   Cognitive Neurophysiology Laboratory,
 %   Albert Einstein College of Medicine, NY
-%   Apr 2017; Last Revision: 15-Apr-2019
+%   Apr 2017; Last Revision: 18-Apr-2019
 
 % Decode input variable arguments
 [p,outlier,per,lim] = decode_varargin(varargin);
 
 % Outlier correction procedure
 if ~isempty(outlier)
-    x(x<outlier(1)|x>outlier(2)) = [];
-    y(y<outlier(1)|y>outlier(2)) = [];
-    xy(xy<outlier(1)|xy>outlier(2)) = [];
+    xhh(xhh<outlier(1)|xhh>outlier(2)) = [];
+    xhl(xhl<outlier(1)|xhl>outlier(2)) = [];
+    xlh(xlh<outlier(1)|xlh>outlier(2)) = [];
+    xll(xll<outlier(1)|xll>outlier(2)) = [];
 end
 
 % Get RT range for each condition
-lims = zeros(3,2);
-lims(1,:) = prctile(x,per);
-lims(2,:) = prctile(y,per);
-lims(3,:) = prctile(xy,per);
+lims = zeros(4,2);
+lims(1,:) = prctile(xhh,per);
+lims(2,:) = prctile(xhl,per);
+lims(3,:) = prctile(xlh,per);
+lims(4,:) = prctile(xll,per);
 
 % Limit RTs to specified range
-x = x(x>=lims(1,1) & x<=lims(1,2));
-y = y(y>=lims(2,1) & y<=lims(2,2));
-xy = xy(xy>=lims(3,1) & xy<=lims(3,2));
+xhh = xhh(xhh>=lims(1,1) & xhh<=lims(1,2));
+xhl = xhl(xhl>=lims(2,1) & xhl<=lims(2,2));
+xlh = xlh(xlh>=lims(3,1) & xlh<=lims(3,2));
+xll = xll(xll>=lims(4,1) & xll<=lims(4,2));
 
 % Get min and max RT limits
 if isempty(lim)
@@ -80,21 +94,16 @@ if isempty(lim)
 end
 
 % Compute CDFs
-Fx = rt2cdf(x,p,lim);
-Fy = rt2cdf(y,p,lim);
-[Fxy,q] = rt2cdf(xy,p,lim);
+Fxhh = rt2cdf(xhh,p,lim);
+Fxhl = rt2cdf(xhl,p,lim);
+Flh = rt2cdf(xlh,p,lim);
+[Fxll,q] = rt2cdf(xll,p,lim);
 
-% Compute survivor functions
-Sx = 1-Fx;
-Sy = 1-Fy;
-Sxy = 1-Fxy;
+% Compute mean interaction contrast
+MIC = nanmean(xhh)-nanmean(xhl)-nanmean(xlh)+nanmean(xll);
 
-% Compute capacity coefficient
-Ccoef = log(Sxy)./log(Sx.*Sy);
-
-% Compute bounds of limited and super capacity
-Clim = log(min(Sx,Sy))./log(Sx.*Sy); % Grice's bound
-Csup = log(Sx+Sy-1)./log(Sx.*Sy); % Miller's bound
+% Compute survivor interaction contrast
+SIC = Fxhl+Flh-Fxhh-Fxll;
 
 function [p,outlier,per,lim] = decode_varargin(varargin)
 %decode_varargin Decode input variable arguments.

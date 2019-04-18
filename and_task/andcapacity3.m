@@ -1,13 +1,15 @@
-function [Ccoef,Clwr,Cupr,q,lim] = andcapacity3(x,y,z,xyz,varargin)
+function [Ccoef,Clim,Csup,q,lim] = andcapacity3(x,y,z,xyz,varargin)
 %andcapacity3 Capacity coefficient for a trisensory AND task.
 %   CCOEF = ANDCAPACITY3(X,Y,Z,XYZ) returns the capacity coefficient for a
-%   trisensory AND task at 10 linearly-spaced quantiles. CCOEF values of 1
-%   imply that the system has unlimited capacity (Townsend & Eidels, 2011).
-%   X, Y and XY are not required to have an equal number of observations.
-%   This function treats NaNs as missing values, and ignores them.
+%   trisensory AND task at 10 linearly-spaced quantiles.  CCOEF values of 1
+%   imply that the system has unlimited capacity, values below 1 imply
+%   limited capacity and values above 1 imply super capacity (Townsend &
+%   Eidels, 2011). X, Y, Z and XYZ are not required to have an equal number
+%   of observations. This function treats NaNs as missing values, and
+%   ignores them.
 %
-%   [...,CLWR,CUPR] = ANDCAPACITY3(...) returns the lower and upper bounds
-%   of limited and super capacity, respectively.
+%   [...,CLIM,CSUP] = ANDCAPACITY3(...) returns the predicted bounds of
+%   limited and super capacity, respectively.
 %
 %   [...,Q] = ANDCAPACITY3(...) returns the RT quantiles used to compute
 %   the CDFs.
@@ -92,14 +94,14 @@ Fz = rt2cdf(z,p,lim);
 % Compute capacity coefficient
 Ccoef = log(Fx.*Fy.*Fz)./log(Fxyz);
 
-% Compute lower and upper bounds
+% Compute bounds of limited and super capacity
 if sharp == 1
     Fxy = Fx.*Fy; Fyz = Fy.*Fz;
-    Clwr = log(Fxy+Fyz-Fy)./log(Fx.*Fy.*Fz); % Diederich's bound
+    Clim = log(Fxy+Fyz-Fy)./log(Fx.*Fy.*Fz); % Diederich's bound
 elseif sharp == 0
-    Clwr = log(Fx.*Fy.*Fz)./log(Fx+Fy+Fz-2); % Colonius-Vorberg lower bound
+    Clim = log(Fx.*Fy.*Fz)./log(Fx+Fy+Fz-2); % Colonius-Vorberg lower bound
 end
-Cupr = log(Fx.*Fy.*Fz)./log(min([Fx,Fy,Fz],[],2)); % Colonius-Vorberg upper bound
+Csup = log(Fx.*Fy.*Fz)./log(min([Fx,Fy,Fz],[],2)); % Colonius-Vorberg upper bound
 
 function [p,outlier,per,lim,sharp] = decode_varargin(varargin)
 %decode_varargin Decode input variable arguments.

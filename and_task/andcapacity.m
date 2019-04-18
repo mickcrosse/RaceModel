@@ -1,13 +1,15 @@
-function [Ccoef,Clwr,Cupr,q,lim] = andcapacity(x,y,xy,varargin)
+function [Ccoef,Clim,Csup,q,lim] = andcapacity(x,y,xy,varargin)
 %andcapacity Capacity coefficient for a bisensory AND task.
 %   CCOEF = ANDCAPACITY(X,Y,XY) returns the capacity coefficient for a
 %   bisensory AND task at 10 linearly-spaced quantiles. CCOEF values of 1
-%   imply that the system has unlimited capacity (Townsend & Eidels, 2011).
-%   X, Y and XY are not required to have an equal number of observations.
-%   This function treats NaNs as missing values, and ignores them.
+%   imply that the system has unlimited capacity, values below 1 imply
+%   limited capacity and values above 1 imply super capacity (Townsend &
+%   Eidels, 2011). X, Y and XY are not required to have an equal number of
+%   observations. This function treats NaNs as missing values, and ignores
+%   them.
 %
-%   [...,CLWR,CUPR] = ANDCAPACITY(...) returns the lower and upper bounds
-%   of limited and super capacity, respectively.
+%   [...,CLIM,CSUP] = ANDCAPACITY(...) returns the predicted bounds of
+%   limited and super capacity, respectively.
 %
 %   [...,Q] = ANDCAPACITY(...) returns the RT quantiles used to compute the
 %   CDFs.
@@ -85,9 +87,9 @@ Fy = rt2cdf(y,p,lim);
 % Compute capacity coefficient
 Ccoef = log(Fx.*Fy)./log(Fxy);
 
-% Compute lower and upper bounds
-Clwr = log(Fx.*Fy)./log(Fx+Fy-1); % Colonius-Vorberg lower bound
-Cupr = log(Fx.*Fy)./log(min(Fx,Fy)); % Colonius-Vorberg upper bound
+% Compute bounds of limited and super capacity
+Clim = log(Fx.*Fy)./log(Fx+Fy-1); % Colonius-Vorberg lower bound
+Csup = log(Fx.*Fy)./log(min(Fx,Fy)); % Colonius-Vorberg upper bound
 
 function [p,outlier,per,lim] = decode_varargin(varargin)
 %decode_varargin Decode input variable arguments.

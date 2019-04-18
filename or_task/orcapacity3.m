@@ -1,14 +1,15 @@
-function [Ccoef,Clwr,Cupr,q,lim] = orcapacity3(x,y,z,xyz,varargin)
+function [Ccoef,Clim,Csup,q,lim] = orcapacity3(x,y,z,xyz,varargin)
 %orcapacity3 Capacity coefficient for a trisensory OR task.
 %   CCOEF = ORCAPACITY3(X,Y,Z,XYZ) returns the capacity coefficient for a
 %   trisensory OR task at 10 linearly-spaced quantiles. CCOEF values of 1
-%   imply that the system has unlimited capacity (Townsend & Eidels, 2011).
-%   X, Y, Z and XYZ are not required to have an equal number of
-%   observations. This function treats NaNs as missing values, and ignores
-%   them.
+%   imply that the system has unlimited capacity, values below 1 imply
+%   limited capacity and values above 1 imply super capacity (Townsend &
+%   Eidels, 2011). X, Y, Z and XYZ are not required to have an equal number
+%   of observations. This function treats NaNs as missing values, and
+%   ignores them.
 %
-%   [...,CLWR,CUPR] = ORCAPACITY3(...) returns the lower and upper bounds
-%   of limited and super capacity, respectively.
+%   [...,CLIM,CSUP] = ORCAPACITY3(...) returns the predicted bounds of
+%   limited and super capacity, respectively.
 %
 %   [...,Q] = ORCAPACITY3(...) returns the RT quantiles used to compute the
 %   CDFs.
@@ -99,13 +100,13 @@ Sxyz = 1-Fxyz;
 % Compute capacity coefficient
 Ccoef = log(Sxyz)./log(Sx.*Sy.*Sz);
 
-% Compute lower and upper bounds
-Clwr = log(min([Sx,Sy,Sz],[],2))./log(Sx.*Sy.*Sz); % Grice's bound
+% Compute bounds of limited and super capacity
+Clim = log(min([Sx,Sy,Sz],[],2))./log(Sx.*Sy.*Sz); % Grice's bound
 if sharp == 1
     Sxy = Sx+Sy-Sx.*Sy; Syz = Sy+Sz-Sy.*Sz;
-    Cupr = log(Sxy+Syz-Sy)./log(Sx.*Sy.*Sz); % Diederich's bound
+    Csup = log(Sxy+Syz-Sy)./log(Sx.*Sy.*Sz); % Diederich's bound
 elseif sharp == 0
-    Cupr = log(Sx+Sy+Sz-2)./log(Sx.*Sy.*Sz); % Miller's bound
+    Csup = log(Sx+Sy+Sz-2)./log(Sx.*Sy.*Sz); % Miller's bound
 end
 
 function [p,outlier,per,lim,sharp] = decode_varargin(varargin)
