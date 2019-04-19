@@ -11,8 +11,8 @@ function [MIC,SIC,q,lim] = sft(xhh,xll,xhl,xlh,varargin)
 %   on the survivor functions of the bisensory conditions XHH, XLL, XHL and
 %   XLH.
 %
-%   The architecture and stopping rule can be inferred by the combined
-%   outcome of MIC and SIC using the following reference table:
+%   The system's architecture and stopping rule can be inferred from the
+%   following reference table using the combined outcome of MIC and SIC.
 %
 %   Model           MIC     SIC
 %   Serial, OR      0       0
@@ -35,13 +35,16 @@ function [MIC,SIC,q,lim] = sft(xhh,xll,xhl,xlh,varargin)
 %               quantiles of a vertical test or the percentiles of a
 %               horizontal test (default=0.05:0.1:0.95)
 %   'outlier'   a 2-element vector specifying the lower and upper RT
-%               cutoffs for outlier correction (default=no correction).
+%               cutoffs for outlier correction (default=no correction)
 %   'per'       a 2-element vector specifying the lower and upper
 %               percentiles of RTs to consider (default=[0,100])
 %   'lim'       a 2-element vector specifying the lower and upper RT limits
 %               for computing CDFs: it is recommended to leave this
 %               unspecified unless comparing directly with other conditions
 %               (default=[min([X,Y,Z,XYZ]),max([X,Y,Z,XYZ])])
+%   'verbose'   a scalar specifying whether to display the reference table
+%               for inferring the system's architecture and stopping rule:
+%               pass in 1 to display reference table (default) and 0 to not
 %
 %   See also ORCAPACITY, ANDCAPACITY, TPERMTEST, EFFECTSIZE.
 %
@@ -55,9 +58,8 @@ function [MIC,SIC,q,lim] = sft(xhh,xll,xhl,xlh,varargin)
 %           elementary perception: An investigation of parallel, serial,
 %           and coactive theories. J Math Psychol 39(4):321–359.
 %       [3] Little DR, Altieri N, Fific M, Yang CT (2017) Systems factorial
-%           technology: A theory driven methodology for the identification  
-%           ofperceptual and cognitive mechanisms. Academic 
-%           Press.
+%           technology: A theory driven methodology for the identification
+%           of perceptual and cognitive mechanisms. Academic Press.
 %
 %   Author: Mick Crosse
 %   Email: mickcrosse@gmail.com
@@ -66,7 +68,13 @@ function [MIC,SIC,q,lim] = sft(xhh,xll,xhl,xlh,varargin)
 %   Apr 2017; Last Revision: 18-Apr-2019
 
 % Decode input variable arguments
-[p,outlier,per,lim] = decode_varargin(varargin);
+[p,outlier,per,lim,verbose] = decode_varargin(varargin);
+
+% Generate reference table
+Model = {'Serial, OR';'Serial, AND';'Parallel, OR';'Parallel, AND';'Coactive'};
+MIC = {'0';'0';'>0';'<0';'>0'};
+SIC = {'0';'-to+';'>0';'<0';'-to+'};
+reftable = table(Model,MIC,SIC);
 
 % Outlier correction procedure
 if ~isempty(outlier)
@@ -106,7 +114,12 @@ MIC = nanmean(xhh)-nanmean(xhl)-nanmean(xlh)+nanmean(xll);
 % Compute survivor interaction contrast
 SIC = Fxhl+Flh-Fxhh-Fxll;
 
-function [p,outlier,per,lim] = decode_varargin(varargin)
+% Display reference table
+if verbose
+    disp(reftable)
+end
+
+function [p,outlier,per,lim,verbose] = decode_varargin(varargin)
 %decode_varargin Decode input variable arguments.
 %   [PARAM1,PARAM2,...] = DECODE_VARARGIN('PARAM1',VAL1,'PARAM2',VAL2,...)
 %   decodes the input variable arguments of the main function.
@@ -143,4 +156,12 @@ if any(strcmpi(varargin,'lim')) && ~isempty(varargin{find(strcmpi(varargin,'lim'
     end
 else
     lim = []; % default: unspecified
+end
+if any(strcmpi(varargin,'verbose')) && ~isempty(varargin{find(strcmpi(varargin,'verbose'))+1})
+    verbose = varargin{find(strcmpi(varargin,'verbose'))+1};
+    if verbose~=0 && verbose~=1
+        error('VERBOSE must be a scalar with a value of 0 or 1.')
+    end
+else
+    verbose = 0; % default: display table
 end

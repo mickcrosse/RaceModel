@@ -32,7 +32,7 @@ function [gain,Fdiff,q,lim] = orgain3(x,y,z,xyz,varargin)
 %               quantiles of a vertical test or the percentiles of a
 %               horizontal test (default=0.05:0.1:0.95)
 %   'outlier'   a 2-element vector specifying the lower and upper RT
-%               cutoffs for outlier correction (default=no correction).
+%               cutoffs for outlier correction (default=no correction)
 %   'per'       a 2-element vector specifying the lower and upper
 %               percentiles of RTs to consider (default=[0,100])
 %   'lim'       a 2-element vector specifying the lower and upper RT limits

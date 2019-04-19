@@ -1,34 +1,29 @@
-function [Bemp,Bpred,Femp,Fpred,q,lim] = biasbenefit(Xx,Xy,Xxy,Yx,Yy,Yxy,xy,varargin)
-%biasbenefit Multisensory benefit with a bias towards X or Y.
-%   BEMP = BIASBENEFIT(XX,XY,XXY,YX,YY,YXY,XY) returns the empirical
-%   multisensory benefit for a bisensory OR task, quantified by the area
-%   between the CDFs of the faster of the unisensory RT distributions X and
-%   Y, and the bisensory RT distribution XY (Otto et al., 2013). By
-%   default, the bound used to compute benefits is for an OR task design,
-%   but the task design can be specified using the TASK argument (see
-%   below). X, Y and XY are not required to have an equal number of
+function [Fx,Fy,Fxy,Fmodel,q,lim] = biasmodel(Xx,Xy,Xxy,Yx,Yy,Yxy,XY,varargin)
+%biasmodel Model bisensory reaction times with a bias towards X or Y.
+%   [FX,FY,FXY] = BIASMODEL(XX,XY,XXY,YX,YY,YXY,XY) returns the CDFs for
+%   the unisensory RT distributions X and Y, and the bisensory RT
+%   distribution XY at 10 linearly-spaced quantiles. X and Y should be
+%   entered separated by previous modality: XX, XY, XXY and YX, YY, YXY,
+%   respectively. X, Y and XY are not required to have an equal number of
 %   observations. This function treats NaNs as missing values, and ignores
 %   them.
 %
-%   [...,BPRED] = BIASBENEFIT(...) returns the predicted multisensory
-%   benefit for a bisensory OR task, quantified by the area between the
-%   CDFs of the faster of the unisensory RT distributions X and Y, and the
-%   bias model based on the probability mean of XX, XY and XXY (Crosse et
-%   al., 2019a,b). By default, the model is biased towards X, but this bias
-%   can be specified using the BIAS argument (see below).
+%   [...,FMODEL] = BIASMODEL(...) returns the bias model based on the
+%   probability mean of XX, XY and XXY (Crosse et al., 2019). By default,
+%   the model is biased towards X, but this bias can be specified using the
+%   BIAS argument (see below). For valid estimates of FMODEL, the stimuli
+%   used to generate X, Y and XY should be presented in random order to
+%   meet the assumption of context invariance.
 %
-%   [...,FEMP,FPRED] = BIASBENEFIT(...) returns the difference at each
-%   quantile for empirical and predicted benefits, respectively.
-%
-%   [...,Q] = BIASBENEFIT(...) returns the RT quantiles used to compute the
+%   [...,Q] = BIASMODEL(...) returns the RT quantiles used to compute the
 %   CDFs for the vertical test and the probabilities used to compute the
 %   percentiles for the horizontal test.
 %
-%   [...,LIM] = BIASBENEFIT(...) returns the lower and upper RT limits used
+%   [...,LIM] = BIASMODEL(...) returns the lower and upper RT limits used
 %   to compute the CDFs. These values can be used to set the CDF limits of
-%   subsequent tests that are to be compared with this one.
+%   subsequent analyses that are to be compared to this one.
 %
-%   [...] = BIASBENEFIT(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
+%   [...] = BIASMODEL(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
 %   additional parameters and their values. Valid parameters are the
 %   following:
 %
@@ -37,7 +32,7 @@ function [Bemp,Bpred,Femp,Fpred,q,lim] = biasbenefit(Xx,Xy,Xxy,Yx,Yy,Yxy,xy,vara
 %               quantiles of a vertical test or the percentiles of a
 %               horizontal test (default=0.05:0.1:0.95)
 %   'outlier'   a 2-element vector specifying the lower and upper RT
-%               cutoffs for outlier correction (default=no correction).
+%               cutoffs for outlier correction (default=no correction)
 %   'per'       a 2-element vector specifying the lower and upper
 %               percentiles of RTs to consider (default=[0,100])
 %   'lim'       a 2-element vector specifying the lower and upper RT limits
@@ -55,24 +50,16 @@ function [Bemp,Bpred,Femp,Fpred,q,lim] = biasbenefit(Xx,Xy,Xxy,Yx,Yy,Yxy,xy,vara
 %   'test'      a string specifying how to test the competition model
 %                   'ver'       vertical test (default)
 %                   'hor'       horizontal test (Ulrich et al., 2007)
-%   'task'      a string specifying the task design
-%                   'OR'        OR task (default)
-%                   'AND'       AND task
 %
-%   See also TRIALHISTORY, BIASMODEL, BIASGAIN, TPERMTEST, EFFECTSIZE.
+%   See also TRIALHISTORY, BIASGAIN, BIASBENEFIT, TPERMTEST, EFFECTSIZE.
 %
 %   RaceModel https://github.com/mickcrosse/RaceModel
 
 %   References:
-%       [1] Crosse MJ, Foxe JJ, Molholm S (2019a) RaceModel: A MATLAB
+%       [1] Crosse MJ, Foxe JJ, Molholm S (2019) RaceModel: A MATLAB
 %           Package for Stochastic Modelling of Multisensory Reaction
 %           Times (In prep).
-%       [2] Crosse MJ, Foxe JJ, Molholm S (2019b) Developmental Recovery of
-%           Impaired Multisensory Processing in Autism and the Cost of
-%           Switching Sensory Modality. bioRxiv 10.1101/565333.
-%       [3] Otto TU, Dassy B, Mamassian P (2013) Principles of multisensory
-%           behavior. J Neurosci 33(17):7463-7474.
-%       [4] Ulrich R, Miller J, Schroter H (2007) Testing the race model
+%       [2] Ulrich R, Miller J, Schroter H (2007) Testing the race model
 %           inequality: An algorithm and computer programs. Behav Res
 %           Methods 39(2):291-302.
 
@@ -83,7 +70,7 @@ function [Bemp,Bpred,Femp,Fpred,q,lim] = biasbenefit(Xx,Xy,Xxy,Yx,Yy,Yxy,xy,vara
 %   Apr 2017; Last Revision: 14-Apr-2019
 
 % Decode input variable arguments
-[p,outlier,per,lim,bias,test,task] = decode_varargin(varargin);
+[p,outlier,per,lim,bias,test] = decode_varargin(varargin);
 
 % Outlier correction procedure
 if ~isempty(outlier)
@@ -93,7 +80,7 @@ if ~isempty(outlier)
     Yx(Yx<outlier(1)|Yx>outlier(2)) = [];
     Yy(Yy<outlier(1)|Yy>outlier(2)) = [];
     Yxy(Yxy<outlier(1)|Yxy>outlier(2)) = [];
-    xy(xy<outlier(1)|xy>outlier(2)) = [];
+    XY(XY<outlier(1)|XY>outlier(2)) = [];
 end
 
 % Get RT range for each condition
@@ -104,7 +91,7 @@ lims(3,:) = prctile(Xxy,per);
 lims(4,:) = prctile(Yx,per);
 lims(5,:) = prctile(Yy,per);
 lims(6,:) = prctile(Yxy,per);
-lims(7,:) = prctile(xy,per);
+lims(7,:) = prctile(XY,per);
 
 % Limit RTs to specified range
 Xx = Xx(Xx>=lims(1,1) & Xx<=lims(1,2));
@@ -113,7 +100,16 @@ Xxy = Xxy(Xxy>=lims(3,1) & Xxy<=lims(3,2));
 Yx = Yx(Yx>=lims(4,1) & Yx<=lims(4,2));
 Yy = Yy(Yy>=lims(5,1) & Yy<=lims(5,2));
 Yxy = Yxy(Yxy>=lims(6,1) & Yxy<=lims(6,2));
-xy = Xy(Xy>=lims(7,1) & xy<=lims(7,2));
+XY = XY(XY>=lims(7,1) & XY<=lims(7,2));
+
+% Get pooled distributions
+if iscolumn(Xx)
+    x = [Xx;Xy;Xxy];
+    y = [Yx;Yy;Yxy];
+elseif isrow(Xx)
+    x = [Xx,Xy,Xxy];
+    y = [Yx,Yy,Yxy];
+end
 
 % Get min and max RT limits
 if isempty(lim)
@@ -122,70 +118,48 @@ end
 
 % Compute CDFs
 if strcmpi(test,'ver')
+    Fx = rt2cdf(x,p,lim);
+    Fy = rt2cdf(y,p,lim);
     FXx = rt2cdf(Xx,p,lim);
     FXy = rt2cdf(Xy,p,lim);
     FXxy = rt2cdf(Xxy,p,lim);
     FYx = rt2cdf(Yx,p,lim);
     FYy = rt2cdf(Yy,p,lim);
     FYxy = rt2cdf(Yxy,p,lim);
-    [Fxy,q] = rt2cdf(xy,p,lim);
+    [Fxy,q] = rt2cdf(XY,p,lim);
 elseif strcmpi(test,'hor')
+    Fx = rt2cfp(x,lim(2));
+    Fy = rt2cfp(y,lim(2));
     FXx = rt2cfp(Xx,lim(2));
     FXy = rt2cfp(Xy,lim(2));
     FXxy = rt2cfp(Xxy,lim(2));
     FYx = rt2cfp(Yx,lim(2));
     FYy = rt2cfp(Yy,lim(2));
     FYxy = rt2cfp(Yxy,lim(2));
-    Fxy = rt2cfp(xy,lim(2));
-end
-
-% Compute bound
-if strcmpi(task,'OR') % Grice's bound
-    Fmax = max(Fx,Fy);
-elseif strcmpi(task,'AND')
-    Fmax = min(Fx,Fy); % Colonius-Vorberg upper bound
+    Fxy = rt2cfp(XY,lim(2));
 end
 
 % Compute model
-if strcmpi(bias,'1X') % X bias
-    Fmodel = (FXx+FXy+FXxy)/3;
-elseif strcmpi(bias,'1Y') % Y bias
-    Fmodel = (FYx+FYy+FYxy)/3;
-elseif strcmpi(bias,'2X') % n-1 bias (X bias when n-1=XY)
-    Fmodel = (FXx+FYy+FXxy)/3;
-elseif strcmpi(bias,'2Y') % n-1 bias (Y bias when n-1=XY)
-    Fmodel = (FXx+FYy+FYxy)/3;
+if nargout > 3
+    if strcmpi(bias,'1X') % X bias
+        Fmodel = (FXx+FXy+FXxy)/3;
+    elseif strcmpi(bias,'1Y') % Y bias
+        Fmodel = (FYx+FYy+FYxy)/3;
+    elseif strcmpi(bias,'2X') % n-1 bias (X bias when n-1=XY)
+        Fmodel = (FXx+FYy+FXxy)/3;
+    elseif strcmpi(bias,'2Y') % n-1 bias (Y bias when n-1=XY)
+        Fmodel = (FXx+FYy+FYxy)/3;
+    end
+    if strcmpi(test,'hor')
+        Fmodel = cfp2per(Fmodel,p);
+    end
 end
 
 % Compute percentiles for horizontal test
 if strcmpi(test,'hor')
-    Fxy = cfp2per(Fxy,p);
-    Fmax = cfp2per(Fmax,p);
-    Fmodel = cfp2per(Fmodel,p);
-end
-
-% Compute difference
-if strcmpi(test,'ver')
-    Femp = Fxy-Fmax;
-elseif strcmpi(test,'hor')
-    Femp = Fmax-Fxy;
-end
-
-% Compute empirical benefit
-Bemp = getauc(p,Femp,area);
-
-if nargout > 1
-    
-    % Compute difference
-    if strcmpi(test,'ver')
-        Fpred = Fmodel-Fmax;
-    elseif strcmpi(test,'hor')
-        Fpred = Fmax-Fmodel;
-    end
-    
-    % Compute predicted benefit
-    Bpred = getauc(p,Fpred,area);
-    
+    Fx = cfp2per(Fmodel,p);
+    Fy = cfp2per(Fmodel,p);
+    Fxy = cfp2per(Fmodel,p);
 end
 
 % Get y-values for horizontal test
@@ -193,7 +167,7 @@ if nargout > 4 &&  strcmpi(test,'hor')
     q = p;
 end
 
-function [p,outlier,per,lim,bias,test,task] = decode_varargin(varargin)
+function [p,outlier,per,lim,bias,test] = decode_varargin(varargin)
 %decode_varargin Decode input variable arguments.
 %   [PARAM1,PARAM2,...] = DECODE_VARARGIN('PARAM1',VAL1,'PARAM2',VAL2,...)
 %   decodes the input variable arguments of the main function.
@@ -246,12 +220,4 @@ if any(strcmpi(varargin,'test')) && ~isempty(varargin{find(strcmpi(varargin,'tes
     end
 else
     test = 'ver'; % default: vertical test
-end
-if any(strcmpi(varargin,'task')) && ~isempty(varargin{find(strcmpi(varargin,'task'))+1})
-    task = varargin{find(strcmpi(varargin,'task'))+1};
-    if ~any(strcmpi(task,{'OR','AND'}))
-        error('Invalid value for argument TASK. Valid values are: ''OR'', ''AND''.')
-    end
-else
-    task = 'ver'; % default: OR task
 end

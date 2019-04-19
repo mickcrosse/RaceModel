@@ -1,29 +1,26 @@
-function [Fx,Fy,Fxy,Fmodel,q,lim] = biasmodel(Xx,Xy,Xxy,Yx,Yy,Yxy,xy,varargin)
-%biasmodel Model bisensory reaction times with a bias towards X or Y.
-%   [FX,FY,FXY] = BIASMODEL(XX,XY,XXY,YX,YY,YXY,XY) returns the CDFs for
-%   the unisensory RT distributions X and Y, and the bisensory RT
-%   distribution XY at 10 linearly-spaced quantiles. X and Y should be
-%   entered separated by previous modality: XX, XY, XXY and YX, YY, YXY,
-%   respectively. X, Y and XY are not required to have an equal number of
-%   observations. This function treats NaNs as missing values, and ignores
-%   them.
-%
-%   [...,FMODEL] = BIASMODEL(...) returns the bias model based on the
+function [gain,Fdiff,q,lim] = biasgain(Xx,Xy,Xxy,Yx,Yy,Yxy,XY,varargin)
+%biasgain Multisensory gain with a bias towards X or Y.
+%   GAIN = BIASGAIN(XX,XY,XXY,YX,YY,YXY,XY) returns the multisensory gain
+%   for a bisensory OR or AND task, quantified by the area between the CDFs
+%   of the bisensory RT distribution XY, and the bias model based on the
 %   probability mean of XX, XY and XXY (Crosse et al., 2019). By default,
 %   the model is biased towards X, but this bias can be specified using the
-%   BIAS argument (see below). For valid estimates of FMODEL, the stimuli
-%   used to generate X, Y and XY should be presented in random order to
-%   meet the assumption of context invariance.
+%   BIAS argument (see below). X, Y and XY are not required to have an
+%   equal number of observations. This function treats NaNs as missing
+%   values, and ignores them.
 %
-%   [...,Q] = BIASMODEL(...) returns the RT quantiles used to compute the
+%   [...,FDIFF] = BIASGAIN(...) returns the difference at each quantile to
+%   test for violations of the model.
+%
+%   [...,Q] = BIASGAIN(...) returns the RT quantiles used to compute the
 %   CDFs for the vertical test and the probabilities used to compute the
 %   percentiles for the horizontal test.
 %
-%   [...,LIM] = BIASMODEL(...) returns the lower and upper RT limits used
-%   to compute the CDFs. These values can be used to set the CDF limits of
-%   subsequent analyses that are to be compared to this one.
+%   [...,LIM] = BIASGAIN(...) returns the lower and upper RT limits used to
+%   compute the CDFs. These values can be used to set the CDF limits of
+%   subsequent tests that are to be compared with this one.
 %
-%   [...] = BIASMODEL(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
+%   [...] = BIASGAIN(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
 %   additional parameters and their values. Valid parameters are the
 %   following:
 %
@@ -32,7 +29,7 @@ function [Fx,Fy,Fxy,Fmodel,q,lim] = biasmodel(Xx,Xy,Xxy,Yx,Yy,Yxy,xy,varargin)
 %               quantiles of a vertical test or the percentiles of a
 %               horizontal test (default=0.05:0.1:0.95)
 %   'outlier'   a 2-element vector specifying the lower and upper RT
-%               cutoffs for outlier correction (default=no correction).
+%               cutoffs for outlier correction (default=no correction)
 %   'per'       a 2-element vector specifying the lower and upper
 %               percentiles of RTs to consider (default=[0,100])
 %   'lim'       a 2-element vector specifying the lower and upper RT limits
@@ -51,7 +48,7 @@ function [Fx,Fy,Fxy,Fmodel,q,lim] = biasmodel(Xx,Xy,Xxy,Yx,Yy,Yxy,xy,varargin)
 %                   'ver'       vertical test (default)
 %                   'hor'       horizontal test (Ulrich et al., 2007)
 %
-%   See also TRIALHISTORY, BIASGAIN, BIASBENEFIT, TPERMTEST, EFFECTSIZE.
+%   See also TRIALHISTORY, BIASMODEL, BIASBENEFIT, TPERMTEST, EFFECTSIZE.
 %
 %   RaceModel https://github.com/mickcrosse/RaceModel
 
@@ -59,7 +56,10 @@ function [Fx,Fy,Fxy,Fmodel,q,lim] = biasmodel(Xx,Xy,Xxy,Yx,Yy,Yxy,xy,varargin)
 %       [1] Crosse MJ, Foxe JJ, Molholm S (2019) RaceModel: A MATLAB
 %           Package for Stochastic Modelling of Multisensory Reaction
 %           Times (In prep).
-%       [2] Ulrich R, Miller J, Schroter H (2007) Testing the race model
+%       [2] Colonius H, Diederich A (2006) The Race Model Inequality:
+%           Interpreting a Geometric Measure of the Amount of Violation.
+%           Psychol Rev 113(1):148–154.
+%       [3] Ulrich R, Miller J, Schroter H (2007) Testing the race model
 %           inequality: An algorithm and computer programs. Behav Res
 %           Methods 39(2):291-302.
 
@@ -80,7 +80,7 @@ if ~isempty(outlier)
     Yx(Yx<outlier(1)|Yx>outlier(2)) = [];
     Yy(Yy<outlier(1)|Yy>outlier(2)) = [];
     Yxy(Yxy<outlier(1)|Yxy>outlier(2)) = [];
-    xy(xy<outlier(1)|xy>outlier(2)) = [];
+    XY(XY<outlier(1)|XY>outlier(2)) = [];
 end
 
 % Get RT range for each condition
@@ -91,7 +91,7 @@ lims(3,:) = prctile(Xxy,per);
 lims(4,:) = prctile(Yx,per);
 lims(5,:) = prctile(Yy,per);
 lims(6,:) = prctile(Yxy,per);
-lims(7,:) = prctile(xy,per);
+lims(7,:) = prctile(XY,per);
 
 % Limit RTs to specified range
 Xx = Xx(Xx>=lims(1,1) & Xx<=lims(1,2));
@@ -100,16 +100,7 @@ Xxy = Xxy(Xxy>=lims(3,1) & Xxy<=lims(3,2));
 Yx = Yx(Yx>=lims(4,1) & Yx<=lims(4,2));
 Yy = Yy(Yy>=lims(5,1) & Yy<=lims(5,2));
 Yxy = Yxy(Yxy>=lims(6,1) & Yxy<=lims(6,2));
-xy = Xy(Xy>=lims(7,1) & xy<=lims(7,2));
-
-% Get pooled distributions
-if iscolumn(Xx)
-    x = [Xx;Xy;Xxy];
-    y = [Yx;Yy;Yxy];
-elseif isrow(Xx)
-    x = [Xx,Xy,Xxy];
-    y = [Yx,Yy,Yxy];
-end
+XY = Xy(Xy>=lims(7,1) & XY<=lims(7,2));
 
 % Get min and max RT limits
 if isempty(lim)
@@ -118,52 +109,52 @@ end
 
 % Compute CDFs
 if strcmpi(test,'ver')
-    Fx = rt2cdf(x,p,lim);
-    Fy = rt2cdf(y,p,lim);
     FXx = rt2cdf(Xx,p,lim);
     FXy = rt2cdf(Xy,p,lim);
     FXxy = rt2cdf(Xxy,p,lim);
     FYx = rt2cdf(Yx,p,lim);
     FYy = rt2cdf(Yy,p,lim);
     FYxy = rt2cdf(Yxy,p,lim);
-    [Fxy,q] = rt2cdf(xy,p,lim);
+    [FXY,q] = rt2cdf(XY,p,lim);
 elseif strcmpi(test,'hor')
-    Fx = rt2cfp(x,lim(2));
-    Fy = rt2cfp(y,lim(2));
     FXx = rt2cfp(Xx,lim(2));
     FXy = rt2cfp(Xy,lim(2));
     FXxy = rt2cfp(Xxy,lim(2));
     FYx = rt2cfp(Yx,lim(2));
     FYy = rt2cfp(Yy,lim(2));
     FYxy = rt2cfp(Yxy,lim(2));
-    Fxy = rt2cfp(xy,lim(2));
+    FXY = rt2cfp(XY,lim(2));
 end
 
 % Compute model
-if nargout > 3
-    if strcmpi(bias,'1X') % X bias
-        Fmodel = (FXx+FXy+FXxy)/3;
-    elseif strcmpi(bias,'1Y') % Y bias
-        Fmodel = (FYx+FYy+FYxy)/3;
-    elseif strcmpi(bias,'2X') % n-1 bias (X bias when n-1=XY)
-        Fmodel = (FXx+FYy+FXxy)/3;
-    elseif strcmpi(bias,'2Y') % n-1 bias (Y bias when n-1=XY)
-        Fmodel = (FXx+FYy+FYxy)/3;
-    end
-    if strcmpi(test,'hor')
-        Fmodel = cfp2per(Fmodel,p);
-    end
+if strcmpi(bias,'1X') % X bias
+    Fmodel = (FXx+FXy+FXxy)/3;
+elseif strcmpi(bias,'1Y') % Y bias
+    Fmodel = (FYx+FYy+FYxy)/3;
+elseif strcmpi(bias,'2X') % n-1 bias (X bias when n-1=XY)
+    Fmodel = (FXx+FYy+FXxy)/3;
+elseif strcmpi(bias,'2Y') % n-1 bias (Y bias when n-1=XY)
+    Fmodel = (FXx+FYy+FYxy)/3;
 end
 
 % Compute percentiles for horizontal test
 if strcmpi(test,'hor')
-    Fx = cfp2per(Fmodel,p);
-    Fy = cfp2per(Fmodel,p);
-    Fxy = cfp2per(Fmodel,p);
+    FXY = cfp2per(Fmodel,p);
+    Fmodel = cfp2per(Fmodel,p);
 end
 
+% Compute difference
+if strcmpi(test,'ver')
+    Fdiff = FXY-Fmodel;
+elseif strcmpi(test,'hor')
+    Fdiff = Fmodel-FXY;
+end
+
+% Compute multisensory gain
+gain = getauc(p,Fdiff,area);
+
 % Get y-values for horizontal test
-if nargout > 4 &&  strcmpi(test,'hor')
+if nargout > 2 &&  strcmpi(test,'hor')
     q = p;
 end
 

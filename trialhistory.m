@@ -1,5 +1,5 @@
 function [x,y,xy,labels] = trialhistory(data,cond,varargin)
-%trialhistory Separate trials based on their trial history.
+%trialhistory Separate trials based on their history.
 %   [X,Y,XY] = TRIALHISTORY(DATA,COND) returns the trials from DATA that
 %   were preceded by a different condition (i.e., switch trials). DATA
 %   should be a vector of mixed unisensory and multisensory reaction times,
@@ -32,7 +32,7 @@ function [x,y,xy,labels] = trialhistory(data,cond,varargin)
 %   following:
 %
 %   Parameter   Value
-%   'type'      a string specifying the type of trial history
+%   'type'      a string specifying the type of trial history critereon
 %                   'switch'    switch trials (default)
 %                   'repeat'    repeat trials
 %                   'x'         trials preceded by condition X
