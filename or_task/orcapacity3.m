@@ -106,7 +106,7 @@ if sharp == 1
     Sxy = Sx+Sy-Sx.*Sy; Syz = Sy+Sz-Sy.*Sz;
     Csup = log(Sxy+Syz-Sy)./log(Sx.*Sy.*Sz); % Diederich's bound
 elseif sharp == 0
-    Csup = log(Sx+Sy+Sz-2)./log(Sx.*Sy.*Sz); % Miller's bound
+    Csup = abs(log(Sx+Sy+Sz-2))./log(Sx.*Sy.*Sz); % Miller's bound
 end
 
 function [p,outlier,per,lim,sharp] = decode_varargin(varargin)

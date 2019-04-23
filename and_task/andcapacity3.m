@@ -97,9 +97,9 @@ Ccoef = log(Fx.*Fy.*Fz)./log(Fxyz);
 % Compute bounds of limited and super capacity
 if sharp == 1
     Fxy = Fx.*Fy; Fyz = Fy.*Fz;
-    Clim = log(Fxy+Fyz-Fy)./log(Fx.*Fy.*Fz); % Diederich's bound
+    Clim = log(Fx.*Fy.*Fz)./log(Fxy+Fyz-Fy); % Diederich's bound
 elseif sharp == 0
-    Clim = log(Fx.*Fy.*Fz)./log(Fx+Fy+Fz-2); % Colonius-Vorberg lower bound
+    Clim = log(Fx.*Fy.*Fz)./abs(log(Fx+Fy+Fz-2)); % Colonius-Vorberg lower bound
 end
 Csup = log(Fx.*Fy.*Fz)./log(min([Fx,Fy,Fz],[],2)); % Colonius-Vorberg upper bound
 

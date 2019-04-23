@@ -24,7 +24,10 @@ function [F1,hitrate,errorrate] = f1score(x,rtmin,rtmax,nresp,ntarget)
 %   RaceModel https://github.com/mickcrosse/RaceModel
 
 %   References:
-%       [1] Van Rijsbergen CJ (1979) Information Retrieval: Butterworth-
+%       [1] Crosse MJ, Foxe JJ, Molholm S (2019) RaceModel: A MATLAB
+%           Package for Stochastic Modelling of Multisensory Reaction
+%           Times (In prep).
+%       [2] Van Rijsbergen CJ (1979) Information Retrieval: Butterworth-
 %           Heinemann.
 
 %   Author: Mick Crosse

@@ -8,9 +8,9 @@ function [Fx,Fy,Fxy,Fmodel,q,lim] = biasmodel(Xx,Xy,Xxy,Yx,Yy,Yxy,XY,varargin)
 %   observations. This function treats NaNs as missing values, and ignores
 %   them.
 %
-%   [...,FMODEL] = BIASMODEL(...) returns the bias model based on the
-%   probability mean of XX, XY and XXY (Crosse et al., 2019). By default,
-%   the model is biased towards X, but this bias can be specified using the
+%   [...,FMODEL] = BIASMODEL(...) returns the bias model based on the mean
+%   probability of XX, XY and XXY (Crosse et al., 2019). By default, the
+%   model is biased towards X, but this bias can be specified using the
 %   BIAS argument (see below). For valid estimates of FMODEL, the stimuli
 %   used to generate X, Y and XY should be presented in random order to
 %   meet the assumption of context invariance.
@@ -43,10 +43,10 @@ function [Fx,Fy,Fxy,Fmodel,q,lim] = biasmodel(Xx,Xy,Xxy,Yx,Yy,Yxy,XY,varargin)
 %               a specific (dominant) modality (X or Y), or 2) bias towards
 %               the previous modality (n-1), except when the previous
 %               modality is XY (bias towards X or Y)
-%                   '1X'        X bias (default)
-%                   '1Y'        Y bias
-%                   '2X'        n-1 bias (X bias when n-1=XY)
-%                   '2Y'        n-1 bias (Y bias when n-1=XY)
+%                   'X'         X bias (default)
+%                   'Y'         Y bias
+%                   'n-1X'      n-1 bias (X bias when n-1=XY)
+%                   'n-1Y'      n-1 bias (Y bias when n-1=XY)
 %   'test'      a string specifying how to test the competition model
 %                   'ver'       vertical test (default)
 %                   'hor'       horizontal test (Ulrich et al., 2007)
@@ -141,13 +141,13 @@ end
 
 % Compute model
 if nargout > 3
-    if strcmpi(bias,'1X') % X bias
+    if strcmpi(bias,'X') % X bias
         Fmodel = (FXx+FXy+FXxy)/3;
-    elseif strcmpi(bias,'1Y') % Y bias
+    elseif strcmpi(bias,'Y') % Y bias
         Fmodel = (FYx+FYy+FYxy)/3;
-    elseif strcmpi(bias,'2X') % n-1 bias (X bias when n-1=XY)
+    elseif strcmpi(bias,'n-1X') % n-1 bias (X bias when n-1=XY)
         Fmodel = (FXx+FYy+FXxy)/3;
-    elseif strcmpi(bias,'2Y') % n-1 bias (Y bias when n-1=XY)
+    elseif strcmpi(bias,'n-1Y') % n-1 bias (Y bias when n-1=XY)
         Fmodel = (FXx+FYy+FYxy)/3;
     end
     if strcmpi(test,'hor')
@@ -207,11 +207,11 @@ else
 end
 if any(strcmpi(varargin,'bias')) && ~isempty(varargin{find(strcmpi(varargin,'bias'))+1})
     bias = varargin{find(strcmpi(varargin,'bias'))+1};
-    if ~any(strcmpi(bias,{'1X','1Y','2X','2Y'}))
-        error('Invalid value for argument BIAS. Valid values are: ''1X'', ''1Y'', ''2X'', ''2Y''.')
+    if ~any(strcmpi(bias,{'X','Y','n-1X','n-1Y'}))
+        error('Invalid value for argument BIAS. Valid values are: ''X'', ''Y'', ''n-1X'', ''n-1Y''.')
     end
 else
-    bias = '1X'; % default: X bias
+    bias = 'X'; % default: X bias
 end
 if any(strcmpi(varargin,'test')) && ~isempty(varargin{find(strcmpi(varargin,'test'))+1})
     test = varargin{find(strcmpi(varargin,'test'))+1};

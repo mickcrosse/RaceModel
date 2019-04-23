@@ -94,7 +94,7 @@ Ccoef = log(Sxy)./log(Sx.*Sy);
 
 % Compute bounds of limited and super capacity
 Clim = log(min(Sx,Sy))./log(Sx.*Sy); % Grice's bound
-Csup = log(Sx+Sy-1)./log(Sx.*Sy); % Miller's bound
+Csup = abs(log(Sx+Sy-1))./log(Sx.*Sy); % Miller's bound
 
 function [p,outlier,per,lim] = decode_varargin(varargin)
 %decode_varargin Decode input variable arguments.

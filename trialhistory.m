@@ -47,7 +47,7 @@ function [x,y,xy,labels] = trialhistory(data,cond,varargin)
 %               unisensory condition, or 2 to include only the second
 %               unisensory condition
 %
-%   See also SWITCHCOST, BIASMODEL, BIASGAIN, BIASBENEFIT, F1SCORE.
+%   See also SWITCHCOST, BIASMODEL, BIASGAIN, BIASBENEFIT.
 %
 %   RaceModel https://github.com/mickcrosse/RaceModel
 

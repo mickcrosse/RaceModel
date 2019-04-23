@@ -88,7 +88,7 @@ Fy = rt2cdf(y,p,lim);
 Ccoef = log(Fx.*Fy)./log(Fxy);
 
 % Compute bounds of limited and super capacity
-Clim = log(Fx.*Fy)./log(Fx+Fy-1); % Colonius-Vorberg lower bound
+Clim = log(Fx.*Fy)./abs(log(Fx+Fy-1)); % Colonius-Vorberg lower bound
 Csup = log(Fx.*Fy)./log(min(Fx,Fy)); % Colonius-Vorberg upper bound
 
 function [p,outlier,per,lim] = decode_varargin(varargin)

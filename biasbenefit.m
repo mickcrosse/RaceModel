@@ -13,7 +13,7 @@ function [Bemp,Bpred,Femp,Fpred,q,lim] = biasbenefit(Xx,Xy,Xxy,Yx,Yy,Yxy,XY,vara
 %   [...,BPRED] = BIASBENEFIT(...) returns the predicted multisensory
 %   benefit for a bisensory OR task, quantified by the area between the
 %   CDFs of the faster of the unisensory RT distributions X and Y, and the
-%   bias model based on the probability mean of XX, XY and XXY (Crosse et
+%   bias model based on the mean probability of XX, XY and XXY (Crosse et
 %   al., 2019a,b). By default, the model is biased towards X, but this bias
 %   can be specified using the BIAS argument (see below).
 %
@@ -239,7 +239,7 @@ if any(strcmpi(varargin,'bias')) && ~isempty(varargin{find(strcmpi(varargin,'bia
         error('Invalid value for argument BIAS. Valid values are: ''X'', ''Y'', ''n-1X'', ''n-1Y''.')
     end
 else
-    bias = '1X'; % default: X bias
+    bias = 'X'; % default: X bias
 end
 if any(strcmpi(varargin,'test')) && ~isempty(varargin{find(strcmpi(varargin,'test'))+1})
     test = varargin{find(strcmpi(varargin,'test'))+1};
