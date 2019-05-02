@@ -1,24 +1,25 @@
-function [gain,Fdiff,q,lim] = orgain(x,y,xy,varargin)
-%orgain Multisensory gain for a bisensory OR task.
-%   GAIN = ORGAIN(X,Y,XY) returns the multisensory gain for a bisensory OR
-%   task, quantified by the area between the CDFs of the bisensory RT
-%   distribution XY, and the OR (race) model based on the probability
-%   summation of X and Y (Colonius & Diederich, 2006). X, Y and XY can have
-%   different lengths. This function treats NaNs as missing values, and
-%   ignores them.
+function [gain,Fdiff,q,lim] = biasgain(Xx,Xy,Xxy,Yx,Yy,Yxy,XY,varargin)
+%biasgain Multisensory gain with a bias towards X or Y.
+%   GAIN = BIASGAIN(XX,XY,XXY,YX,YY,YXY,XY) returns the multisensory gain
+%   for a bisensory OR or AND task, quantified by the area between the CDFs
+%   of the bisensory RT distribution XY, and the bias model based on the
+%   mean probability of XX, XY and XXY (Crosse et al., 2019). By default,
+%   the model is biased towards X, but this bias can be specified using the
+%   BIAS argument (see below). X, Y and XY can have different lengths. This
+%   function treats NaNs as missing values, and ignores them.
 %
-%   [...,FDIFF] = ORGAIN(...) returns the difference at each quantile to
+%   [...,FDIFF] = BIASGAIN(...) returns the difference at each quantile to
 %   test for violations of the model.
 %
-%   [...,Q] = ORGAIN(...) returns the RT quantiles used to compute the
-%   CDFs for the vertical test or the probabilities used to compute the
+%   [...,Q] = BIASGAIN(...) returns the RT quantiles used to compute the
+%   CDFs for the vertical test and the probabilities used to compute the
 %   percentiles for the horizontal test.
 %
-%   [...,LIM] = ORGAIN(...) returns the lower and upper RT limits used to
+%   [...,LIM] = BIASGAIN(...) returns the lower and upper RT limits used to
 %   compute the CDFs. These values can be used to set the CDF limits of
 %   subsequent tests that are to be compared with this one.
 %
-%   [...] = ORGAIN(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
+%   [...] = BIASGAIN(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
 %   additional parameters and their values. Valid parameters are the
 %   following:
 %
@@ -28,22 +29,21 @@ function [gain,Fdiff,q,lim] = orgain(x,y,xy,varargin)
 %               horizontal test (default=0.05:0.1:0.95)
 %   'lim'       a 2-element vector specifying the lower and upper RT limits
 %               for computing CDFs: it is recommended to leave this
-%               unspecified unless comparing directly with other conditions
+%               unspecified unless comparing directly to other conditions
 %               (default=[min([X,Y,XY]),max([X,Y,XY])])
-%   'dep'       a scalar specifying the model's assumption of stochastic
-%               dependence between sensory channels: pass in 0 to assume
-%               independence (OR model; default), -1 to assume perfect
-%               negative dependence (Miller's bound) and 1 to assume
-%               perfect positive dependence (Grice's bound)
-%   'test'      a string specifying how to test the model
+%   'bias'      a string specifying how to bias the model: 1) bias towards
+%               a specific (dominant) modality (X or Y), or 2) bias towards
+%               the previous modality (n-1), except when the previous
+%               modality is XY (bias towards X or Y)
+%                   'X'         X bias (default)
+%                   'Y'         Y bias
+%                   'n-1X'      n-1 bias (X bias when n-1=XY)
+%                   'n-1Y'      n-1 bias (Y bias when n-1=XY)
+%   'test'      a string specifying how to test the competition model
 %                   'ver'       vertical test (default)
 %                   'hor'       horizontal test (Ulrich et al., 2007)
-%   'area'      a string specifying how to compute the area under the curve
-%                   'all'       use all values (default)
-%                   'pos'       use only positive values
-%                   'neg'       use only negative values
 %
-%   See also ORGAIN3, ORMODEL, ORBENEFIT, TPERMTEST, EFFECTSIZE.
+%   See also TRIALHISTORY, BIASMODEL, BIASBENEFIT, TPERMTEST, EFFECTSIZE.
 %
 %   RaceModel https://github.com/mickcrosse/RaceModel
 
@@ -65,49 +65,63 @@ function [gain,Fdiff,q,lim] = orgain(x,y,xy,varargin)
 %   Apr 2017; Last Revision: 01-May-2019
 
 % Decode input variable arguments
-[p,lim,dep,test,area] = decode_varargin(varargin);
+[p,lim,bias,test] = decode_varargin(varargin);
 
 % Transpose row vectors
-if isrow(x), x = x'; end
-if isrow(y), y = y'; end
-if isrow(xy), xy = xy'; end
+if isrow(Xx), Xx = Xx'; end
+if isrow(Xy), Xy = Xy'; end
+if isrow(Xxy), Xxy = Xxy'; end
+if isrow(Yx), Yx = Yx'; end
+if isrow(Yy), Yy = Yy'; end
+if isrow(Yxy), Yxy = Yxy'; end
+if isrow(XY), XY = XY'; end
 
 % Get min and max CDF limits
 if isempty(lim)
-    lim = [min([x;y;xy]),max([x;y;xy])];
+    lim = [min([Xx;Xy;Xxy;Yx;Yy;Yxy;XY]),max([Xx;Xy;Xxy;Yx;Yy;Yxy;XY])];
 end
 
 % Compute CDFs
 if strcmpi(test,'ver')
-    Fx = rt2cdf(x,p,lim);
-    Fy = rt2cdf(y,p,lim);
-    [Fxy,q] = rt2cdf(xy,p,lim);
+    FXx = rt2cdf(Xx,p,lim);
+    FXy = rt2cdf(Xy,p,lim);
+    FXxy = rt2cdf(Xxy,p,lim);
+    FYx = rt2cdf(Yx,p,lim);
+    FYy = rt2cdf(Yy,p,lim);
+    FYxy = rt2cdf(Yxy,p,lim);
+    [FXY,q] = rt2cdf(XY,p,lim);
 elseif strcmpi(test,'hor')
-    Fx = rt2cfp(x,lim(2));
-    Fy = rt2cfp(y,lim(2));
-    Fxy = rt2cfp(xy,lim(2));
+    FXx = rt2cfp(Xx,lim(2));
+    FXy = rt2cfp(Xy,lim(2));
+    FXxy = rt2cfp(Xxy,lim(2));
+    FYx = rt2cfp(Yx,lim(2));
+    FYy = rt2cfp(Yy,lim(2));
+    FYxy = rt2cfp(Yxy,lim(2));
+    FXY = rt2cfp(XY,lim(2));
 end
 
 % Compute model
-if dep == 0 % OR model
-    Fmodel = Fx+Fy-Fx.*Fy;
-elseif dep == -1 % Miller's bound
-    Fmodel = min(Fx+Fy,ones(size(Fxy)));
-elseif dep == 1 % Grice's bound
-    Fmodel = max(Fx,Fy);
+if strcmpi(bias,'X') % X bias
+    Fmodel = (FXx+FXy+FXxy)/3;
+elseif strcmpi(bias,'Y') % Y bias
+    Fmodel = (FYx+FYy+FYxy)/3;
+elseif strcmpi(bias,'n-1X') % n-1 bias (X bias when n-1=XY)
+    Fmodel = (FXx+FYy+FXxy)/3;
+elseif strcmpi(bias,'n-1Y') % n-1 bias (Y bias when n-1=XY)
+    Fmodel = (FXx+FYy+FYxy)/3;
 end
 
 % Compute percentiles for horizontal test
 if strcmpi(test,'hor')
-    Fxy = cfp2per(Fxy,p);
+    FXY = cfp2per(Fmodel,p);
     Fmodel = cfp2per(Fmodel,p);
 end
 
 % Compute difference
 if strcmpi(test,'ver')
-    Fdiff = Fxy-Fmodel;
+    Fdiff = FXY-Fmodel;
 elseif strcmpi(test,'hor')
-    Fdiff = Fmodel-Fxy;
+    Fdiff = Fmodel-FXY;
 end
 
 % Compute multisensory gain
@@ -118,7 +132,7 @@ if nargout > 2 &&  strcmpi(test,'hor')
     q = p;
 end
 
-function [p,lim,dep,test,area] = decode_varargin(varargin)
+function [p,lim,bias,test] = decode_varargin(varargin)
 %decode_varargin Decode input variable arguments.
 %   [PARAM1,PARAM2,...] = DECODE_VARARGIN('PARAM1',VAL1,'PARAM2',VAL2,...)
 %   decodes the input variable arguments of the main function.
@@ -140,13 +154,13 @@ if any(strcmpi(varargin,'lim')) && ~isempty(varargin{find(strcmpi(varargin,'lim'
 else
     lim = []; % default: unspecified
 end
-if any(strcmpi(varargin,'dep')) && ~isempty(varargin{find(strcmpi(varargin,'dep'))+1})
-    dep = varargin{find(strcmpi(varargin,'dep'))+1};
-    if dep~=0 && dep~=-1 && dep~=1
-        error('DEP must be a scalar with a value of -1, 0 or 1.')
+if any(strcmpi(varargin,'bias')) && ~isempty(varargin{find(strcmpi(varargin,'bias'))+1})
+    bias = varargin{find(strcmpi(varargin,'bias'))+1};
+    if ~any(strcmpi(bias,{'X','Y','n-1X','n-1Y'}))
+        error('Invalid value for argument BIAS. Valid values are: ''X'', ''Y'', ''n-1X'', ''n-1Y''.')
     end
 else
-    dep = 0; % default: assume stochastic independence
+    bias = 'X'; % default: X bias
 end
 if any(strcmpi(varargin,'test')) && ~isempty(varargin{find(strcmpi(varargin,'test'))+1})
     test = varargin{find(strcmpi(varargin,'test'))+1};
@@ -155,12 +169,4 @@ if any(strcmpi(varargin,'test')) && ~isempty(varargin{find(strcmpi(varargin,'tes
     end
 else
     test = 'ver'; % default: vertical test
-end
-if any(strcmpi(varargin,'area')) && ~isempty(varargin{find(strcmpi(varargin,'area'))+1})
-    area = varargin{find(strcmpi(varargin,'area'))+1};
-    if ~any(strcmpi(area,{'all','pos','neg'}))
-        error('Invalid value for argument AREA. Valid values are: ''all'', ''pos'', ''neg''.')
-    end
-else
-    area = 'all'; % default: use all values
 end

@@ -3,19 +3,19 @@ function [Fx,Fy,Fxy,Fmodel,q,lim] = ormodel(x,y,xy,varargin)
 %   [FX,FY,FXY] = ORMODEL(X,Y,XY) returns the cumulative distribution
 %   functions (CDFs) for the unisensory RT distributions X and Y, and the
 %   bisensory RT distribution XY at 10 linearly-spaced quantiles. X, Y and
-%   XY are not required to have an equal number of observations. This
-%   function treats NaNs as missing values, and ignores them.
+%   XY can have different lengths. This function treats NaNs as missing
+%   values, and ignores them.
 %
 %   [...,FMODEL] = ORMODEL(...) returns the OR (race) model based on the
 %   probability summation of X and Y (Raab, 1962). By default, the model
-%   assumes statistical independence between RTs on different sensory
+%   assumes stochastic independence between RTs on different sensory
 %   channels, but this assumption can be specified using the DEP argument
 %   (see below). For valid estimates of FMODEL, the stimuli used to
 %   generate X, Y and XY should be presented in random order to meet the
 %   assumption of context invariance.
 %
 %   [...,Q] = ORMODEL(...) returns the RT quantiles used to compute the
-%   CDFs for the vertical test and the probabilities used to compute the
+%   CDFs for the vertical test or the probabilities used to compute the
 %   percentiles for the horizontal test.
 %
 %   [...,LIM] = ORMODEL(...) returns the lower and upper RT limits used
@@ -30,15 +30,11 @@ function [Fx,Fy,Fxy,Fmodel,q,lim] = ormodel(x,y,xy,varargin)
 %   'p'         a vector specifying the probabilities for computing the
 %               quantiles of a vertical test or the percentiles of a
 %               horizontal test (default=0.05:0.1:0.95)
-%   'outlier'   a 2-element vector specifying the lower and upper RT
-%               cutoffs for outlier correction (default=no correction)
-%   'per'       a 2-element vector specifying the lower and upper
-%               percentiles of RTs to consider (default=[0,100])
 %   'lim'       a 2-element vector specifying the lower and upper RT limits
 %               for computing CDFs: it is recommended to leave this
 %               unspecified unless comparing directly with other conditions
 %               (default=[min([X,Y,XY]),max([X,Y,XY])])
-%   'dep'       a scalar specifying the model's assumption of statistical
+%   'dep'       a scalar specifying the model's assumption of stochastic
 %               dependence between sensory channels: pass in 0 to assume
 %               independence (OR model; default), -1 to assume perfect
 %               negative dependence (Miller's bound) and 1 to assume
@@ -67,32 +63,19 @@ function [Fx,Fy,Fxy,Fmodel,q,lim] = ormodel(x,y,xy,varargin)
 %   Email: mickcrosse@gmail.com
 %   Cognitive Neurophysiology Laboratory,
 %   Albert Einstein College of Medicine, NY
-%   Apr 2017; Last Revision: 14-Apr-2019
+%   Apr 2017; Last Revision: 01-May-2019
 
 % Decode input variable arguments
-[p,outlier,per,lim,dep,test] = decode_varargin(varargin);
+[p,lim,dep,test] = decode_varargin(varargin);
 
-% Outlier correction procedure
-if ~isempty(outlier)
-    x(x<outlier(1)|x>outlier(2)) = [];
-    y(y<outlier(1)|y>outlier(2)) = [];
-    xy(xy<outlier(1)|xy>outlier(2)) = [];
-end
+% Transpose row vectors
+if isrow(x), x = x'; end
+if isrow(y), y = y'; end
+if isrow(xy), xy = xy'; end
 
-% Get RT range for each condition
-lims = zeros(3,2);
-lims(1,:) = prctile(x,per);
-lims(2,:) = prctile(y,per);
-lims(3,:) = prctile(xy,per);
-
-% Limit RTs to specified range
-x = x(x>=lims(1,1) & x<=lims(1,2));
-y = y(y>=lims(2,1) & y<=lims(2,2));
-xy = xy(xy>=lims(3,1) & xy<=lims(3,2));
-
-% Get min and max RT limits
+% Get min and max CDF limits
 if isempty(lim)
-    lim = [min(lims(:)),max(lims(:))];
+    lim = [min([x;y;xy]),max([x;y;xy])];
 end
 
 % Compute CDFs
@@ -132,7 +115,7 @@ if nargout > 4 &&  strcmpi(test,'hor')
     q = p;
 end
 
-function [p,outlier,per,lim,dep,test] = decode_varargin(varargin)
+function [p,lim,dep,test] = decode_varargin(varargin)
 %decode_varargin Decode input variable arguments.
 %   [PARAM1,PARAM2,...] = DECODE_VARARGIN('PARAM1',VAL1,'PARAM2',VAL2,...)
 %   decodes the input variable arguments of the main function.
@@ -145,22 +128,6 @@ if any(strcmpi(varargin,'p')) && ~isempty(varargin{find(strcmpi(varargin,'p'))+1
     end
 else
     p = 0.05:0.1:0.95; % default: 0.05 to 0.95 in 0.1 increments
-end
-if any(strcmpi(varargin,'outlier')) && ~isempty(varargin{find(strcmpi(varargin,'outlier'))+1})
-    outlier = varargin{find(strcmpi(varargin,'outlier'))+1};
-    if ~isnumeric(outlier) || isscalar(outlier) || any(isnan(outlier)) || any(isinf(outlier)) || any(outlier<0) || outlier(1)>=outlier(2)
-        error('OUTLIER must be a 2-element vector of positive values.')
-    end
-else
-    outlier = []; % default: unspecified
-end
-if any(strcmpi(varargin,'per')) && ~isempty(varargin{find(strcmpi(varargin,'per'))+1})
-    per = varargin{find(strcmpi(varargin,'per'))+1};
-    if ~isnumeric(per) || isscalar(per) || any(isnan(per)) || any(isinf(per)) || any(per<0) || any(per>100) || per(1)>=per(2)
-        error('PER must be a 2-element vector with values between 0 and 100.')
-    end
-else
-    per = [0,100]; % default: all RTs
 end
 if any(strcmpi(varargin,'lim')) && ~isempty(varargin{find(strcmpi(varargin,'lim'))+1})
     lim = varargin{find(strcmpi(varargin,'lim'))+1};
@@ -176,7 +143,7 @@ if any(strcmpi(varargin,'dep')) && ~isempty(varargin{find(strcmpi(varargin,'dep'
         error('DEP must be a scalar with a value of -1, 0 or 1.')
     end
 else
-    dep = 0; % default: assume statistical independence
+    dep = 0; % default: assume stochastic independence
 end
 if any(strcmpi(varargin,'test')) && ~isempty(varargin{find(strcmpi(varargin,'test'))+1})
     test = varargin{find(strcmpi(varargin,'test'))+1};

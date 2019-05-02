@@ -4,9 +4,8 @@ function [Fx,Fy,Fxy,Fmodel,q,lim] = biasmodel(Xx,Xy,Xxy,Yx,Yy,Yxy,XY,varargin)
 %   the unisensory RT distributions X and Y, and the bisensory RT
 %   distribution XY at 10 linearly-spaced quantiles. X and Y should be
 %   entered separated by previous modality: XX, XY, XXY and YX, YY, YXY,
-%   respectively. X, Y and XY are not required to have an equal number of
-%   observations. This function treats NaNs as missing values, and ignores
-%   them.
+%   respectively. X, Y and XY can have different lengths. This function
+%   treats NaNs as missing values, and ignores them.
 %
 %   [...,FMODEL] = BIASMODEL(...) returns the bias model based on the mean
 %   probability of XX, XY and XXY (Crosse et al., 2019). By default, the
@@ -31,10 +30,6 @@ function [Fx,Fy,Fxy,Fmodel,q,lim] = biasmodel(Xx,Xy,Xxy,Yx,Yy,Yxy,XY,varargin)
 %   'p'         a vector specifying the probabilities for computing the
 %               quantiles of a vertical test or the percentiles of a
 %               horizontal test (default=0.05:0.1:0.95)
-%   'outlier'   a 2-element vector specifying the lower and upper RT
-%               cutoffs for outlier correction (default=no correction)
-%   'per'       a 2-element vector specifying the lower and upper
-%               percentiles of RTs to consider (default=[0,100])
 %   'lim'       a 2-element vector specifying the lower and upper RT limits
 %               for computing CDFs: it is recommended to leave this
 %               unspecified unless comparing directly to other conditions
@@ -67,54 +62,28 @@ function [Fx,Fy,Fxy,Fmodel,q,lim] = biasmodel(Xx,Xy,Xxy,Yx,Yy,Yxy,XY,varargin)
 %   Email: mickcrosse@gmail.com
 %   Cognitive Neurophysiology Laboratory,
 %   Albert Einstein College of Medicine, NY
-%   Apr 2017; Last Revision: 14-Apr-2019
+%   Apr 2017; Last Revision: 01-May-2019
 
 % Decode input variable arguments
-[p,outlier,per,lim,bias,test] = decode_varargin(varargin);
+[p,lim,bias,test] = decode_varargin(varargin);
 
-% Outlier correction procedure
-if ~isempty(outlier)
-    Xx(Xx<outlier(1)|Xx>outlier(2)) = [];
-    Xy(Xy<outlier(1)|Xy>outlier(2)) = [];
-    Xxy(Xxy<outlier(1)|Xxy>outlier(2)) = [];
-    Yx(Yx<outlier(1)|Yx>outlier(2)) = [];
-    Yy(Yy<outlier(1)|Yy>outlier(2)) = [];
-    Yxy(Yxy<outlier(1)|Yxy>outlier(2)) = [];
-    XY(XY<outlier(1)|XY>outlier(2)) = [];
+% Transpose row vectors
+if isrow(Xx), Xx = Xx'; end
+if isrow(Xy), Xy = Xy'; end
+if isrow(Xxy), Xxy = Xxy'; end
+if isrow(Yx), Yx = Yx'; end
+if isrow(Yy), Yy = Yy'; end
+if isrow(Yxy), Yxy = Yxy'; end
+if isrow(XY), XY = XY'; end
+
+% Get min and max CDF limits
+if isempty(lim)
+    lim = [min([Xx;Xy;Xxy;Yx;Yy;Yxy;XY]),max([Xx;Xy;Xxy;Yx;Yy;Yxy;XY])];
 end
-
-% Get RT range for each condition
-lims = zeros(7,2);
-lims(1,:) = prctile(Xx,per);
-lims(2,:) = prctile(Xy,per);
-lims(3,:) = prctile(Xxy,per);
-lims(4,:) = prctile(Yx,per);
-lims(5,:) = prctile(Yy,per);
-lims(6,:) = prctile(Yxy,per);
-lims(7,:) = prctile(XY,per);
-
-% Limit RTs to specified range
-Xx = Xx(Xx>=lims(1,1) & Xx<=lims(1,2));
-Xy = Xy(Xy>=lims(2,1) & Xy<=lims(2,2));
-Xxy = Xxy(Xxy>=lims(3,1) & Xxy<=lims(3,2));
-Yx = Yx(Yx>=lims(4,1) & Yx<=lims(4,2));
-Yy = Yy(Yy>=lims(5,1) & Yy<=lims(5,2));
-Yxy = Yxy(Yxy>=lims(6,1) & Yxy<=lims(6,2));
-XY = XY(XY>=lims(7,1) & XY<=lims(7,2));
 
 % Get pooled distributions
-if iscolumn(Xx)
-    x = [Xx;Xy;Xxy];
-    y = [Yx;Yy;Yxy];
-elseif isrow(Xx)
-    x = [Xx,Xy,Xxy];
-    y = [Yx,Yy,Yxy];
-end
-
-% Get min and max RT limits
-if isempty(lim)
-    lim = [min(lims(:)),max(lims(:))];
-end
+x = [Xx;Xy;Xxy];
+y = [Yx;Yy;Yxy];
 
 % Compute CDFs
 if strcmpi(test,'ver')
@@ -167,7 +136,7 @@ if nargout > 4 &&  strcmpi(test,'hor')
     q = p;
 end
 
-function [p,outlier,per,lim,bias,test] = decode_varargin(varargin)
+function [p,lim,bias,test] = decode_varargin(varargin)
 %decode_varargin Decode input variable arguments.
 %   [PARAM1,PARAM2,...] = DECODE_VARARGIN('PARAM1',VAL1,'PARAM2',VAL2,...)
 %   decodes the input variable arguments of the main function.
@@ -180,22 +149,6 @@ if any(strcmpi(varargin,'p')) && ~isempty(varargin{find(strcmpi(varargin,'p'))+1
     end
 else
     p = 0.05:0.1:0.95; % default: 0.05 to 0.95 in 0.1 increments
-end
-if any(strcmpi(varargin,'outlier')) && ~isempty(varargin{find(strcmpi(varargin,'outlier'))+1})
-    outlier = varargin{find(strcmpi(varargin,'outlier'))+1};
-    if ~isnumeric(outlier) || isscalar(outlier) || any(isnan(outlier)) || any(isinf(outlier)) || any(outlier<0) || outlier(1)>=outlier(2)
-        error('OUTLIER must be a 2-element vector of positive values.')
-    end
-else
-    outlier = []; % default: unspecified
-end
-if any(strcmpi(varargin,'per')) && ~isempty(varargin{find(strcmpi(varargin,'per'))+1})
-    per = varargin{find(strcmpi(varargin,'per'))+1};
-    if ~isnumeric(per) || isscalar(per) || any(isnan(per)) || any(isinf(per)) || any(per<0) || any(per>100) || per(1)>=per(2)
-        error('PER must be a 2-element vector with values between 0 and 100.')
-    end
-else
-    per = [0,100]; % default: all RTs
 end
 if any(strcmpi(varargin,'lim')) && ~isempty(varargin{find(strcmpi(varargin,'lim'))+1})
     lim = varargin{find(strcmpi(varargin,'lim'))+1};

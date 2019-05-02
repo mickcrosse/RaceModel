@@ -3,9 +3,8 @@ function [cost,Fdiff,q] = switchcost(sw,re,varargin)
 %   COST = SWITCHCOST(SW,RE) returns the switch cost of reaction times to
 %   mixed stimuli, quantified as the area between the CDFs of the RT
 %   distributions of the switch trials SW, and repeat trials RE (Crosse et
-%   al., 2019a,b). SW and RE are not required to have an equal number of
-%   observations. This function treats NaNs as missing values, and ignores
-%   them.
+%   al., 2019a,b). SW and RE can have different lengths. This function
+%   treats NaNs as missing values, and ignores them.
 %
 %   FDIFF = SWITCHCOST(...) returns the difference between the CDFs of the
 %   switch and repeat trials at every quantile.
@@ -22,10 +21,6 @@ function [cost,Fdiff,q] = switchcost(sw,re,varargin)
 %   'p'         a vector specifying the probabilities for computing the
 %               quantiles of a vertical test or the percentiles of a
 %               horizontal test (default=0.05:0.1:0.95)
-%   'outlier'   a 2-element vector specifying the lower and upper RT
-%               cutoffs for outlier correction (default=no correction)
-%   'per'       a 2-element vector specifying the lower and upper
-%               percentiles of RTs to consider (default=[0,100])
 %   'lim'       a 2-element vector specifying the lower and upper RT limits
 %               for computing CDFs: it is recommended to leave this
 %               unspecified unless comparing directly to other conditions
@@ -57,29 +52,18 @@ function [cost,Fdiff,q] = switchcost(sw,re,varargin)
 %   Email: mickcrosse@gmail.com
 %   Cognitive Neurophysiology Laboratory,
 %   Albert Einstein College of Medicine, NY
-%   Apr 2017; Last Revision: 4-Apr-2019
+%   Apr 2017; Last Revision: 01-May-2019
 
 % Decode input variable arguments
-[p,outlier,per,lim,test,area] = decode_varargin(varargin);
+[p,lim,test,area] = decode_varargin(varargin);
 
-% Outlier correction procedure
-if ~isempty(outlier)
-    sw(sw<outlier(1)|sw>outlier(2)) = [];
-    re(re<outlier(1)|re>outlier(2)) = [];
-end
+% Transpose row vectors
+if isrow(sw), sw = sw'; end
+if isrow(re), re = re'; end
 
-% Get RT range for each condition
-lims = zeros(3,2);
-lims(1,:) = prctile(sw,per);
-lims(2,:) = prctile(re,per);
-
-% Limit RTs to specified range
-sw = sw(sw>=lims(1,1) & sw<=lims(1,2));
-re = re(re>=lims(2,1) & re<=lims(2,2));
-
-% Get min and max RT limits
+% Get min and max CDF limits
 if isempty(lim)
-    lim = [min(lims(:)),max(lims(:))];
+    lim = [min([sw;re]),max([sw;re])];
 end
 
 % Compute CDFs
@@ -112,7 +96,7 @@ if nargout > 2 &&  strcmpi(test,'hor')
     q = p;
 end
 
-function [p,outlier,per,lim,test,area] = decode_varargin(varargin)
+function [p,lim,test,area] = decode_varargin(varargin)
 %decode_varargin Decode input variable arguments.
 %   [PARAM1,PARAM2,...] = DECODE_VARARGIN('PARAM1',VAL1,'PARAM2',VAL2,...)
 %   decodes the input variable arguments of the main function.
@@ -125,22 +109,6 @@ if any(strcmpi(varargin,'p')) && ~isempty(varargin{find(strcmpi(varargin,'p'))+1
     end
 else
     p = 0.05:0.1:0.95; % default: 0.05 to 0.95 in 0.1 increments
-end
-if any(strcmpi(varargin,'outlier')) && ~isempty(varargin{find(strcmpi(varargin,'outlier'))+1})
-    outlier = varargin{find(strcmpi(varargin,'outlier'))+1};
-    if ~isnumeric(outlier) || isscalar(outlier) || any(isnan(outlier)) || any(isinf(outlier)) || any(outlier<0) || outlier(1)>=outlier(2)
-        error('OUTLIER must be a 2-element vector of positive values.')
-    end
-else
-    outlier = []; % default: unspecified
-end
-if any(strcmpi(varargin,'per')) && ~isempty(varargin{find(strcmpi(varargin,'per'))+1})
-    per = varargin{find(strcmpi(varargin,'per'))+1};
-    if ~isnumeric(per) || isscalar(per) || any(isnan(per)) || any(isinf(per)) || any(per<0) || any(per>100) || per(1)>=per(2)
-        error('PER must be a 2-element vector with values between 0 and 100.')
-    end
-else
-    per = [0,100]; % default: all RTs
 end
 if any(strcmpi(varargin,'lim')) && ~isempty(varargin{find(strcmpi(varargin,'lim'))+1})
     lim = varargin{find(strcmpi(varargin,'lim'))+1};
