@@ -1,4 +1,4 @@
-function [Bemp,Bpred,Femp,Fpred,q,lim] = andbenefit3(x,y,z,xyz,varargin)
+function [Bemp,Bpred,Femp,Fpred,t] = andbenefit3(x,y,z,xyz,p,varargin)
 %andbenefit3 Multisensory benefit for a trisensory AND task.
 %   BEMP = ANDBENEFIT3(X,Y,Z,XYZ) returns the empirical multisensory
 %   benefit for a trisensory AND task, quantified by the area between the
@@ -12,6 +12,11 @@ function [Bemp,Bpred,Femp,Fpred,q,lim] = andbenefit3(x,y,z,xyz,varargin)
 %   bisensory RTs. To compare across bisensory and trisensory conditions,
 %   use the same RT limits (see below).
 %
+%   [...] = ANDBENEFIT3(...,P) uses the intervals P to generate CDFs. P is
+%   a vector of decimal values between 0 and 1 inclusive. For horizontal
+%   tests, P is the probabilities used to compute the CDF quantiles
+%   (default=0.05:0.1:0.95).
+%
 %   [...,BPRED] = ANDBENEFIT3(...) returns the predicted multisensory
 %   benefit for a trisensory AND task, quantified by the area between the
 %   CDFs of the slower of the unisensory RT distributions X, Y and Z, and
@@ -21,22 +26,14 @@ function [Bemp,Bpred,Femp,Fpred,q,lim] = andbenefit3(x,y,z,xyz,varargin)
 %   [...,FEMP,FPRED] = ANDBENEFIT(...) returns the difference at each
 %   quantile for empirical and predicted benefits, respectively.
 %
-%   [...,Q] = ANDBENEFIT3(...) returns the RT quantiles used to compute the
-%   CDFs for the vertical test and the probabilities used to compute the
-%   percentiles for the horizontal test.
-%
-%   [...,LIM] = ANDBENEFIT3(...) returns the lower and upper RT limits used
-%   to compute the CDFs. These values can be used to set the CDF limits of
-%   subsequent tests that are to be compared with this one.
+%   [...,T] = ANDBENEFIT3(...) returns the time intervals used to compute
+%   the CDFs for the vertical test.
 %
 %   [...] = ANDBENEFIT3(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
 %   additional parameters and their values. Valid parameters are the
 %   following:
 %
 %   Parameter   Value
-%   'p'         a vector specifying the probabilities for computing the
-%               quantiles of a vertical test or the percentiles of a
-%               horizontal test (default=0.05:0.1:0.95)
 %   'lim'       a 2-element vector specifying the lower and upper RT limits
 %               for computing CDFs: it is recommended to leave this
 %               unspecified unless comparing directly with other conditions
@@ -74,10 +71,17 @@ function [Bemp,Bpred,Femp,Fpred,q,lim] = andbenefit3(x,y,z,xyz,varargin)
 %   Email: mickcrosse@gmail.com
 %   Cognitive Neurophysiology Laboratory,
 %   Albert Einstein College of Medicine, NY
-%   Apr 2017; Last Revision: 01-May-2019
+%   Apr 2017; Last Revision: 3-May-2019
 
 % Decode input variable arguments
-[p,lim,dep,test,area,sharp] = decode_varargin(varargin);
+[lim,dep,test,area,sharp] = decode_varargin(varargin);
+
+% Set default values
+if ~isnumeric(p) || isscalar(p) || any(p<0|p>1)
+    error('P must be a vector of values between 0 and 1.')
+elseif nargin < 5 || isempty(p)
+    p = 0.05:0.1:0.95;
+end
 
 % Transpose row vectors
 if isrow(x), x = x'; end
@@ -95,7 +99,7 @@ if strcmpi(test,'ver')
     Fx = rt2cdf(x,p,lim);
     Fy = rt2cdf(y,p,lim);
     Fz = rt2cdf(z,p,lim);
-    Fxyz = rt2cdf(xyz,p,lim);
+    [Fxyz,t] = rt2cdf(xyz,p,lim);
 elseif strcmpi(test,'hor')
     Fx = rt2cfp(x,lim(2));
     Fy = rt2cfp(y,lim(2));
@@ -118,11 +122,11 @@ elseif dep == -1
     end
 end
 
-% Compute percentiles for horizontal test
+% Compute quantiles for horizontal test
 if strcmpi(test,'hor')
-    Fxyz = cfp2per(Fxyz,p);
-    Fmin = cfp2per(Fmin,p);
-    Fmodel = cfp2per(Fmodel,p);
+    Fxyz = cfp2q(Fxyz,p);
+    Fmin = cfp2q(Fmin,p);
+    Fmodel = cfp2q(Fmodel,p);
 end
 
 % Compute difference
@@ -149,25 +153,17 @@ if nargout > 1
     
 end
 
-% Get y-values for horizontal test
-if nargout > 4 &&  strcmpi(test,'hor')
-    q = p;
+% Time intervals for horizontal test not required
+if nargout > 4 && strcmpi(test,'hor')
+    error('Time intervals T not required for horizontal test.')
 end
 
-function [p,lim,dep,test,area,sharp] = decode_varargin(varargin)
+function [lim,dep,test,area,sharp] = decode_varargin(varargin)
 %decode_varargin Decode input variable arguments.
 %   [PARAM1,PARAM2,...] = DECODE_VARARGIN('PARAM1',VAL1,'PARAM2',VAL2,...)
 %   decodes the input variable arguments of the main function.
 
 varargin = varargin{1,1};
-if any(strcmpi(varargin,'p')) && ~isempty(varargin{find(strcmpi(varargin,'p'))+1})
-    p = varargin{find(strcmpi(varargin,'p'))+1};
-    if ~isnumeric(p) || isscalar(p) || any(isnan(p)) || any(isinf(p)) || any(p<0) || any(p>1) || any(diff(p)<=0)
-        error('P must be a vector with values between 0 and 1.')
-    end
-else
-    p = 0.05:0.1:0.95; % default: 0.05 to 0.95 in 0.1 increments
-end
 if any(strcmpi(varargin,'lim')) && ~isempty(varargin{find(strcmpi(varargin,'lim'))+1})
     lim = varargin{find(strcmpi(varargin,'lim'))+1};
     if ~isnumeric(lim) || isscalar(lim) || any(isnan(lim)) || any(isinf(lim)) || any(lim<0) || lim(1)>=lim(2)

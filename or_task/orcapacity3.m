@@ -1,30 +1,27 @@
-function [Ccoef,Clim,Csup,q,lim] = orcapacity3(x,y,z,xyz,varargin)
+function [Ccoef,Clim,Csup,t] = orcapacity3(x,y,z,xyz,p,varargin)
 %orcapacity3 Capacity coefficient for a trisensory OR task.
 %   CCOEF = ORCAPACITY3(X,Y,Z,XYZ) returns the capacity coefficient for a
-%   trisensory OR task at 10 linearly-spaced quantiles. CCOEF values of 1
+%   trisensory OR task at 10 linearly-spaced intervals. CCOEF values of 1
 %   imply that the system has unlimited capacity, values below 1 imply
 %   limited capacity and values above 1 imply super capacity (Townsend &
 %   Eidels, 2011). X, Y, Z and XYZ can have different lengths. This
 %   function treats NaNs as missing values, and ignores them.
 %
+%   [...] = ORCAPACITY3(...,P) uses the intervals P to compute CCOEF. P is
+%   a vector of decimal values between 0 and 1 inclusive
+%   (default=0.05:0.1:0.95).
+%
 %   [...,CLIM,CSUP] = ORCAPACITY3(...) returns the predicted bounds of
 %   extreme limited and super capacity, respectively.
 %
-%   [...,Q] = ORCAPACITY3(...) returns the RT quantiles used to compute the
-%   CDFs.
-%
-%   [...,LIM] = ORCAPACITY3(...) returns the lower and upper RT limits used
-%   to compute the CDFs. These values can be used to set the CDF limits of
-%   subsequent tests that are to be compared with this one.
+%   [...,T] = ORCAPACITY3(...) returns the time intervals used to compute
+%   the CDFs.
 %
 %   [...] = ORCAPACITY3(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
 %   additional parameters and their values. Valid parameters are the
 %   following:
 %
 %   Parameter   Value
-%   'p'         a vector specifying the probabilities for computing the
-%               quantiles of a vertical test or the percentiles of a
-%               horizontal test (default=0.05:0.1:0.95)
 %   'lim'       a 2-element vector specifying the lower and upper RT limits
 %               for computing CDFs: it is recommended to leave this
 %               unspecified unless comparing directly with other conditions
@@ -49,10 +46,17 @@ function [Ccoef,Clim,Csup,q,lim] = orcapacity3(x,y,z,xyz,varargin)
 %   Email: mickcrosse@gmail.com
 %   Cognitive Neurophysiology Laboratory,
 %   Albert Einstein College of Medicine, NY
-%   Apr 2017; Last Revision: 01-May-2019
+%   Apr 2017; Last Revision: 3-May-2019
 
 % Decode input variable arguments
-[p,lim,sharp] = decode_varargin(varargin);
+[lim,sharp] = decode_varargin(varargin);
+
+% Set default values
+if ~isnumeric(p) || isscalar(p) || any(p<0|p>1)
+    error('P must be a vector of values between 0 and 1.')
+elseif nargin < 5 || isempty(p)
+    p = 0.05:0.1:0.95;
+end
 
 % Transpose row vectors
 if isrow(x), x = x'; end
@@ -69,7 +73,7 @@ end
 Fx = rt2cdf(x,p,lim);
 Fy = rt2cdf(y,p,lim);
 Fz = rt2cdf(z,p,lim);
-[Fxyz,q] = rt2cdf(xyz,p,lim);
+[Fxyz,t] = rt2cdf(xyz,p,lim);
 
 % Compute survivor functions
 Sx = 1-Fx;
@@ -89,20 +93,12 @@ elseif sharp == 0
     Csup = log(max(Sx+Sy+Sz-2,zeros(size(Sxyz))))./log(Sx.*Sy.*Sz); % Miller's bound
 end
 
-function [p,lim,sharp] = decode_varargin(varargin)
+function [lim,sharp] = decode_varargin(varargin)
 %decode_varargin Decode input variable arguments.
 %   [PARAM1,PARAM2,...] = DECODE_VARARGIN('PARAM1',VAL1,'PARAM2',VAL2,...)
 %   decodes the input variable arguments of the main function.
 
 varargin = varargin{1,1};
-if any(strcmpi(varargin,'p')) && ~isempty(varargin{find(strcmpi(varargin,'p'))+1})
-    p = varargin{find(strcmpi(varargin,'p'))+1};
-    if ~isnumeric(p) || isscalar(p) || any(isnan(p)) || any(isinf(p)) || any(p<0) || any(p>1) || any(diff(p)<=0)
-        error('P must be a vector with values between 0 and 1.')
-    end
-else
-    p = 0.05:0.1:0.95; % default: 0.05 to 0.95 in 0.1 increments
-end
 if any(strcmpi(varargin,'lim')) && ~isempty(varargin{find(strcmpi(varargin,'lim'))+1})
     lim = varargin{find(strcmpi(varargin,'lim'))+1};
     if ~isnumeric(lim) || isscalar(lim) || any(isnan(lim)) || any(isinf(lim)) || any(lim<0) || lim(1)>=lim(2)

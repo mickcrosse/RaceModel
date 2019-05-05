@@ -1,4 +1,4 @@
-function [cost,Fdiff,q] = switchcost(sw,re,varargin)
+function [cost,Fdiff,t] = switchcost(sw,re,p,varargin)
 %switchcost Switch cost of reaction times to mixed stimuli.
 %   COST = SWITCHCOST(SW,RE) returns the switch cost of reaction times to
 %   mixed stimuli, quantified as the area between the CDFs of the RT
@@ -6,21 +6,22 @@ function [cost,Fdiff,q] = switchcost(sw,re,varargin)
 %   al., 2019a,b). SW and RE can have different lengths. This function
 %   treats NaNs as missing values, and ignores them.
 %
-%   FDIFF = SWITCHCOST(...) returns the difference between the CDFs of the
-%   switch and repeat trials at every quantile.
+%   [...] = SWITCHCOST(...,P) uses the intervals P to generate CDFs. P is a
+%   vector of decimal values between 0 and 1 inclusive. For horizontal
+%   tests, P is the probabilities used to compute the CDF quantiles
+%   (default=0.05:0.1:0.95).
 %
-%   [...,Q] = SWITCHCOST(...) returns the RT quantiles used to compute the
-%   CDFs for the vertical test and the probabilities used to compute the
-%   percentiles for the horizontal test.
+%   [...,FDIFF] = SWITCHCOST(...) returns the difference between the CDFs
+%   of the switch and repeat trials at every quantile.
+%
+%   [...,T] = SWITCHCOST(...) returns the time intervals used to compute
+%   the CDFs for the vertical test.
 %
 %   [...] = SWITCHCOST(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
 %   additional parameters and their values. Valid parameters are the
 %   following:
 %
 %   Parameter   Value
-%   'p'         a vector specifying the probabilities for computing the
-%               quantiles of a vertical test or the percentiles of a
-%               horizontal test (default=0.05:0.1:0.95)
 %   'lim'       a 2-element vector specifying the lower and upper RT limits
 %               for computing CDFs: it is recommended to leave this
 %               unspecified unless comparing directly to other conditions
@@ -52,10 +53,17 @@ function [cost,Fdiff,q] = switchcost(sw,re,varargin)
 %   Email: mickcrosse@gmail.com
 %   Cognitive Neurophysiology Laboratory,
 %   Albert Einstein College of Medicine, NY
-%   Apr 2017; Last Revision: 01-May-2019
+%   Apr 2017; Last Revision: 3-May-2019
 
 % Decode input variable arguments
-[p,lim,test,area] = decode_varargin(varargin);
+[lim,test,area] = decode_varargin(varargin);
+
+% Set default values
+if ~isnumeric(p) || isscalar(p) || any(p<0|p>1)
+    error('P must be a vector of values between 0 and 1.')
+elseif nargin < 3 || isempty(p)
+    p = 0.05:0.1:0.95;
+end
 
 % Transpose row vectors
 if isrow(sw), sw = sw'; end
@@ -69,16 +77,16 @@ end
 % Compute CDFs
 if strcmpi(test,'ver')
     Fsw = rt2cdf(sw,p,lim);
-    [Fre,q] = rt2cdf(re,p,lim);
+    [Fre,t] = rt2cdf(re,p,lim);
 elseif strcmpi(test,'hor')
     Fsw = rt2cfp(sw,lim(2));
     Fre = rt2cfp(re,lim(2));
 end
 
-% Compute percentiles for horizontal test
+% Compute quantiles for horizontal test
 if strcmpi(test,'hor')
-    Fsw = cfp2per(Fsw,p);
-    Fre = cfp2per(Fre,p);
+    Fsw = cfp2q(Fsw,p);
+    Fre = cfp2q(Fre,p);
 end
 
 % Compute difference
@@ -91,25 +99,17 @@ end
 % Compute MSE
 cost = getauc(p,Fdiff,area);
 
-% Get probabilities for horizontal test
-if nargout > 2 &&  strcmpi(test,'hor')
-    q = p;
+% Time intervals for horizontal test not required
+if nargout > 2 && strcmpi(test,'hor')
+    error('Time intervals T not required for horizontal test.')
 end
 
-function [p,lim,test,area] = decode_varargin(varargin)
+function [lim,test,area] = decode_varargin(varargin)
 %decode_varargin Decode input variable arguments.
 %   [PARAM1,PARAM2,...] = DECODE_VARARGIN('PARAM1',VAL1,'PARAM2',VAL2,...)
 %   decodes the input variable arguments of the main function.
 
 varargin = varargin{1,1};
-if any(strcmpi(varargin,'p')) && ~isempty(varargin{find(strcmpi(varargin,'p'))+1})
-    p = varargin{find(strcmpi(varargin,'p'))+1};
-    if ~isnumeric(p) || isscalar(p) || any(isnan(p)) || any(isinf(p)) || any(p<0) || any(p>1) || any(diff(p)<=0)
-        error('P must be a vector with values between 0 and 1.')
-    end
-else
-    p = 0.05:0.1:0.95; % default: 0.05 to 0.95 in 0.1 increments
-end
 if any(strcmpi(varargin,'lim')) && ~isempty(varargin{find(strcmpi(varargin,'lim'))+1})
     lim = varargin{find(strcmpi(varargin,'lim'))+1};
     if ~isnumeric(lim) || isscalar(lim) || any(isnan(lim)) || any(isinf(lim)) || any(lim<0) || lim(1)>=lim(2)

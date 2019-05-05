@@ -1,15 +1,20 @@
-function [Fx,Fy,Fz,Fxyz,Fmodel,q,lim] = andmodel3(x,y,z,xyz,varargin)
+function [Fx,Fy,Fz,Fxyz,Fmodel,t] = andmodel3(x,y,z,xyz,p,varargin)
 %andmodel3 Model trisensory reaction times for an AND task.
 %   [FX,FY,FZ,FXYZ] = ANDMODEL3(X,Y,Z,XYZ) returns the cumulative
 %   distribution functions (CDFs) for the unisensory RT distributions X, Y
 %   and Z, and the trisensory RT distribution XYZ at 10 linearly-spaced
-%   quantiles. X, Y, Z and XYZ can have different lengths. This function
+%   intervals. X, Y, Z and XYZ can have different lengths. This function
 %   treats NaNs as missing values, and ignores them.
 %
 %   To compute CDFs and models for the bisensory conditions XY, XZ and YZ,
 %   use the function ANDMODEL on the corresponding unisensory and bisensory
 %   RTs. To compare across bisensory and trisensory conditions, use the
 %   same RT limits (see below).
+%
+%   [...] = ANDMODEL3(...,P) uses the intervals P to generate CDFs. P is a
+%   vector of decimal values between 0 and 1 inclusive. For horizontal
+%   tests, P is the probabilities used to compute the CDF quantiles
+%   (default=0.05:0.1:0.95).
 %
 %   [...,FMODEL] = ANDMODEL3(...) returns the AND model based on the joint
 %   probability of X, Y and Z (Townsend & Ashby, 1983). By default, the
@@ -19,22 +24,14 @@ function [Fx,Fy,Fz,Fxyz,Fmodel,q,lim] = andmodel3(x,y,z,xyz,varargin)
 %   generate X, Y, Z and XYZ should be presented in random order to meet
 %   the assumption of context invariance.
 %
-%   [...,Q] = ANDMODEL3(...) returns the RT quantiles used to compute the
-%   CDFs for the vertical test and the probabilities used to compute the
-%   percentiles for the horizontal test.
-%
-%   [...,LIM] = ANDMODEL3(...) returns the lower and upper RT limits used
-%   to compute the CDFs. These values can be used to set the CDF limits of
-%   subsequent tests that are to be compared with this one.
+%   [...,T] = ANDMODEL3(...) returns the time intervals used to compute the
+%   CDFs for the vertical test.
 %
 %   [...] = ANDMODEL3(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies
 %   additional parameters and their values. Valid parameters are the
 %   following:
 %
 %   Parameter   Value
-%   'p'         a vector specifying the probabilities for computing the
-%               quantiles of a vertical test or the percentiles of a
-%               horizontal test (default=0.05:0.1:0.95)
 %   'lim'       a 2-element vector specifying the lower and upper RT limits
 %               for computing CDFs: it is recommended to leave this
 %               unspecified unless comparing directly with other conditions
@@ -75,10 +72,17 @@ function [Fx,Fy,Fz,Fxyz,Fmodel,q,lim] = andmodel3(x,y,z,xyz,varargin)
 %   Email: mickcrosse@gmail.com
 %   Cognitive Neurophysiology Laboratory,
 %   Albert Einstein College of Medicine, NY
-%   Apr 2017; Last Revision: 01-May-2019
+%   Apr 2017; Last Revision: 3-May-2019
 
 % Decode input variable arguments
-[p,lim,dep,test,sharp] = decode_varargin(varargin);
+[lim,dep,test,sharp] = decode_varargin(varargin);
+
+% Set default values
+if ~isnumeric(p) || isscalar(p) || any(p<0|p>1)
+    error('P must be a vector of values between 0 and 1.')
+elseif nargin < 5 || isempty(p)
+    p = 0.05:0.1:0.95;
+end
 
 % Transpose row vectors
 if isrow(x), x = x'; end
@@ -96,7 +100,7 @@ if strcmpi(test,'ver')
     Fx = rt2cdf(x,p,lim);
     Fy = rt2cdf(y,p,lim);
     Fz = rt2cdf(z,p,lim);
-    [Fxyz,q] = rt2cdf(xyz,p,lim);
+    [Fxyz,t] = rt2cdf(xyz,p,lim);
 elseif strcmpi(test,'hor')
     Fx = rt2cfp(x,lim(2));
     Fy = rt2cfp(y,lim(2));
@@ -119,37 +123,29 @@ if nargout > 4
         Fmodel = min([Fx,Fy,Fz],[],2);
     end
     if strcmpi(test,'hor')
-        Fmodel = cfp2per(Fmodel,p);
+        Fmodel = cfp2q(Fmodel,p);
     end
 end
 
-% Compute percentiles for horizontal test
+% Compute quantiles for horizontal test
 if strcmpi(test,'hor')
-    Fx = cfp2per(Fx,p);
-    Fy = cfp2per(Fy,p);
-    Fz = cfp2per(Fz,p);
-    Fxyz = cfp2per(Fxyz,p);
+    Fx = cfp2q(Fx,p);
+    Fy = cfp2q(Fy,p);
+    Fz = cfp2q(Fz,p);
+    Fxyz = cfp2q(Fxyz,p);
 end
 
-% Get probabilities for horizontal test
-if nargout > 5 &&  strcmpi(test,'hor')
-    q = p;
+% Time intervals for horizontal test not required
+if nargout > 5 && strcmpi(test,'hor')
+    error('Time intervals T not required for horizontal test.')
 end
 
-function [p,lim,dep,test,sharp] = decode_varargin(varargin)
+function [lim,dep,test,sharp] = decode_varargin(varargin)
 %decode_varargin Decode input variable arguments.
 %   [PARAM1,PARAM2,...] = DECODE_VARARGIN('PARAM1',VAL1,'PARAM2',VAL2,...)
 %   decodes the input variable arguments of the main function.
 
 varargin = varargin{1,1};
-if any(strcmpi(varargin,'p')) && ~isempty(varargin{find(strcmpi(varargin,'p'))+1})
-    p = varargin{find(strcmpi(varargin,'p'))+1};
-    if ~isnumeric(p) || isscalar(p) || any(isnan(p)) || any(isinf(p)) || any(p<0) || any(p>1) || any(diff(p)<=0)
-        error('P must be a vector with values between 0 and 1.')
-    end
-else
-    p = 0.05:0.1:0.95; % default: 0.05 to 0.95 in 0.1 increments
-end
 if any(strcmpi(varargin,'lim')) && ~isempty(varargin{find(strcmpi(varargin,'lim'))+1})
     lim = varargin{find(strcmpi(varargin,'lim'))+1};
     if ~isnumeric(lim) || isscalar(lim) || any(isnan(lim)) || any(isinf(lim)) || any(lim<0) || lim(1)>=lim(2)

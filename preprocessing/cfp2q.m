@@ -1,10 +1,10 @@
-function [Gxp] = cfp2per(Gx,p)
-%cfp2per Convert cumulative frequency polygon to percentiles.
-%   GXP = CFP2PER(GX,P) returns the percentiles of the cumulative frequency
+function q = cfp2q(Gx,p)
+%cfp2q Convert cumulative frequency polygon to quantiles.
+%   Q = CFP2Q(GX,P) returns the quantiles of the cumulative frequency
 %   polygon GX for the probabilities P. This function was adapted from the
 %   code described in Appendix B, Ulrich et al. (2007).
 %
-%   See also RT2CFP, RT2CDF, RACEMODEL, SWITCHCOST, GETAUC.
+%   See also RT2CFP, RT2CDF, RT2PDF, GETAUC.
 %
 %   RaceModel https://github.com/mickcrosse/RaceModel
 
@@ -24,12 +24,12 @@ if nargin < 2 || isempty(p)
     p = 0.05:0.1:0.95;
 end
 
-% Get number of probabilities
-np = length(p);
+% Get number of quantiles
+nq = length(p);
 
-% Compute percentiles using linear interpolation
-Gxp = zeros(np,1);
-for i = 1:np
+% Compute quantiles using linear interpolation
+q = zeros(nq,1);
+for i = 1:nq
     idx = find(Gx<=p(i),1,'last');
-    Gxp(i) = idx+(p(i)-Gx(idx))/(Gx(idx+1)-Gx(idx));
+    q(i) = idx+(p(i)-Gx(idx))/(Gx(idx+1)-Gx(idx));
 end
