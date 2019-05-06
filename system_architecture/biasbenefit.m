@@ -78,7 +78,7 @@ function [Bemp,Bpred,Femp,Fpred,t] = biasbenefit(Xx,Xy,Xxy,Yx,Yy,Yxy,XY,p,vararg
 [lim,bias,test,task] = decode_varargin(varargin);
 
 % Set default values
-if nargin < 4 || isempty(p)
+if nargin < 8 || isempty(p)
     p = 0.05:0.1:0.95;
 elseif ~isnumeric(p) || isscalar(p) || any(p<0|p>1)
     error('P must be a vector of values between 0 and 1.')

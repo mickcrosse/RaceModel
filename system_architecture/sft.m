@@ -66,7 +66,7 @@ SIC = {'0';'-to+';'>0';'<0';'-to+'};
 reftable = table(Model,MIC,SIC);
 
 % Set default values
-if nargin < 4 || isempty(p)
+if nargin < 5 || isempty(p)
     p = 0.05:0.1:0.95;
 elseif ~isnumeric(p) || isscalar(p) || any(p<0|p>1)
     error('P must be a vector of values between 0 and 1.')
