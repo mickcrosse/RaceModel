@@ -81,7 +81,7 @@ Ccoef = log(Fx.*Fy.*Fz)./log(Fxyz);
 % Compute bounds of limited and super capacity
 if sharp == 1
     Fxy = Fx.*Fy; Fyz = Fy.*Fz;
-    Clim = log(Fx.*Fy.*Fz)./log(Fxy+Fyz-Fy); % Diederich's bound
+    Clim = log(Fx.*Fy.*Fz)./log(max(Fxy+Fyz-Fy,zeros(size(Fxyz)))); % Diederich's bound
 elseif sharp == 0
     Clim = log(Fx.*Fy.*Fz)./log(max(Fx+Fy+Fz-2,zeros(size(Fxyz)))); % Colonius-Vorberg lower bound
 end
@@ -107,5 +107,5 @@ if any(strcmpi(varargin,'sharp')) && ~isempty(varargin{find(strcmpi(varargin,'sh
         error('SHARP must be a scalar with a value of 0 or 1.')
     end
 else
-    sharp = 0; % default: sharpen (Diederich's Bound)
+    sharp = 1; % default: sharpen (Diederich's Bound)
 end

@@ -87,8 +87,8 @@ Ccoef = log(Sxyz)./log(Sx.*Sy.*Sz);
 % Compute bounds of limited and super capacity
 Clim = log(min([Sx,Sy,Sz],[],2))./log(Sx.*Sy.*Sz); % Grice's bound
 if sharp == 1
-    Sxy = Sx+Sy-Sx.*Sy; Syz = Sy+Sz-Sy.*Sz;
-    Csup = log(Sxy+Syz-Sy)./log(Sx.*Sy.*Sz); % Diederich's bound
+    Sxy = Sx.*Sy; Syz = Sy.*Sz;
+    Csup = log(max(Sxy+Syz-Sy,zeros(size(Sxyz))))./log(Sx.*Sy.*Sz); % Diederich's bound
 elseif sharp == 0
     Csup = log(max(Sx+Sy+Sz-2,zeros(size(Sxyz))))./log(Sx.*Sy.*Sz); % Miller's bound
 end
@@ -113,5 +113,5 @@ if any(strcmpi(varargin,'sharp')) && ~isempty(varargin{find(strcmpi(varargin,'sh
         error('SHARP must be a scalar with a value of 0 or 1.')
     end
 else
-    sharp = 0; % default: sharpen (Diederich's Bound)
+    sharp = 1; % default: sharpen (Diederich's Bound)
 end
