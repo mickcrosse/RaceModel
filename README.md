@@ -31,17 +31,21 @@ Crosse MJ, Foxe JJ, Molholm S (2019) RaceModel: A MATLAB Package for Stochastic 
 * andbenefit3.m - compute empirical and predicted benefits
 * andcapacity3.m - compute capacity coefficient and bounds
 
-### History effects
-* trialhistory.m - separate RTs based on trial history
-* switchcost.m - compute modality switch effects
+### System Architecture
+* sft.m - systems factorial technology framework
 * biasmodel.m - compute bias model
 * biasgain.m - compute multisensory gain (violations)
 * biasbenefit.m - compute empirical and predicted benefits
  
+### Modality Switch Effects
+* trialhistory.m - separate RTs based on trial history
+* switchcost.m - compute modality switch effects
+
 ### Accuracy
 * f1score.m - compute F1 score of a test's detection accuracy
  
 ### Preprocessing
+* clearnrts.m - perform outlier correction procedures
 * rt2pdf.m - convert RTs to probability density function
 * rt2cdf.m - convert RTs to cumulative distribution function
 * rt2cfp.m - convert RTs to a cumulative frequency polygon 
