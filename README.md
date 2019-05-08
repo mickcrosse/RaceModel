@@ -10,33 +10,33 @@ Crosse MJ, Foxe JJ, Molholm S (2019) RaceModel: A MATLAB Package for Stochastic 
 ### Redundant signals (OR) task
 #### Bisensory
 * `ormodel.m` - compute parallel (race) model
-* `orgain.m` - compute multisensory gain (violations)
+* `orgain.m` - compute multisensory gain (violation)
 * `orbenefit.m` - compute empirical and predicted benefits
 * `orcapacity.m` - compute capacity coefficient and bounds
  
 #### Trisensory
 * `ormodel3.m` - compute parallel (race) model
-* `orgain3.m` - compute multisensory gain (violations)
+* `orgain3.m` - compute multisensory gain (violation)
 * `orbenefit3.m` - compute empirical and predicted benefits
 * `orcapacity3.m` - compute capacity coefficient and bounds
 
 ### Exhaustive search (AND) task
 #### Bisensory
 * `andmodel.m` - compute parallel (AND) model
-* `andgain.m` - compute multisensory gain (violations)
+* `andgain.m` - compute multisensory gain (violation)
 * `andbenefit.m` - compute empirical and predicted benefits
 * `andcapacity.m` - compute capacity coefficient and bounds
 
 #### Trisensory
 * `andmodel3.m` - compute parallel (AND) model
-* `andgain3.m` - compute multisensory gain (violations)
+* `andgain3.m` - compute multisensory gain (violation)
 * `andbenefit3.m` - compute empirical and predicted benefits
 * `andcapacity3.m` - compute capacity coefficient and bounds
 
 ### System Architecture
 * `sft.m` - systems factorial technology framework
 * `biasmodel.m` - compute bias model
-* `biasgain.m` - compute multisensory gain (violations)
+* `biasgain.m` - compute multisensory gain (violation)
 * `biasbenefit.m` - compute empirical and predicted benefits
  
 ### Modality Switch Effects
