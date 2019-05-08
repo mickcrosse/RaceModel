@@ -96,7 +96,8 @@ end
 if dep == 0 % OR model
     Fmodel = Fx+Fy-Fx.*Fy;
 elseif dep == -1 % Miller's bound
-    Fmodel = min(Fx+Fy,ones(size(Fxy)));
+    Fupr = ones(length(p),1);
+    Fmodel = min(Fx+Fy,Fupr);
 elseif dep == 1 % Grice's bound
     Fmodel = max(Fx,Fy);
 end

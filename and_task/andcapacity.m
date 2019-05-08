@@ -69,12 +69,13 @@ end
 Fx = rt2cdf(x,p,lim);
 Fy = rt2cdf(y,p,lim);
 [Fxy,t] = rt2cdf(xy,p,lim);
+Flwr = zeros(length(p),1);
 
 % Compute capacity coefficient
 Ccoef = log(Fx.*Fy)./log(Fxy);
 
-% Compute bounds of limited and super capacity
-Clim = log(Fx.*Fy)./log(max(Fx+Fy-1,zeros(size(Fxy)))); % Colonius-Vorberg lower bound
+% Compute bounds of extreme limited and super capacity
+Clim = log(Fx.*Fy)./log(max(Fx+Fy-1,Flwr)); % Colonius-Vorberg lower bound
 Csup = log(Fx.*Fy)./log(min(Fx,Fy)); % Colonius-Vorberg upper bound
 
 function lim = decode_varargin(varargin)

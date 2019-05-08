@@ -96,7 +96,8 @@ end
 if dep == 0 % AND model
     Fmodel = Fx.*Fy;
 elseif dep == -1 % Colonius-Vorberg lower bound
-    Fmodel = max(Fx+Fy-1,zeros(size(Fxy)));
+    Flwr = zeros(length(p),1);
+    Fmodel = max(Fx+Fy-1,Flwr);
 elseif dep == 1 % Colonius-Vorberg upper bound
     Fmodel = min(Fx,Fy);
 end

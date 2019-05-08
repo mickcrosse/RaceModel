@@ -80,17 +80,19 @@ Sx = 1-Fx;
 Sy = 1-Fy;
 Sz = 1-Fz;
 Sxyz = 1-Fxyz;
+Slwr = zeros(length(p),1);
 
 % Compute capacity coefficient
 Ccoef = log(Sxyz)./log(Sx.*Sy.*Sz);
 
-% Compute bounds of limited and super capacity
+% Compute bounds of extreme limited and super capacity
 Clim = log(min([Sx,Sy,Sz],[],2))./log(Sx.*Sy.*Sz); % Grice's bound
 if sharp == 1
-    Sxy = Sx.*Sy; Syz = Sy.*Sz;
-    Csup = log(max(Sxy+Syz-Sy,zeros(size(Sxyz))))./log(Sx.*Sy.*Sz); % Diederich's bound
+    Sxy = Sx.*Sy; Sxz = Sx.*Sz; Syz = Sy.*Sz;
+    S1 = Sxy+Sxz-Sx; S2 = Sxy+Syz-Sy; S3 = Sxz+Syz-Sz;
+    Csup = log(max([S1,S2,S3,Slwr],[],2))./log(Sx.*Sy.*Sz); % Diederich's bound
 elseif sharp == 0
-    Csup = log(max(Sx+Sy+Sz-2,zeros(size(Sxyz))))./log(Sx.*Sy.*Sz); % Miller's bound
+    Csup = log(max(Sx+Sy+Sz-2,Slwr))./log(Sx.*Sy.*Sz); % Miller's bound
 end
 
 function [lim,sharp] = decode_varargin(varargin)

@@ -108,32 +108,34 @@ elseif strcmpi(test,'hor')
 end
 
 % Compute Colonius-Vorberg upper bound
-Fmin = min([Fx,Fy,Fz],[],2);
+Fbound = min([Fx,Fy,Fz],[],2);
 
 % Compute model
 if dep == 0 % AND model
     Fmodel = Fx.*Fy.*Fz;
 elseif dep == -1
+    Flwr = zeros(length(p),1);
     if sharp == 1 % Diederich's bound
-        Fxy = Fx.*Fy; Fyz = Fy.*Fz;
-        Fmodel = min(Fxy+Fyz-Fy,ones(size(Fxyz)));
+        Fxy = Fx.*Fy; Fxz = Fx.*Fz; Fyz = Fy.*Fz;
+        F1 = Fxy+Fxz-Fx; F2 = Fxy+Fyz-Fy; F3 = Fxz+Fyz-Fz;
+        Fmodel = max([F1,F2,F3,Flwr],[],2);
     elseif sharp == 0 % Colonius-Vorberg lower bound
-        Fmodel = max(Fx+Fy+Fz-2,zeros(size(Fxyz)));
+        Fmodel = max(Fx+Fy+Fz-2,Flwr);
     end
 end
 
 % Compute quantiles for horizontal test
 if strcmpi(test,'hor')
     Fxyz = cfp2q(Fxyz,p);
-    Fmin = cfp2q(Fmin,p);
+    Fbound = cfp2q(Fbound,p);
     Fmodel = cfp2q(Fmodel,p);
 end
 
 % Compute difference
 if strcmpi(test,'ver')
-    Femp = Fxyz-Fmin;
+    Femp = Fxyz-Fbound;
 elseif strcmpi(test,'hor')
-    Femp = Fmin-Fxyz;
+    Femp = Fbound-Fxyz;
 end
 
 % Compute empirical cost
@@ -143,9 +145,9 @@ if nargout > 1
     
     % Compute difference
     if strcmpi(test,'ver')
-        Fpred = Fmodel-Fmin;
+        Fpred = Fmodel-Fbound;
     elseif strcmpi(test,'hor')
-        Fpred = Fmin-Fmodel;
+        Fpred = Fbound-Fmodel;
     end
     
     % Compute predicted cost

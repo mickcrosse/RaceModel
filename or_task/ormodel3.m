@@ -113,11 +113,13 @@ if nargout > 4
         Fxy = Fx+Fy-Fx.*Fy;
         Fmodel = Fxy+Fz-Fxy.*Fz;
     elseif dep == -1
+        Fupr = ones(length(p),1);
         if sharp == 1 % Diederich's bound
-            Fxy = Fx+Fy-Fx.*Fy; Fyz = Fy+Fz-Fy.*Fz;
-            Fmodel = min(Fxy+Fyz-Fy,ones(size(Fxyz)));
+            Fxy = Fx+Fy-Fx.*Fy; Fxz = Fx+Fz-Fx.*Fz; Fyz = Fy+Fz-Fy.*Fz;
+            F1 = Fxy+Fxz-Fx; F2 = Fxy+Fyz-Fy; F3 = Fxz+Fyz-Fz;
+            Fmodel = min([F1,F2,F3,Fupr],[],2);
         elseif sharp == 0 % Miller's bound
-            Fmodel = min(Fx+Fy+Fz,ones(size(Fxyz)));
+            Fmodel = min(Fx+Fy+Fz,Fupr);
         end
     elseif dep == 1 % Grice's bound
         Fmodel = max([Fx,Fy,Fz],[],2);

@@ -121,9 +121,9 @@ end
 Fx = mean([FXx,FXy,FXxy],2);
 Fy = mean([FYx,FYy,FYxy],2);
 if strcmpi(task,'OR') % Grice's bound
-    Fmax = max(Fx,Fy);
+    Fbound = max(Fx,Fy);
 elseif strcmpi(task,'AND') % Colonius-Vorberg upper bound
-    Fmax = min(Fx,Fy);
+    Fbound = min(Fx,Fy);
 end
 
 % Compute model
@@ -140,15 +140,15 @@ end
 % Compute quantiles for horizontal test
 if strcmpi(test,'hor')
     FXY = cfp2q(FXY,p);
-    Fmax = cfp2q(Fmax,p);
+    Fbound = cfp2q(Fbound,p);
     Fmodel = cfp2q(Fmodel,p);
 end
 
 % Compute difference
 if strcmpi(test,'ver')
-    Femp = FXY-Fmax;
+    Femp = FXY-Fbound;
 elseif strcmpi(test,'hor')
-    Femp = Fmax-FXY;
+    Femp = Fbound-FXY;
 end
 
 % Compute empirical benefit
@@ -158,9 +158,9 @@ if nargout > 1
     
     % Compute difference
     if strcmpi(test,'ver')
-        Fpred = Fmodel-Fmax;
+        Fpred = Fmodel-Fbound;
     elseif strcmpi(test,'hor')
-        Fpred = Fmax-Fmodel;
+        Fpred = Fbound-Fmodel;
     end
     
     % Compute predicted benefit

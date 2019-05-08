@@ -108,33 +108,35 @@ elseif strcmpi(test,'hor')
 end
 
 % Compute Grice's bound
-Fmax = max([Fx,Fy,Fz],[],2);
+Fbound = max([Fx,Fy,Fz],[],2);
 
 % Compute model
 if dep == 0 % OR model
     Fxy = Fx+Fy-Fx.*Fy;
     Fmodel = Fxy+Fz-Fxy.*Fz;
 elseif dep == -1
+    Fupr = ones(length(p),1);
     if sharp == 1 % Diederich's bound
-        Fxy = Fx+Fy-Fx.*Fy; Fyz = Fy+Fz-Fy.*Fz;
-        Fmodel = min(Fxy+Fyz-Fy,ones(size(Fxyz)));
+        Fxy = Fx+Fy-Fx.*Fy; Fxz = Fx+Fz-Fx.*Fz; Fyz = Fy+Fz-Fy.*Fz;
+        F1 = Fxy+Fxz-Fx; F2 = Fxy+Fyz-Fy; F3 = Fxz+Fyz-Fz;
+        Fmodel = min([F1,F2,F3,Fupr],[],2);
     elseif sharp == 0 % Miller's bound
-        Fmodel = min(Fx+Fy+Fz,ones(size(Fxyz)));
+        Fmodel = min(Fx+Fy+Fz,Fupr);
     end
 end
 
 % Compute quantiles for horizontal test
 if strcmpi(test,'hor')
     Fxyz = cfp2q(Fxyz,p);
-    Fmax = cfp2q(Fmax,p);
+    Fbound = cfp2q(Fbound,p);
     Fmodel = cfp2q(Fmodel,p);
 end
 
 % Compute difference
 if strcmpi(test,'ver')
-    Femp = Fxyz-Fmax;
+    Femp = Fxyz-Fbound;
 elseif strcmpi(test,'hor')
-    Femp = Fmax-Fxyz;
+    Femp = Fbound-Fxyz;
 end
 
 % Compute empirical benefit
@@ -144,9 +146,9 @@ if nargout > 1
     
     % Compute difference
     if strcmpi(test,'ver')
-        Fpred = Fmodel-Fmax;
+        Fpred = Fmodel-Fbound;
     elseif strcmpi(test,'hor')
-        Fpred = Fmax-Fmodel;
+        Fpred = Fbound-Fmodel;
     end
     
     % Compute predicted benefit

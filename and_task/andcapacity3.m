@@ -74,16 +74,18 @@ Fx = rt2cdf(x,p,lim);
 Fy = rt2cdf(y,p,lim);
 Fz = rt2cdf(z,p,lim);
 [Fxyz,t] = rt2cdf(xyz,p,lim);
+Flwr = zeros(length(p),1);
 
 % Compute capacity coefficient
 Ccoef = log(Fx.*Fy.*Fz)./log(Fxyz);
 
-% Compute bounds of limited and super capacity
+% Compute bounds of extreme limited and super capacity
 if sharp == 1
-    Fxy = Fx.*Fy; Fyz = Fy.*Fz;
-    Clim = log(Fx.*Fy.*Fz)./log(max(Fxy+Fyz-Fy,zeros(size(Fxyz)))); % Diederich's bound
+    Fxy = Fx.*Fy; Fxz = Fx.*Fz; Fyz = Fy.*Fz;
+    F1 = Fxy+Fxz-Fx; F2 = Fxy+Fyz-Fy; F3 = Fxz+Fyz-Fz;
+    Clim = log(Fx.*Fy.*Fz)./log(max([F1,F2,F3,Flwr],[],2)); % Diederich's bound
 elseif sharp == 0
-    Clim = log(Fx.*Fy.*Fz)./log(max(Fx+Fy+Fz-2,zeros(size(Fxyz)))); % Colonius-Vorberg lower bound
+    Clim = log(Fx.*Fy.*Fz)./log(max(Fx+Fy+Fz-2,Flwr)); % Colonius-Vorberg lower bound
 end
 Csup = log(Fx.*Fy.*Fz)./log(min([Fx,Fy,Fz],[],2)); % Colonius-Vorberg upper bound
 

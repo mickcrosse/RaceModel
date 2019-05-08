@@ -97,27 +97,28 @@ elseif strcmpi(test,'hor')
 end
 
 % Compute Colonius-Vorberg upper bound
-Fmin = min(Fx,Fy);
+Fbound = min(Fx,Fy);
 
 % Compute model
 if dep == 0 % AND model
     Fmodel = Fx.*Fy;
 elseif dep == -1 % Colonius-Vorberg lower bound
-    Fmodel = max(Fx+Fy-1,zeros(size(Fxy)));
+    Flwr = zeros(length(p),1);
+    Fmodel = max(Fx+Fy-1,Flwr);
 end
 
 % Compute quantiles for horizontal test
 if strcmpi(test,'hor')
     Fxy = cfp2q(Fxy,p);
-    Fmin = cfp2q(Fmin,p);
+    Fbound = cfp2q(Fbound,p);
     Fmodel = cfp2q(Fmodel,p);
 end
 
 % Compute difference
 if strcmpi(test,'ver')
-    Femp = Fxy-Fmin;
+    Femp = Fxy-Fbound;
 elseif strcmpi(test,'hor')
-    Femp = Fmin-Fxy;
+    Femp = Fbound-Fxy;
 end
 
 % Compute empirical benefit
@@ -127,9 +128,9 @@ if nargout > 1
     
     % Compute difference
     if strcmpi(test,'ver')
-        Fpred = Fmodel-Fmin;
+        Fpred = Fmodel-Fbound;
     elseif strcmpi(test,'hor')
-        Fpred = Fmin-Fmodel;
+        Fpred = Fbound-Fmodel;
     end
     
     % Compute predicted benefit

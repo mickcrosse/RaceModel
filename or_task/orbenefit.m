@@ -96,27 +96,28 @@ elseif strcmpi(test,'hor')
 end
 
 % Compute Grice's bound
-Fmax = max(Fx,Fy);
+Fbound = max(Fx,Fy);
 
 % Compute model
 if dep == 0 % OR model
     Fmodel = Fx+Fy-Fx.*Fy;
 elseif dep == -1 % Miller's bound
-    Fmodel = min(Fx+Fy,ones(size(Fxy)));
+    Fupr = ones(length(p),1);
+    Fmodel = min(Fx+Fy,Fupr);
 end
 
 % Compute quantiles for horizontal test
 if strcmpi(test,'hor')
     Fxy = cfp2q(Fxy,p);
-    Fmax = cfp2q(Fmax,p);
+    Fbound = cfp2q(Fbound,p);
     Fmodel = cfp2q(Fmodel,p);
 end
 
 % Compute difference
 if strcmpi(test,'ver')
-    Femp = Fxy-Fmax;
+    Femp = Fxy-Fbound;
 elseif strcmpi(test,'hor')
-    Femp = Fmax-Fxy;
+    Femp = Fbound-Fxy;
 end
 
 % Compute empirical benefit
@@ -126,9 +127,9 @@ if nargout > 1
     
     % Compute difference
     if strcmpi(test,'ver')
-        Fpred = Fmodel-Fmax;
+        Fpred = Fmodel-Fbound;
     elseif strcmpi(test,'hor')
-        Fpred = Fmax-Fmodel;
+        Fpred = Fbound-Fmodel;
     end
     
     % Compute predicted benefit

@@ -74,13 +74,14 @@ Fy = rt2cdf(y,p,lim);
 Sx = 1-Fx;
 Sy = 1-Fy;
 Sxy = 1-Fxy;
+Slwr = zeros(length(p),1);
 
 % Compute capacity coefficient
 Ccoef = log(Sxy)./log(Sx.*Sy);
 
-% Compute bounds of limited and super capacity
+% Compute bounds of extreme limited and super capacity
 Clim = log(min(Sx,Sy))./log(Sx.*Sy); % Grice's bound
-Csup = log(max(Sx+Sy-1,zeros(size(Sxy))))./log(Sx.*Sy); % Miller's bound
+Csup = log(max(Sx+Sy-1,Slwr))./log(Sx.*Sy); % Miller's bound
 
 function lim = decode_varargin(varargin)
 %decode_varargin Decode input variable arguments.
