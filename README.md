@@ -10,12 +10,14 @@ Crosse MJ, Foxe JJ, Molholm S (2019) RaceModel: A MATLAB Package for Stochastic 
 ### Redundant signals (OR) task
 #### Bisensory
 * `ormodel.m` - compute parallel (race) model
+* `ormre.m` - compute multisensory response enhancement
 * `orgain.m` - compute multisensory gain (violation)
 * `orbenefit.m` - compute empirical and predicted benefits
 * `orcapacity.m` - compute capacity coefficient and bounds
  
 #### Trisensory
 * `ormodel3.m` - compute parallel (race) model
+* `ormre3.m` - compute multisensory response enhancement
 * `orgain3.m` - compute multisensory gain (violation)
 * `orbenefit3.m` - compute empirical and predicted benefits
 * `orcapacity3.m` - compute capacity coefficient and bounds
@@ -23,12 +25,14 @@ Crosse MJ, Foxe JJ, Molholm S (2019) RaceModel: A MATLAB Package for Stochastic 
 ### Exhaustive search (AND) task
 #### Bisensory
 * `andmodel.m` - compute parallel (AND) model
+* `andmre.m` - compute multisensory response enhancement
 * `andgain.m` - compute multisensory gain (violation)
 * `andbenefit.m` - compute empirical and predicted benefits
 * `andcapacity.m` - compute capacity coefficient and bounds
 
 #### Trisensory
 * `andmodel3.m` - compute parallel (AND) model
+* `andmre3.m` - compute multisensory response enhancement
 * `andgain3.m` - compute multisensory gain (violation)
 * `andbenefit3.m` - compute empirical and predicted benefits
 * `andcapacity3.m` - compute capacity coefficient and bounds
