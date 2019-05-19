@@ -1,4 +1,4 @@
-function [MIC,SIC,t] = sft(xhh,xll,xhl,xlh,p,varargin)
+function [mic,sic,t] = sft(xhh,xll,xhl,xlh,p,varargin)
 %sft Systems factorial technology.
 %   MIC = SFT(XHH,XLL,XHL,XLH) returns the mean interaction contrast (MIC)
 %   based on the mean values of the bisensory conditions XHH, XLL, XHL and
@@ -61,9 +61,9 @@ function [MIC,SIC,t] = sft(xhh,xll,xhl,xlh,p,varargin)
 
 % Generate reference table
 Model = {'Serial, OR';'Serial, AND';'Parallel, OR';'Parallel, AND';'Coactive'};
-MIC = {'0';'0';'>0';'<0';'>0'};
-SIC = {'0';'-to+';'>0';'<0';'-to+'};
-reftable = table(Model,MIC,SIC);
+mic = {'0';'0';'>0';'<0';'>0'};
+sic = {'0';'-to+';'>0';'<0';'-to+'};
+reftable = table(Model,mic,sic);
 
 % Set default values
 if nargin < 5 || isempty(p)
@@ -86,14 +86,14 @@ end
 % Compute CDFs
 Fxhh = rt2cdf(xhh,p,lim);
 Fxhl = rt2cdf(xhl,p,lim);
-Flh = rt2cdf(xlh,p,lim);
+Fxlh = rt2cdf(xlh,p,lim);
 [Fxll,t] = rt2cdf(xll,p,lim);
 
 % Compute mean interaction contrast
-MIC = nanmean(xhh)+nanmean(xll)-nanmean(xhl)-nanmean(xlh);
+mic = nanmean(xhh)+nanmean(xll)-nanmean(xhl)-nanmean(xlh);
 
 % Compute survivor interaction contrast
-SIC = Fxhl+Flh-Fxhh-Fxll;
+sic = Fxhl+Fxlh-Fxhh-Fxll;
 
 % Display reference table
 if verbose
