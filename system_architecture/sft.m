@@ -1,14 +1,14 @@
-function [mic,sic,t] = sft(xhh,xll,xhl,xlh,p,varargin)
+function [mic,sic,t] = sft(hh,ll,hl,lh,p,varargin)
 %sft Systems factorial technology.
-%   MIC = SFT(XHH,XLL,XHL,XLH) returns the mean interaction contrast (MIC)
-%   based on the mean values of the bisensory conditions XHH, XLL, XHL and
-%   XLH, where H indicates high salience and L indicates low salience on
-%   the respective channels. XHH, XLL, XHL and XLH can have different
+%   MIC = SFT(HH,LL,HL,LH) returns the mean interaction contrast (MIC)
+%   based on the mean values of the bisensory conditions HH, LL, HL and LH, 
+%   where H indicates high salience and L indicates low salience on the 
+%   corresponding sensory channels. HH, LL, HL and LH can have different
 %   lengths. This function treats NaNs as missing values, and ignores them.
 %
-%   [...,SIC] = SFT(...) returns survivor interaction contrast (SIC) based
-%   on the survivor functions of the bisensory conditions XHH, XLL, XHL and
-%   XLH.
+%   [...,SIC] = SFT(...) returns the survivor interaction contrast (SIC) 
+%   based on the cumulative distributions functions (CDFs) of the bisensory 
+%   conditions HH, LL, HL and LH.
 %
 %   The system's architecture and stopping rule can be inferred from the
 %   following reference table using the combined outcome of MIC and SIC.
@@ -20,8 +20,7 @@ function [mic,sic,t] = sft(xhh,xll,xhl,xlh,p,varargin)
 %   Parallel, AND	<0      <0
 %   Coactive        >0      -to+
 %
-%   [...,T] = ORMODEL(...) returns the time intervals used to compute the
-%   CDFs for the vertical test.
+%   [...,T] = SFT(...) returns the time intervals used to compute the CDFs.
 %
 %   [...] = SFT(...,'PARAM1',VAL1,'PARAM2',VAL2,...) specifies additional
 %   parameters and their values. Valid parameters are the following:
@@ -30,7 +29,7 @@ function [mic,sic,t] = sft(xhh,xll,xhl,xlh,p,varargin)
 %   'lim'       a 2-element vector specifying the lower and upper RT limits
 %               for computing CDFs: it is recommended to leave this
 %               unspecified unless comparing directly with other conditions
-%               (default=[min([X,Y,Z,XYZ]),max([X,Y,Z,XYZ])])
+%               (default=[min([HH,LL,HL,LH]),max([HH,LL,HL,LH])])
 %   'verbose'   a scalar specifying whether to display the reference table
 %               for inferring the system's architecture and stopping rule:
 %               pass in 1 to display reference table (default) and 0 to not
@@ -59,12 +58,6 @@ function [mic,sic,t] = sft(xhh,xll,xhl,xlh,p,varargin)
 % Decode input variable arguments
 [lim,verbose] = decode_varargin(varargin);
 
-% Generate reference table
-Model = {'Serial, OR';'Serial, AND';'Parallel, OR';'Parallel, AND';'Coactive'};
-mic = {'0';'0';'>0';'<0';'>0'};
-sic = {'0';'-to+';'>0';'<0';'-to+'};
-reftable = table(Model,mic,sic);
-
 % Set default values
 if nargin < 5 || isempty(p)
     p = 0.05:0.1:0.95;
@@ -73,30 +66,34 @@ elseif ~isnumeric(p) || isscalar(p) || any(p<0|p>1)
 end
 
 % Transpose row vectors
-if isrow(xhh), xhh = xhh'; end
-if isrow(xll), xll = xll'; end
-if isrow(xhl), xhl = xhl'; end
-if isrow(xlh), xlh = xlh'; end
+if isrow(hh), hh = hh'; end
+if isrow(ll), ll = ll'; end
+if isrow(hl), hl = hl'; end
+if isrow(lh), lh = lh'; end
 
 % Get min and max CDF limits
 if isempty(lim)
-    lim = [min([xhh;xll;xhl;xlh]),max([xhh;xll;xhl;xlh])];
+    lim = [min([hh;ll;hl;lh]),max([hh;ll;hl;lh])];
 end
 
 % Compute CDFs
-Fxhh = rt2cdf(xhh,p,lim);
-Fxhl = rt2cdf(xhl,p,lim);
-Fxlh = rt2cdf(xlh,p,lim);
-[Fxll,t] = rt2cdf(xll,p,lim);
+Fxhh = rt2cdf(hh,p,lim);
+Fxhl = rt2cdf(hl,p,lim);
+Fxlh = rt2cdf(lh,p,lim);
+[Fxll,t] = rt2cdf(ll,p,lim);
 
 % Compute mean interaction contrast
-mic = nanmean(xhh)+nanmean(xll)-nanmean(xhl)-nanmean(xlh);
+mic = nanmean(hh)+nanmean(ll)-nanmean(hl)-nanmean(lh);
 
 % Compute survivor interaction contrast
 sic = Fxhl+Fxlh-Fxhh-Fxll;
 
 % Display reference table
 if verbose
+    Model = {'Serial, OR';'Serial, AND';'Parallel, OR';'Parallel, AND';'Coactive'};
+    MIC = {'0';'0';'>0';'<0';'>0'};
+    SIC = {'0';'-to+';'>0';'<0';'-to+'};
+    reftable = table(Model,MIC,SIC);
     disp(reftable)
 end
 

@@ -1,12 +1,12 @@
 function [x,y,xy,labels] = trialhistory(data,cond,varargin)
-%trialhistory Separate trials based on their history.
+%trialhistory Separate bisensory RTs based on their trial history.
 %   [X,Y,XY] = TRIALHISTORY(DATA,COND) returns the trials from DATA that
 %   were preceded by a different condition (i.e., switch trials). DATA
-%   should be a vector of mixed unisensory and multisensory reaction times,
+%   should be a vector of mixed unisensory and bisensory reaction times,
 %   arranged in the order in which they were collected during testing. COND
 %   should be a vector of integer values indicating the condition of each
 %   trial, where 1 and 2 indicate unisensory trials, and 3 indicates
-%   multisensory trials.
+%   bisensory trials.
 %
 %   [...,LABELS] = TRIALHISTORY(...) returns a vector of labels indicating
 %   the condition of both the previous and current trial.
