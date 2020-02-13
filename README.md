@@ -1,3 +1,6 @@
+
+[![View RaceModel on File Exchange](https://www.mathworks.com/matlabcentral/images/matlab-file-exchange.svg)](https://www.mathworks.com/matlabcentral/fileexchange/71559-racemodel)
+
 # RaceModel
 RaceModel is a MATLAB package for stochastic modelling of multisensory reaction times (RTs). It is suitable for analyzing empirical data or running simulations, and can handle datasets of unequal sizes and with missing values (NaNs). The toolbox can be used to build parallel models of multisensory information processing for both OR and AND task designs (e.g., the race model; Miller, 1982), as well as bisensory and trisensory paradigms. Parallel models can be generated under the assumption that RTs on separate sensory channels are stochastically independent (independent race model), perfectly negatively dependent (Miller's bound) or perfectly positively dependent (Grice's bound), and can be tested using either the vertical or horizontal method. Separate functions compute geometric measures of multisensory gain (violation), multisensory benefit (Otto et al., 2013) and modality switch effects.
 
