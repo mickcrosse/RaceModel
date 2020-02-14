@@ -9,6 +9,9 @@ RaceModel also includes a *systems factorial technology* framework for inferring
 ### Documentation
 Crosse MJ, Foxe JJ, Molholm S (2019) RaceModel: A MATLAB Package for Stochastic Modelling of Multisensory Reaction Times (In prep).
 
+## RaceModel Framework
+<img src="doc/RaceModel_Framework.png" width="800" height="500">
+
 ## Contents
 ### Redundant signals (OR) task
 #### Bisensory
